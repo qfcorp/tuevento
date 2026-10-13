@@ -18,6 +18,7 @@ $hayFiltro = $filtros['buscar'] !== '' || $filtros['categoria'] !== '';
     <div class="acciones">
         <a class="boton" href="<?= e(url('catalogo', ['nuevo' => 1] + array_filter(['cat' => $filtros['categoria']]))) ?>#form-producto">+ Agregar producto</a>
         <a class="boton boton-claro" href="<?= e(url('paquetes')) ?>">Paquetes</a>
+        <a class="boton boton-claro" href="<?= e(url('extras')) ?>">Extras del portal</a>
     </div>
     <?php endif; ?>
 </div>
@@ -99,6 +100,7 @@ $hayFiltro = $filtros['buscar'] !== '' || $filtros['categoria'] !== '';
                 <small class="doc-etiquetas">
                     <?= e($unis[$p['unidad']] ?? '') ?><?= $p['con_iva'] ? '' : ' · <b>0 % IVA</b>' ?>
                     <?= (int) $p['en_paquetes'] > 0 ? ' · en ' . (int) $p['en_paquetes'] . ' ' . ((int) $p['en_paquetes'] === 1 ? 'paquete' : 'paquetes') : '' ?>
+                    <?= !empty($p['en_portal']) ? ' · <a href="' . e(url('extras')) . '#prod-' . (int) $p['id'] . '">se pide en el portal</a>' : '' ?>
                 </small>
             </div>
             <div class="doc-producto-precio">

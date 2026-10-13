@@ -319,27 +319,33 @@ final class Reportes
             "SELECT e.id, e.codigo, e.nombre, e.fecha, e.estado, e.invitados, e.total, e.costo_estimado, c.nombre AS cliente,
                     " . self::SQL_SIN_IVA . " AS sin_iva,
                     COALESCE((SELECT sum(g.monto) FROM gastos g WHERE g.evento_id = e.id),0) AS gastos,
-                    COALESCE((SELECT sum(ep.pago) FROM evento_personal ep WHERE ep.evento_id = e.id),0) AS personal
+                    COALESCE((SELECT sum(ep.pago) FROM evento_personal ep WHERE ep.evento_id = e.id),0) AS personal,
+                    " . Compras::sqlCostoEvento('e.id') . " AS compras
                FROM eventos e JOIN negocios n ON n.id = e.negocio_id JOIN clientes c ON c.id = e.cliente_id
               WHERE e.negocio_id = ? AND e.estado IN ('separado','confirmado','realizado') AND e.fecha BETWEEN ?::date AND ?::date
            ORDER BY e.fecha", [$negocioId, $desde, $hasta])->fetchAll();
-        $tot = ['sin_iva' => 0.0, 'gastos' => 0.0, 'personal' => 0.0, 'costo' => 0.0, 'ganancia' => 0.0];
+        $tot = ['sin_iva' => 0.0, 'gastos' => 0.0, 'compras' => 0.0, 'personal' => 0.0, 'costo' => 0.0, 'ganancia' => 0.0];
         foreach ($filas as &$r) {
             $r['sin_iva'] = round((float) $r['sin_iva'], 2);
             $r['gastos'] = round((float) $r['gastos'], 2);
+            $r['compras'] = round((float) $r['compras'], 2);   // compras a proveedores del evento (060), aparte de los gastos
             $r['personal'] = round((float) $r['personal'], 2);
-            // Si todavía no se registraron gastos, se usa el costo estimado de la cotización
-            $r['usa_estimado'] = $r['gastos'] <= 0 && (float) $r['costo_estimado'] > 0;
-            $r['costo'] = $r['usa_estimado'] ? round((float) $r['costo_estimado'], 2) : $r['gastos'];
+            // Si todavía no se registraron gastos ni compras, se usa el costo estimado de la cotización
+            $r['usa_estimado'] = $r['gastos'] + $r['compras'] <= 0 && (float) $r['costo_estimado'] > 0;
+            $r['costo'] = $r['usa_estimado'] ? round((float) $r['costo_estimado'], 2) : round($r['gastos'] + $r['compras'], 2);
             $r['ganancia'] = round($r['sin_iva'] - $r['costo'] - $r['personal'], 2);
             $r['margen'] = $r['sin_iva'] > 0 ? (int) round($r['ganancia'] * 100 / $r['sin_iva']) : 0;
-            foreach (['sin_iva', 'gastos', 'personal', 'costo', 'ganancia'] as $k) $tot[$k] += $r[$k];
+            foreach (['sin_iva', 'gastos', 'compras', 'personal', 'costo', 'ganancia'] as $k) $tot[$k] += $r[$k];
         }
         unset($r);
         $tot = array_map(fn($v) => round($v, 2), $tot);
         $tot['margen'] = $tot['sin_iva'] > 0 ? (int) round($tot['ganancia'] * 100 / $tot['sin_iva']) : 0;
         $generales = (float) $this->q('SELECT COALESCE(sum(monto),0) FROM gastos WHERE negocio_id = ? AND evento_id IS NULL AND fecha BETWEEN ?::date AND ?::date',
                                       [$negocioId, $desde, $hasta])->fetchColumn();
+        // Compras generales del negocio (sin evento) también son gastos generales
+        $generales += (float) $this->q("SELECT COALESCE(sum(COALESCE(c.factura_total, c.total) - " . Compras::SQL_DESCUENTOS . "),0) FROM compras c
+                                         WHERE c.negocio_id = ? AND c.evento_id IS NULL AND " . Compras::SQL_ACTIVAS . " AND c.fecha BETWEEN ?::date AND ?::date",
+                                       [$negocioId, $desde, $hasta])->fetchColumn();
         return ['lista' => $filas, 'total' => $tot, 'gastos_generales' => round($generales, 2),
                 'ganancia_neta' => round($tot['ganancia'] - $generales, 2)];
     }
@@ -437,7 +443,7 @@ final class Reportes
             'realizados' => $realizados, 'ganancia' => $rent['total']['ganancia'],
             'por_cobrar' => $this->porCobrar($negocioId, $hoy)['saldo'], 'pct_sabados' => $ocup['pct_sabados'],
             'mejor_origen' => array_key_first(array_filter($conv['por_origen'], fn($g) => $g['vendidos'] > 0)),
-        ];
+        ] + (new Encuestas($this->db))->resumenMes($negocioId, $mes);   // encuestas y NPS de los eventos del mes (migración 070)
     }
 
     public static function textoResumenMes(array $r, string $negocio): string
@@ -452,6 +458,7 @@ final class Reportes
            . "Sábados vendidos en los próximos 12 meses: {$r['pct_sabados']} %\n";
         if ($r['mejor_origen']) $t .= "Lo que más vende: {$r['mejor_origen']}\n";
         if ($r['perdidos'] && $r['motivo_principal']) $t .= "Se perdieron {$r['perdidos']}; el motivo más común: {$r['motivo_principal']}\n";
+        if (!empty($r['encuestas'])) $t .= "Satisfacción de los clientes: NPS {$r['nps']} ({$r['encuestas']} " . ($r['encuestas'] === 1 ? 'encuesta' : 'encuestas') . ")\n";
         return $t . "\nMira el detalle en TuEvento → Reportes.";
     }
 

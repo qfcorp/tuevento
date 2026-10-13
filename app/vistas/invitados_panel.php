@@ -192,6 +192,7 @@ $pv = fn(string $k, $def = '') => e($previo[$k] ?? $def);
     <?= count($mesas) ?> mesas · <?= $ocupados ?> de <?= $puestos ?> puestos ocupados<?= $plano['sin_mesa'] ? ' · ' . count($plano['sin_mesa']) . ' invitados todavía sin mesa' : '' ?>.
 </p>
 <?php endif; ?>
+<?php require RAIZ . '/app/vistas/_plano_mesas.php'; /* plano del salón dibujado (módulo 080) */ ?>
 
 <?php if ($editable): ?>
 <form method="post" class="bloque dia-crear-mesas"><?= $accion('mesas_crear') ?>

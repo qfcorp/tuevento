@@ -125,5 +125,6 @@ $reservaPct = rtrim(rtrim((string) $st->fetchColumn(), '0'), '.');
 $ultimoPago = (int) ($_SESSION['ultimo_pago'] ?? 0);
 unset($_SESSION['ultimo_pago']);
 $tab = 'evento_pagos';
-vista('evento_pagos', compact('ev', 'tab', 'res', 'lista', 'porRevisar', 'ganancia', 'gastos', 'proveedores', 'reservaPct', 'portal', 'recordatorio', 'waPortal', 'puede', 'ultimoPago'),
+$comprasEv = (new \TuEvento\Compras(db()))->deEvento($nid, $id);   // compras a proveedores del evento (060)
+vista('evento_pagos', compact('ev', 'tab', 'res', 'lista', 'porRevisar', 'ganancia', 'gastos', 'proveedores', 'reservaPct', 'portal', 'recordatorio', 'waPortal', 'puede', 'ultimoPago', 'comprasEv'),
       'Pagos · ' . $ev['nombre'] . ' · TuEvento');

@@ -18,6 +18,7 @@ use RuntimeException;
  *  6) Eventos de ayer o antes → pasan solos a "realizado"; aviso de devolver la garantía
  *  7) Reporte del mes al dueño, el día 1 desde las 7:00
  *  8) 8:00: a cada vendedor/dueño con Telegram, su lista de seguimientos del día
+ *  9) Proveedores (AvisosProveedores): pagos que vencen o vencieron, documentos por vencer, proveedores sin confirmar a 3 días
  */
 final class Automaticas
 {
@@ -300,6 +301,7 @@ final class Automaticas
         $hoy = $ahora->setTime(0, 0);
         $total = ['negocios' => 0, 'cotizaciones_vencidas' => 0, 'retenciones' => 0, 'cuotas' => 0, 'precios' => 0,
                   'semana' => 0, 'realizados' => 0, 'garantias' => 0, 'reportes' => 0, 'seguimientos' => 0, 'errores' => 0];
+        $total += ['prov_pagos' => 0, 'prov_documentos' => 0, 'prov_confirmar' => 0];   // proveedores (060)
         $total['cotizaciones_vencidas'] = (new Cotizaciones($this->db))->vencerAntiguas($hoy);
         $planes = new Planes($this->db);
         $negocios = $this->db->query("SELECT id, estado, prueba_hasta, activo_hasta FROM negocios WHERE estado IN ('prueba','activo') ORDER BY id")->fetchAll();
@@ -317,6 +319,7 @@ final class Automaticas
                 $total['semana'] += $this->avisarSemana($id, $ahora);
                 $total['reportes'] += $this->enviarReporteMes($id, $ahora) ? 1 : 0;
                 $total['seguimientos'] += $this->enviarSeguimientos($id, $ahora);
+                foreach ((new AvisosProveedores($this->db))->correr($id, $ahora) as $k => $v) $total[$k] += $v;   // pagos, documentos y confirmaciones de proveedores
             } catch (\Throwable $e) {
                 $total['errores']++;
                 error_log("TuEvento tareas negocio $id: " . $e->getMessage());
@@ -330,6 +333,6 @@ final class Automaticas
         return $ahora->format('Y-m-d H:i') . " · negocios {$r['negocios']} · cotizaciones vencidas {$r['cotizaciones_vencidas']}"
              . " · fechas liberadas {$r['retenciones']} · avisos de cobro {$r['cuotas']} · revisar precio {$r['precios']}"
              . " · eventos en 7 dias {$r['semana']} · realizados {$r['realizados']} (garantias {$r['garantias']})"
-             . " · reportes {$r['reportes']} · seguimientos {$r['seguimientos']}" . ($r['errores'] ? " · ERRORES {$r['errores']}" : '');
+             . " · reportes {$r['reportes']} · seguimientos {$r['seguimientos']}" . AvisosProveedores::resumen($r) . ($r['errores'] ? " · ERRORES {$r['errores']}" : '');
     }
 }

@@ -14,7 +14,7 @@ export TUEVENTO_UPLOADS="$TMP/uploads"
 psql -h 127.0.0.1 -U tuevento -d postgres -qc "DROP DATABASE IF EXISTS $DB" > /dev/null 2>&1
 psql -h 127.0.0.1 -U tuevento -d postgres -qc "CREATE DATABASE $DB" > /dev/null
 psql -h 127.0.0.1 -U tuevento -d "$DB" -q -v ON_ERROR_STOP=1 -f db/schema.sql > /dev/null || { echo "ERROR en schema.sql"; exit 1; }
-for m in db/migraciones/*.sql; do [ -f "$m" ] && psql -h 127.0.0.1 -U tuevento -d "$DB" -q -v ON_ERROR_STOP=1 -f "$m" > /dev/null || true; done
+for m in db/migraciones/*.sql; do [ -f "$m" ] || continue; psql -h 127.0.0.1 -U tuevento -d "$DB" -q -v ON_ERROR_STOP=1 -f "$m" > /dev/null || { echo "ERROR en $m"; exit 1; }; done
 # Sitio de prueba
 TUEVENTO_DB_NAME=$DB TUEVENTO_DB_USER=tuevento TUEVENTO_DB_PASS=$PGPASSWORD TUEVENTO_URL=$BASE \
   php -S 127.0.0.1:$PUERTO -t public tests/router.php > "$TMP/servidor.log" 2>&1 &

@@ -33,6 +33,7 @@ $msgPortal = "Hola {$ev['cliente']}, aquí pueden armar su lista de invitados de
 <div class="acciones dia-descargas">
     <a class="boton boton-claro boton-chico" href="<?= e(url('pdf', ['tipo' => 'invitados', 'id' => $ev['id']])) ?>" target="_blank" rel="noopener">Lista (PDF)</a>
     <a class="boton boton-claro boton-chico" href="<?= e(url('pdf', ['tipo' => 'mesas', 'id' => $ev['id']])) ?>" target="_blank" rel="noopener">Plano de mesas (PDF)</a>
+    <a class="boton boton-claro boton-chico" href="<?= e(url('plano', ['id' => $ev['id']])) ?>">Plano del salón</a>
     <a class="boton boton-claro boton-chico" href="<?= e(url('invitados', ['id' => $ev['id'], 'csv' => 1])) ?>">Descargar para Excel</a>
 </div>
 

@@ -97,6 +97,9 @@ $telServicio = function (string $servicio) use ($proveedoresEv): ?string {
                         <span class="etq <?= $bv['estado'] === 'ahora' ? 'etq-confirmada' : 'etq-reservada' ?>"><?= $bv['estado'] === 'ahora' ? 'Ahora' : 'Hecho' ?> · empezó <?= e(substr((string) $b['inicio_real'], 11, 5)) ?></span>
                     <?php endif; ?>
                     <?php if ($b['responsable']): ?><br><small><?= e($b['responsable']) ?></small><?php endif; ?>
+                    <?php if (!empty($b['evento_proveedor_id']) && $bv && $bv['atraso'] !== null && !$vivo['prueba']): ?>
+                        <span class="pv-chip <?= $bv['atraso'] <= \TuEvento\ProveedoresFicha::TOLERANCIA_MIN ? 'pv-chip-verde' : 'pv-chip-rojo' ?>"><?= $bv['atraso'] <= \TuEvento\ProveedoresFicha::TOLERANCIA_MIN ? 'Proveedor a tiempo' : 'Proveedor ' . (int) $bv['atraso'] . ' min tarde' ?></span>
+                    <?php endif; ?>
                     <?php if ($b['notas']): ?><br><small class="suave"><?= e($b['notas']) ?></small><?php endif; ?>
                     <?php if ($editable): ?>
                     <details class="dia-editar">
@@ -110,6 +113,11 @@ $telServicio = function (string $servicio) use ($proveedoresEv): ?string {
                             <div class="campo"><label for="a<?= (int) $b['id'] ?>">Qué pasa</label><input type="text" id="a<?= (int) $b['id'] ?>" name="actividad" value="<?= e($b['actividad']) ?>" maxlength="150" required></div>
                             <div class="campo"><label for="r<?= (int) $b['id'] ?>">Responsable</label><input type="text" id="r<?= (int) $b['id'] ?>" name="responsable" value="<?= e($b['responsable']) ?>" maxlength="100"></div>
                             <div class="campo"><label for="n<?= (int) $b['id'] ?>">Notas <small>(canción, quién habla…)</small></label><input type="text" id="n<?= (int) $b['id'] ?>" name="notas" value="<?= e($b['notas']) ?>" maxlength="300"></div>
+                            <?php if ($proveedoresEv): ?>
+                            <div class="campo"><label for="pr<?= (int) $b['id'] ?>">Proveedor a cargo <small>(para saber si cumplió a tiempo)</small></label>
+                                <select id="pr<?= (int) $b['id'] ?>" name="evento_proveedor_id"><option value="0">— Ninguno —</option>
+                                    <?php foreach ($proveedoresEv as $pv): ?><option value="<?= (int) $pv['id'] ?>" <?= (int) ($b['evento_proveedor_id'] ?? 0) === (int) $pv['id'] ? 'selected' : '' ?>><?= e($pv['nombre']) ?></option><?php endforeach; ?></select></div>
+                            <?php endif; ?>
                             <button class="boton boton-chico" type="submit">Guardar</button>
                         </form>
                         <form method="post" class="dia-en-linea"><?= campo_csrf() ?><?= $accion('bloque_borrar') ?><input type="hidden" name="bloque_id" value="<?= (int) $b['id'] ?>">
@@ -142,6 +150,11 @@ $telServicio = function (string $servicio) use ($proveedoresEv): ?string {
         <div class="campo"><label for="na">Qué pasa</label><input type="text" id="na" name="actividad" maxlength="150" required placeholder="Lanzamiento del ramo"></div>
         <div class="campo"><label for="nr">Responsable</label><input type="text" id="nr" name="responsable" maxlength="100" placeholder="DJ"></div>
         <div class="campo"><label for="nn">Notas <small>(opcional)</small></label><input type="text" id="nn" name="notas" maxlength="300" placeholder="Canción: Perfect – Ed Sheeran"></div>
+        <?php if ($proveedoresEv): ?>
+        <div class="campo"><label for="npr">Proveedor a cargo <small>(opcional)</small></label>
+            <select id="npr" name="evento_proveedor_id"><option value="0">— Ninguno —</option>
+                <?php foreach ($proveedoresEv as $pv): ?><option value="<?= (int) $pv['id'] ?>"><?= e($pv['nombre']) ?></option><?php endforeach; ?></select></div>
+        <?php endif; ?>
         <button class="boton boton-ancho" type="submit">Agregar al cronograma</button>
         <p class="suave" style="margin:8px 0 0"><small>Se ubica solo según la hora. Lo de madrugada (después de las 00:00) va al final.</small></p>
     </form>
@@ -297,13 +310,15 @@ $telServicio = function (string $servicio) use ($proveedoresEv): ?string {
             <div class="dia-tarjeta-cab">
                 <div>
                     <span class="dia-hora-grande"><?= e(hora_corta($p['hora_llegada']) ?: '--:--') ?></span>
-                    <strong><?= e($p['nombre']) ?></strong>
+                    <?php if ($p['proveedor_id']): ?><a href="<?= e(url('proveedor', ['id' => $p['proveedor_id']])) ?>"><strong><?= e($p['nombre']) ?></strong></a><?php else: ?><strong><?= e($p['nombre']) ?></strong><?php endif; ?>
+                    <?php if (($t = \TuEvento\ProveedoresFicha::textoPuntaje($puntajesProv[(int) $p['proveedor_id']] ?? null)) !== ''): ?><span class="pv-chip pv-nivel-<?= e($puntajesProv[(int) $p['proveedor_id']]['nivel'] ?? 'sin') ?>"><?= e($t) ?></span><?php endif; ?>
                     <br><small><?= e(Cotizaciones::CATEGORIAS[$p['servicio']] ?? $p['servicio']) ?><?= $p['telefono'] ? ' · ' . e($p['telefono']) : '' ?><?= $p['contacto'] ? ' · ' . e($p['contacto']) : '' ?></small>
                     <?php if ($p['lo_trae_cliente']): ?><br><span class="etq etq-pendiente">Lo trae el cliente</span><?php endif; ?>
                     <?php if ($p['notas']): ?><br><small class="suave"><?= e($p['notas']) ?></small><?php endif; ?>
                 </div>
                 <?php if ($wa): ?><a class="boton boton-wa boton-chico" href="<?= e($wa) ?>" target="_blank" rel="noopener" aria-label="WhatsApp a <?= e($p['nombre']) ?>">WhatsApp</a><?php endif; ?>
             </div>
+            <?php require RAIZ . '/app/vistas/_pv_cumplimiento.php';   // compra, llegada y evaluación (060) ?>
             <?php if ($editable): ?>
             <div class="dia-marcas">
                 <form method="post"><?= campo_csrf() ?><?= $accion('prov_confirmar') ?><input type="hidden" name="prov_id" value="<?= (int) $p['id'] ?>"><input type="hidden" name="valor" value="<?= $p['confirmado'] ? '0' : '1' ?>">
@@ -344,7 +359,7 @@ $telServicio = function (string $servicio) use ($proveedoresEv): ?string {
             <select id="prid" name="proveedor_id">
                 <option value="">Elige…</option>
                 <?php foreach (Cotizaciones::CATEGORIAS as $cat => $nomCat): $deCat = array_filter($disp, fn($p) => $p['servicio'] === $cat); if (!$deCat) continue; ?>
-                <optgroup label="<?= e($nomCat) ?>"><?php foreach ($deCat as $p): ?><option value="<?= (int) $p['id'] ?>"><?= e($p['nombre']) ?></option><?php endforeach; ?></optgroup>
+                <optgroup label="<?= e($nomCat) ?>"><?php foreach ($deCat as $p): $tp = \TuEvento\ProveedoresFicha::textoPuntaje($puntajesProv[(int) $p['id']] ?? null); ?><option value="<?= (int) $p['id'] ?>"><?= ($p['preferido'] ?? false) ? '★ ' : '' ?><?= e($p['nombre']) ?><?= $tp !== '' ? ' · ' . e($tp) : '' ?></option><?php endforeach; ?></optgroup>
                 <?php endforeach; ?>
             </select></div>
         <?php else: ?>
@@ -366,6 +381,20 @@ $telServicio = function (string $servicio) use ($proveedoresEv): ?string {
     <button class="boton boton-ancho" type="submit">Agregar al evento</button>
 </form>
 <?php endif; ?>
+
+<?php /* ===================================================== INCIDENCIAS (060) */ elseif ($ver === 'incidencias'):
+    $listaInc = $incidenciasEv; $conDinero = es_comercial($u); $volverA = 'evento_dia'; $volverId = $id; $ocultarEvento = true; $eventoFijo = $id;
+    $comprasSel = $conDinero ? array_values(array_filter($comprasEv, fn($c) => $c['saldo'] > 0)) : [];
+    $provsSel = array_values(array_map(fn($pv) => ['id' => $pv['proveedor_id'], 'nombre' => $pv['nombre']], array_filter($proveedoresEv, fn($pv) => $pv['proveedor_id'])));
+    $pre = ['evento' => $id, 'proveedor' => (int) ($_GET['proveedor'] ?? 0)]; ?>
+<div class="rejilla rejilla-2">
+    <section class="bloque">
+        <div class="dia-titulo-acciones"><h2>Problemas del evento</h2><a class="enlace-chico" href="<?= e(url('incidencias', ['evento' => $id, 'estado' => 'todas'])) ?>">Ver en Incidencias</a></div>
+        <?php if (!$listaInc): ?><p class="vacio">Sin problemas registrados. Si pasa algo (un proveedor llega tarde, se daña algo, falta comida), anótalo aquí con una foto.</p>
+        <?php else: require RAIZ . '/app/vistas/_pv_incidencias.php'; endif; ?>
+    </section>
+    <?php if ($editable) require RAIZ . '/app/vistas/_pv_incidencia_form.php'; ?>
+</div>
 
 <?php /* ===================================================== MOBILIARIO */ elseif ($ver === 'mobiliario'):
     $reservados = array_filter($mobiliario, fn($m) => $m['reservado'] > 0);

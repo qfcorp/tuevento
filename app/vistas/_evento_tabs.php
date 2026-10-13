@@ -13,6 +13,9 @@ $pestanas = [
 ];
 if ($u['rol'] === 'coordinador') unset($pestanas['cotizacion'], $pestanas['contrato'], $pestanas['evento_pagos']);
 $soloQuinta = ['evento_dia', 'invitados'];
+$pestanas['evento_formulario'] = $u['rol'] === 'coordinador' ? 'Formulario' : 'Formulario y extras';   // portal del cliente (módulo 070)
+$pestanas['plano'] = 'Plano';      // plano del salón (módulo 080)
+$soloQuinta[] = 'plano';
 ?>
 <div class="evento-cabeza">
     <div>

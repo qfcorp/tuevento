@@ -62,6 +62,8 @@ $t = $conversion['total'];
 <nav class="g-indice" aria-label="Ir a">
     <a href="#ventas">Ventas</a><a href="#cobros">Cobrado</a><a href="#por-cobrar">Por cobrar</a><a href="#ocupacion">Ocupación</a>
     <a href="#conversion">Conversión</a><a href="#rentabilidad">Ganancia</a><a href="#comisiones">Comisiones</a><a href="#descargas">Descargas</a>
+    <a href="#satisfaccion">Satisfacción</a>
+    <a href="#metas">Metas</a>
 </nav>
 
 <div class="g-cifras">
@@ -103,6 +105,7 @@ $t = $conversion['total'];
     <?php endif; ?>
     <div class="g-pie-tabla"><?= $descargar('eventos', 'Descargar eventos para Excel') ?></div>
 </section>
+<?php require RAIZ . '/app/vistas/_metas_reporte.php'; /* metas y año anterior (módulo 080) */ ?>
 
 <div class="rejilla rejilla-2">
     <section class="bloque" id="cobros">
@@ -187,11 +190,11 @@ $t = $conversion['total'];
 
 <section class="bloque" id="rentabilidad">
     <h2>Ganancia por evento</h2>
-    <p class="g-nota">De los eventos que se hacen en el periodo: lo cobrado sin IVA, menos los gastos del evento y lo pagado al personal.
-        Si todavía no registraste gastos, usamos el costo estimado de la cotización (marcado con *).</p>
+    <p class="g-nota">De los eventos que se hacen en el periodo: lo cobrado sin IVA, menos los gastos y las compras a proveedores del evento, y lo pagado al personal.
+        Si todavía no registraste gastos ni compras, usamos el costo estimado de la cotización (marcado con *).</p>
     <?php if (!$rentabilidad['lista']): ?><p class="vacio">No hay eventos vendidos en este periodo.</p><?php else: $tr = $rentabilidad['total']; ?>
         <div class="tabla-scroll"><table class="tabla">
-            <thead><tr><th>Evento</th><th class="num">Sin IVA</th><th class="num">Gastos</th><th class="num">Personal</th><th class="num">Ganancia</th><th class="num">Margen</th></tr></thead>
+            <thead><tr><th>Evento</th><th class="num">Sin IVA</th><th class="num">Gastos y compras</th><th class="num">Personal</th><th class="num">Ganancia</th><th class="num">Margen</th></tr></thead>
             <tbody>
             <?php foreach ($rentabilidad['lista'] as $r): ?>
                 <tr><td><a href="<?= e(url('evento', ['id' => $r['id']])) ?>"><?= e($r['nombre']) ?></a><br><small><?= e(fecha_corta($r['fecha'])) ?> · <?= (int) $r['invitados'] ?> inv. · <?= e(Eventos::ESTADOS[$r['estado']]) ?></small></td>
@@ -231,6 +234,8 @@ $t = $conversion['total'];
         <?php endif; ?>
     <?php endif; ?>
 </section>
+
+<?php require RAIZ . '/app/vistas/_reporte_satisfaccion.php'; // encuesta de satisfacción (migración 070) ?>
 
 <section class="bloque" id="descargas">
     <h2>Descargar para Excel</h2>

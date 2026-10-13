@@ -6,4 +6,5 @@ if (!requiere_quinta($u, 'Hoja del evento', 'La hoja del evento junta en un PDF 
 $dia = new DiaEvento(db());
 $h = $dia->hoja((int) $u['negocio_id'], $id);
 $h['enlace_vivo'] = url_completa('vivo', ['t' => $h['evento']['token_vivo']]);
+$h['formulario'] = (new \TuEvento\Cuestionarios(db()))->respondidas((int) $u['negocio_id'], $id);   // formulario del evento (070)
 Pdf::enviar(PdfDia::hoja($h), 'hoja-' . $h['evento']['codigo'] . '.pdf');

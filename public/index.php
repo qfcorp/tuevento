@@ -28,8 +28,19 @@ $privadas = [
 // Lo que puede abrir un coordinador (el día del evento); lo demás lo hace el dueño o el vendedor
 $deCoordinador = ['inicio', 'calendario', 'eventos', 'evento', 'evento_dia', 'invitados', 'personal', 'proveedores', 'mobiliario', 'espacios',
                   'mi_cuenta', 'notificaciones', 'archivo', 'pdf', 'buscar', 'mas', 'salir', 'prueba_terminada'];
+// Plano del salón (el coordinador también lo arma) y metas de ventas — módulo 080
+array_push($privadas, 'plano', 'metas');
+$deCoordinador[] = 'plano';
 // Panel del super administrador (Tukán): sesión aparte
 $deAdmin = ['admin', 'admin_negocios', 'admin_negocio', 'admin_nuevo', 'admin_planes', 'admin_ver', 'admin_volver', 'admin_salir'];
+// Portal del cliente, segunda parte (migración 070): formulario del evento, extras pedidos en línea y encuesta de satisfacción
+array_push($publicas, 'portal_cuestionario', 'portal_extras', 'encuesta');
+array_push($privadas, 'evento_formulario', 'cuestionarios', 'extras');
+$deCoordinador[] = 'evento_formulario';   // el coordinador ve las respuestas del formulario (útil el día del evento)
+// Proveedores y compras (migración 060): portal del proveedor, verificación de la orden de compra, ficha, compras, por pagar e incidencias
+array_push($publicas, 'portal_proveedor', 'verificar_oc');
+array_push($privadas, 'proveedor', 'compras', 'compra', 'por_pagar', 'incidencias', 'proveedor_archivo');
+array_push($deCoordinador, 'proveedor', 'incidencias', 'proveedor_archivo');   // ficha sin dinero, incidencias y documentos
 
 $ruta = (string) ($_GET['r'] ?? 'inicio');
 if (in_array($ruta, $deAdmin, true) && !superadmin()) {

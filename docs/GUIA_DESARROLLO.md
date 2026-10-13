@@ -24,7 +24,7 @@ Misma forma de trabajar que TuSalón (qfcorp/tusalon): PHP 8.3+ sin framework, P
 - Mostrar con `e()` todo lo que venga de la base o del usuario.
 - Dinero con `dinero()`, fechas con `fecha_corta()` / `fecha_larga()`.
 - Permisos: `consulta` solo mira (`puede_editar`), `coordinador` solo el día del evento (lista `$deCoordinador`), ventas y cobros solo `es_comercial`, configuración y usuarios solo `es_dueno`.
-- Plan Quinta: portal del cliente, invitados, día del evento, mobiliario y boda en vivo (`requiere_quinta`).
+- Plan Quinta: portal del cliente, invitados, día del evento, mobiliario, boda en vivo y plano del salón (`requiere_quinta`).
 - Diseño: celular primero. Usar las clases de `app.css`: `cabecera`, `bloque`, `campo`, `fila-campos`, `rejilla-form`, `boton`, `boton-claro`, `boton-chico`, `boton-peligro`, `boton-wa`, `tabla`, `tabla-scroll`, `num`, `cifras`/`cifra-tarjeta`, `ev-estado ev-<estado>`, `pestanas`, `filas`, `aviso aviso-ok|aviso-error`, `vacio`, `barra`.
 - WhatsApp con un toque: `\TuEvento\WhatsApp::enlace($telefono, $mensaje)`.
 
@@ -42,6 +42,24 @@ bash tests/run_web.sh
 - `Eventos::guardarCliente` no deja vaciar datos al editar; para la ficha del cliente se usa `Ventas::editarCliente()`.
 - `Pagos::registrar()` deja en `$pagos->ultimoMensaje` lo que pasó con la fecha (ej. "Reserva pagada: la fecha quedó separada.").
 - Números: `numero()` y `Cotizaciones::num()` entienden 1.234,50 · 1234,50 · 1234.50 · 12.000.
+- Formulario del evento (070): cada evento tiene una **copia** de la plantilla de su tipo (se crea la primera vez que alguien lo abre: `Cuestionarios::deEvento`). Cambiar la plantilla no cambia lo ya copiado. En el formulario cada pregunta manda `en[]=<id>`: una pregunta presente sin valor se guarda vacía (así se desmarcan todas las casillas de "varias").
+- Extras aprobados (070): `Extras::aprobar` crea una versión NUEVA de la cotización aceptada con las líneas del pedido (la anterior y los borradores quedan "reemplazada"), cambia `eventos.total` y agrega UNA cuota "Extras: …" al final del plan (vence con el saldo) sin rehacer las cuotas; si el evento no tenía plan, arma el plan completo. Las cuotas siguen sumando el total. El contrato firmado no cambia.
+- Mensajes de hoy: el tipo `cuestionario` (070) está en el CHECK de `mensajes_enviados`. Si otra migración vuelve a crear ese CHECK, debe incluir `'cuestionario'`. El mensaje de reseña lleva el enlace de la encuesta (`?r=encuesta&t=<eventos.token_encuesta>`) mientras no se responda.
+- Plano (080): rutas `/?r=plano` (distribuciones de los espacios), `&p=<plano>` (una distribución), `&id=<evento>` (pestaña "Plano" del evento), `&json=1`. El editor guarda con `fetch` (POST `accion=guardar`, `csrf`, `version`, `elementos` = JSON) y la página SIEMPRE responde JSON (400 CSRF, 403 permiso, 404 de otro negocio, 409 otra persona guardó, 422 dato malo). `Planos::validar()` revisa todo otra vez en el servidor (centro dentro del salón, tamaños, puestos 1–100, máximo 300).
+- Mesas del plano = tabla `mesas` de invitados (`plano_elementos.mesa_id`, ON DELETE CASCADE): mesa nueva en el plano crea su mesa; nombre y puestos del plano cambian la mesa; el plano siempre muestra lo de invitados (`Planos::datos`). Quitar del plano una mesa vacía la borra; con invitados se queda "sin ubicar". Una `mesa_id` de otro evento o que ya no existe NO se une: se crea una mesa nueva. Ocupados = confirmados + pases de los que no responden (igual que `Invitados::mesas`).
+- Mismo dibujo en tres lugares: `Planos::svg()` (portal, vistas chicas, sin JavaScript), `mod_plano.js` y `PdfPlano` (polígonos girados a mano). Si cambias colores (`Planos::COLORES`), sillas (`Planos::sillas`) o el giro del texto (`Planos::giroTexto`), cámbialo en los tres.
+- Metas (080): "vendido" sale de `Reportes::vendidos(..., 'venta')` (la misma regla de Reportes → Ventas); no inventes otra. `metas_ventas.vendedor_id` NULL = del local y `mes` NULL = la de siempre (`UNIQUE NULLS NOT DISTINCT`). Los meses que todavía no llegan no cuentan en los totales del reporte. Los avances del Inicio y de Reportes salen de vistas parciales (`_metas_inicio.php`, `_metas_reporte.php`) con variables `$mt…` para no pisar las de la página.
+- Proveedores (060): saldo de una compra = (factura_total si ya llegó, si no total) − retención − descuentos de incidencias − pagos válidos. Usa `Compras::SQL_SALDO` / `Compras::completar()`; no lo vuelvas a calcular a mano. Solo las compras `pedida`, `confirmada` y `entregada` son deuda y costo (`Compras::ACTIVAS`); `cotizacion` (pedido de precio) y `cancelada`, no.
+- Ganancia (060): el costo real del evento = gastos + compras (`Compras::sqlCostoEvento`, valor − descuentos; la retención NO baja el costo) + personal. Una compra no crea un gasto: no registres el mismo pago en los dos lados. Las compras sin evento suman a los gastos generales del reporte.
+- Pagos a proveedores nunca se borran (`anularPago` con motivo). No se paga más que el saldo (la compra se bloquea con `FOR UPDATE`). Una compra con pagos no se cancela.
+- Al pasar una compra con evento a pedida/confirmada se agrega (o se une) el proveedor en `evento_proveedores.compra_id`; al cancelarla se suelta (`compra_id = NULL`) pero el proveedor queda en el día del evento.
+- `proveedor_movimientos` es la bitácora: escribe siempre con `ProveedoresFicha::anotar()` (también copia al `registro_cambios` del evento). Origen `usuario`, `proveedor` (portal) o `sistema`.
+- Archivos de proveedores: `Adjuntos` (foto limpia con Fotos, PDF revisado por `%PDF-`, XML) en `uploads/proveedores`; se sirven por `/?r=proveedor_archivo&tipo=documento|incidencia|factura|xml|comprobante&id=` (el XML siempre se descarga, con `CSP: sandbox`). `FacturaXml::leer` rechaza `<!DOCTYPE>`/`<!ENTITY>` (XXE).
+- Puntualidad: la llegada pactada es el mismo día del evento (solo de madrugada en un evento de noche es el día siguiente: `ProveedoresFicha::momentoLlegada`), tolerancia `TOLERANCIA_MIN = 10`. Los bloques del cronograma con `evento_proveedor_id` también cuentan. `DiaEvento::guardarBloque` solo toca `evento_proveedor_id` si viene esa clave.
+- Dinero de proveedores: lo ve quien no es coordinador; lo cambia solo `es_comercial`. El coordinador entra a `proveedor` (ficha sin cuenta, precios ni banco), `incidencias` y `proveedor_archivo` (sin facturas ni comprobantes), marca llegadas y califica; en incidencias no pone costo ni descuento.
+- En pruebas: los botones con `name="accion"` dentro de un form que también tiene `<input hidden name="accion">` ganan porque van después (PHP toma el último).
+- Texto en PHP: `"«$etq»"` NO funciona (PHP toma los bytes de « » como parte del nombre de la variable); usa `"«{$etq}»"`.
+- Los `mod_*.js` se cargan con `defer` en todas las páginas: llama a la función de arranque al FINAL del archivo (si la llamas antes de definir los `const`, falla con "Cannot access … before initialization").
 
 ## Archivos de cada módulo
 | Módulo | Pruebas | Migración | Clases |
@@ -52,6 +70,9 @@ bash tests/run_web.sh
 | Cobros y portal del cliente | logica_30, web_30 | 030 | Cobranza, PdfCobros |
 | Día del evento e invitados | logica_40, web_40 | 040 | DiaEvento, Invitados, PdfDia, Qr |
 | Gestión y panel Tukán | logica_50, web_50 | 050 | Automaticas, Reportes, PanelTukan, Usuarios, Configuracion |
+| Proveedores y compras: ficha, documentos, compras, pagos, por pagar, XML del SRI, cumplimiento, incidencias, portal del proveedor | logica_60, web_60 | 060 | Compras, ProveedoresFicha, Incidencias, FacturaXml, PdfCompras, Adjuntos, AvisosProveedores (CSS `mod_proveedores.css`, prefijo `pv-`) |
+| Portal del cliente 2: formulario del evento, extras en línea, encuesta de satisfacción | logica_70, web_70 | 070 | Cuestionarios, Extras, Encuestas, PdfFormulario |
+| Plano visual del salón y metas de ventas | logica_80, web_80 | 080 | Planos, PdfPlano, Metas (editor: `public/assets/mod_plano.js` + `mod_plano.css`, prefijo `pl-`; metas: `mod_metas.css`, prefijo `mt-`) |
 
 ## Servidor
 - Cron cada hora: `php /var/www/tuevento/bin/tareas.php` · respaldo diario 3:25: `deploy/respaldo.sh`

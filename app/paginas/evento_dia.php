@@ -25,6 +25,7 @@ if (!es_quinta($u)) {
     return;
 }
 $secciones = ['cronograma' => 'Cronograma', 'personal' => 'Personal', 'proveedores' => 'Proveedores', 'mobiliario' => 'Mobiliario', 'detalles' => 'Montaje y menú', 'vivo' => 'Boda en vivo'];
+$secciones = array_slice($secciones, 0, 3, true) + ['incidencias' => 'Incidencias'] + array_slice($secciones, 3, null, true);   // 060
 $ver = (string) ($_GET['ver'] ?? 'cronograma');
 if (!isset($secciones[$ver])) $ver = 'cronograma';
 $dia = new DiaEvento(db());
@@ -119,6 +120,21 @@ if (es_post()) {
                 $dia->quitarProveedorEvento($nid, (int) ($_POST['prov_id'] ?? 0));
                 aviso('Proveedor quitado del evento.');
                 break;
+            // Cumplimiento del proveedor (060): llegada real y evaluación después del evento
+            case 'prov_llegada':
+                if (!campo('ahora') && campo('hora_real') === '') throw new RuntimeException('Escribe la hora en que llegó, o toca "Llegó ahora".');
+                $pu = (new \TuEvento\ProveedoresFicha(db()))->marcarLlegada($nid, (int) ($_POST['prov_id'] ?? 0), campo('ahora') ? null : campo('hora_real'), $u);
+                aviso('Llegada anotada' . ($pu ? ': ' . mb_strtolower($pu['texto']) : '') . '.');
+                break;
+            case 'prov_sin_llegada':
+                (new \TuEvento\ProveedoresFicha(db()))->quitarLlegada($nid, (int) ($_POST['prov_id'] ?? 0), $u);
+                aviso('Se borró la hora de llegada.');
+                break;
+            case 'prov_evaluar':
+                (new \TuEvento\ProveedoresFicha(db()))->evaluar($nid, (int) ($_POST['prov_id'] ?? 0), ['cumplimiento' => campo('cumplimiento'),
+                    'calificacion' => campo('calificacion'), 'comentario' => campo('comentario')], $u);
+                aviso('Evaluación guardada. Cuenta para el puntaje del proveedor.');
+                break;
             // Mobiliario
             case 'mobiliario':
                 $faltan = $dia->reservarMobiliario($nid, $id, array_map('intval', (array) ($_POST['cant'] ?? [])));
@@ -173,6 +189,12 @@ if ($ver === 'personal') {
     $datos['ocupados'] = $dia->ocupadosEseDia($nid, $ev['fecha'], $id);
 }
 if ($ver === 'proveedores') $datos['catalogoProv'] = $dia->proveedores($nid, true);
+// Proveedores y compras (060): puntajes, compras unidas, incidencias del evento
+$fichaProv = new \TuEvento\ProveedoresFicha(db());
+$datos['puntajesProv'] = in_array($ver, ['proveedores'], true) ? $fichaProv->puntajes($nid) : [];
+$datos['incidenciasEv'] = (new \TuEvento\Incidencias(db()))->deEvento($nid, $id);
+$datos['conteos']['incidencias'] = count(array_filter($datos['incidenciasEv'], fn($i) => $i['estado'] !== 'resuelta'));
+$datos['comprasEv'] = $u['rol'] !== 'coordinador' ? array_column((new \TuEvento\Compras(db()))->deEvento($nid, $id), null, 'id') : [];
 if ($ver === 'mobiliario') $datos['valorDanos'] = $dia->valorDanos($id);
 if ($ver === 'detalles') $datos['restricciones'] = (new Invitados(db()))->restricciones($nid, $id);
 vista('evento_dia', $datos, 'Día del evento · ' . $ev['nombre']);

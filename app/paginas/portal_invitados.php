@@ -22,6 +22,17 @@ $nid = (int) $ev['negocio_id'];
 $id = (int) $ev['id'];
 $inv = new Invitados(db());
 $editable = $ev['fecha'] >= date('Y-m-d');
+// Plano del salón en PDF (solo mirar): /?r=portal_invitados&t=…&plano=pdf
+if (($_GET['plano'] ?? '') === 'pdf') {
+    $plPlano = (new \TuEvento\Planos(db()))->delEvento($nid, $id);
+    if (!$plPlano) {
+        http_response_code(404);
+        vista_publica('error_publico', ['mensaje' => 'Este evento todavía no tiene plano del salón.'], 'Invitados', DiaEvento::marca($negocio));
+        return;
+    }
+    \TuEvento\Pdf::enviar(\TuEvento\PdfPlano::plano($negocio, (new \TuEvento\Planos(db()))->datos($nid, (int) $plPlano['id']), $ev), 'plano-' . $ev['codigo'] . '.pdf');
+    return;
+}
 $verInv = (string) ($_GET['ver'] ?? 'lista');
 if (!in_array($verInv, ['lista', 'mesas', 'invitacion'], true)) $verInv = 'lista';
 

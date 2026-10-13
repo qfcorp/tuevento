@@ -12,6 +12,9 @@ $menu = ['inicio' => 'Inicio', 'calendario' => 'Calendario', 'eventos' => 'Event
 $grupoMas = ['mas', 'clientes', 'cliente', 'seguimiento', 'catalogo', 'paquetes', 'espacios', 'personal', 'proveedores', 'mobiliario',
              'reportes', 'configuracion', 'usuarios', 'mi_cuenta', 'planes', 'notificaciones', 'mensajes', 'exportar'];
 $grupoEventos = ['eventos', 'evento', 'evento_nuevo', 'evento_editar', 'cotizacion', 'contrato', 'evento_pagos', 'evento_dia', 'invitados'];
+array_push($grupoMas, 'cuestionarios', 'extras'); $grupoEventos[] = 'evento_formulario';   // portal del cliente (070)
+$grupoMas[] = 'metas'; if (!empty($_GET['id'])) $grupoEventos[] = 'plano'; else $grupoMas[] = 'plano';   // plano y metas (080)
+array_push($grupoMas, 'proveedor', 'compras', 'compra', 'por_pagar', 'incidencias');   // proveedores y compras (060)
 $campana = 0;
 if ($u) {
     $campana = (new \TuEvento\Notificaciones(db()))->sinLeer((int) $u['id']);
@@ -78,10 +81,13 @@ $modulosJs = glob(RAIZ . '/public/assets/mod_*.js') ?: [];
         <a href="<?= e(url('mensajes')) ?>">Mensajes por WhatsApp</a>
         <a href="<?= e(url('catalogo')) ?>">Catálogo y precios</a>
         <a href="<?= e(url('paquetes')) ?>">Paquetes</a>
+        <a href="<?= e(url('extras')) ?>">Extras del portal</a>
         <?php endif; ?>
         <a href="<?= e(url('espacios')) ?>">Espacios</a>
         <a href="<?= e(url('personal')) ?>">Personal</a>
         <a href="<?= e(url('proveedores')) ?>">Proveedores</a>
+        <?php if ($u['rol'] !== 'coordinador'): ?><a href="<?= e(url('por_pagar')) ?>">Por pagar</a><?php endif; ?>
+        <a href="<?= e(url('incidencias')) ?>">Incidencias</a>
         <a href="<?= e(url('mobiliario')) ?>">Mobiliario</a>
         <?php if ($u['rol'] !== 'coordinador'): ?>
         <a href="<?= e(url('reportes')) ?>">Reportes</a>
@@ -89,6 +95,7 @@ $modulosJs = glob(RAIZ . '/public/assets/mod_*.js') ?: [];
         <?php if (es_dueno($u)): ?>
         <a href="<?= e(url('configuracion')) ?>">Configuración</a>
         <a href="<?= e(url('contrato')) ?>">Plantillas de contrato</a>
+        <a href="<?= e(url('cuestionarios')) ?>">Formularios del evento</a>
         <a href="<?= e(url('usuarios')) ?>">Usuarios</a>
         <a href="<?= e(url('planes')) ?>">Mi plan</a>
         <?php endif; ?>

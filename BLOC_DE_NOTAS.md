@@ -34,6 +34,29 @@ Se armó juntando lo mejor de los programas existentes y lo que Tukán ya tenía
 - [x] Inicio del día, reportes, exportar a Excel, configuración, usuarios y roles, Telegram, calendario de Google, tareas automáticas, panel Tukán, instalador y respaldo
 - [x] **Pruebas en entorno simulado: lógica 795/795 y pantallas 916/916**, sin avisos de PHP; revisado en celular y computadora (Chromium) sin errores de JavaScript; QR leídos con un lector real
 
+## Hecho (13 oct 2026) — portal del cliente, segunda parte (ideas de Tripleseat, Perfect Venue, Planning Pod, Aisle Planner, HoneyBook)
+- [x] Formulario del evento: plantillas de ejemplo por tipo de evento (8 tipos de pregunta), copia por evento, el cliente lo llena en su portal con guardado automático y avance, cierre X días antes, aviso al local al terminar, respuestas en el evento, en PDF y en la hoja del evento, recordatorio en Mensajes de hoy
+- [x] Extras en línea: el local elige qué productos se piden en el portal (texto y foto); el cliente pide, el local aprueba (versión nueva de la cotización + cuota "Extras") o rechaza con nota
+- [x] Encuesta de satisfacción con enlace secreto (NPS + estrellas + comentario), botón de reseña en Google para los que recomiendan, aviso al dueño por notas bajas, reporte de satisfacción y NPS en el reporte del mes
+- [x] Pruebas: logica_70 y web_70 (migración 070)
+
+## Hecho (13 oct 2026) — plano del salón y metas de ventas (ideas de Tripleseat, Cvent, Planning Pod y Perfect Venue)
+- [x] Plano visual del salón: distribuciones por espacio (con ejemplo de boda o corporativo listo), editor con el dedo y el mouse (cuadrícula de 0,5 m, girar, duplicar, deshacer, acercar con dos dedos, se guarda solo)
+- [x] Plano de cada evento unido a las mesas de invitados (en los dos sentidos), colores por ocupación, invitados de cada mesa, mesas sin ubicar, PDF a escala con la lista de mesas, y el plano para mirar en el portal de los novios
+- [x] Metas de ventas del local y por vendedor (meta de siempre + meses distintos), avance del mes en el Inicio y Reportes → Metas con el año anterior y descarga para Excel
+- [x] Pruebas: lógica logica_80 (189) y pantallas web_80 (137), y prueba real en Chromium con dedo (390 px) y mouse
+
+## Hecho (13 oct 2026) — proveedores y compras con trazabilidad completa (ideas de Planning Pod, Odoo, STEL Order, control de pólizas y Momentus)
+- [x] Ficha del proveedor: RUC/cédula, banco para transferir, crédito (días, cupo con aviso, anticipo), preferido; estado de cuenta, pagos, eventos, historial de precios, puntaje y bitácora de todo
+- [x] Documentos con vencimiento (RUC, permisos, ARCSA, póliza, contrato) con alertas en la lista, la ficha y por Telegram
+- [x] Compras / órdenes de compra OC-0001 con ítems e IVA, estados, PDF con QR de verificación, WhatsApp, comparar pedidos de precio y elegir; el proveedor queda solo en el día del evento
+- [x] Factura del proveedor a mano o con el XML del SRI (crea el proveedor si el RUC es nuevo); pagos con cheque posfechado, anulación sin borrar, sin pagar de más; retención y descuentos por incidencias
+- [x] Por pagar: total, vencido, esta semana, antigüedad 1-30/31-60/61-90/+90, por proveedor, cheques, cupo pasado, Excel; tarjeta en el Inicio; compras en la ganancia real y en Reportes
+- [x] Día del evento: llegada real (coordinador o "Ya llegué" del proveedor), puntualidad, cumplimiento y estrellas, bloques del cronograma a cargo de un proveedor; incidencias con foto (graves avisan al dueño), también en la hoja del evento
+- [x] Portal del proveedor (Quinta): sus eventos, cronograma, confirmar órdenes, subir factura, pagos y saldo
+- [x] Tareas automáticas: pagos por vencer y vencidos, documentos por vencer, proveedores sin confirmar
+- [x] Pruebas: logica_60 (321) y web_60 (210), migración 060; revisado en celular (390 px) y computadora sin errores de JavaScript
+
 ## Pendiente
 1. [ ] DIMI: instalar en el servidor (comando en el README) y crear la ruta del túnel `tuevento.tukanec.com`
 2. [ ] DIMI: crear el super usuario del panel Tukán (`php /var/www/tuevento/bin/crear_admin.php`)

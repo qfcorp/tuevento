@@ -33,6 +33,7 @@ final class Cobranza
         'cotizacion' => ['Cotizaciones sin respuesta', 4],
         'staff'      => ['Personal sin confirmar para mañana', 0],
         'invitados'  => ['Pedir la lista de invitados', 0],
+        'cuestionario' => ['Formularios del evento sin llenar', 4],   // migración 070 (Cuestionarios)
         'resena'     => ['Agradecer y pedir una reseña', 0],
     ];
 
@@ -88,7 +89,7 @@ final class Cobranza
      * Ganancia del evento.
      *  ingreso       = lo que se cobra sin IVA (subtotal − descuento de la cotización aceptada; si no hay, el total sin IVA)
      *  estimada      = ingreso − costo estimado de la cotización
-     *  real          = ingreso − gastos del evento − pagos al personal (los que no faltaron)
+     *  real          = ingreso − gastos del evento − compras a proveedores del evento − pagos al personal (los que no faltaron)
      */
     public function ganancia(int $negocioId, int $eventoId): array
     {
@@ -106,15 +107,19 @@ final class Cobranza
         $st->execute([$eventoId]);
         $per = $st->fetch();
         $personal = round((float) $per['total'], 2);
+        // Compras a proveedores del evento (pedidas, confirmadas o entregadas; no las canceladas ni los pedidos de precio).
+        // Son aparte de los gastos: una compra no crea gastos, así que no se cuenta dos veces.
+        $compras = (new Compras($this->db))->costoEvento($negocioId, $eventoId);
         $costo = round((float) $ev['costo_estimado'], 2);
-        $real = round($ingreso - $gastos - $personal, 2);
+        $real = round($ingreso - $gastos - $compras - $personal, 2);
         $estimada = round($ingreso - $costo, 2);
         return [
             'total' => round($total, 2), 'iva' => round($total - $ingreso, 2), 'ingreso' => $ingreso,
             'costo_estimado' => $costo, 'ganancia_estimada' => $estimada,
             'margen_estimado' => $ingreso > 0 ? round($estimada * 100 / $ingreso, 1) : 0.0,
             'gastos' => $gastos, 'personal' => $personal, 'personal_pagado' => round((float) $per['pagado'], 2), 'personas' => (int) $per['personas'],
-            'costo_real' => round($gastos + $personal, 2), 'ganancia_real' => $real,
+            'compras' => $compras,
+            'costo_real' => round($gastos + $compras + $personal, 2), 'ganancia_real' => $real,
             'margen_real' => $ingreso > 0 ? round($real * 100 / $ingreso, 1) : 0.0,
             'diferencia' => round($real - $estimada, 2),
         ];
@@ -434,8 +439,19 @@ final class Cobranza
             $agregar('invitados', $f, $f['cliente'], $f['telefono'], 'Evento el ' . self::fechaTexto($f['fecha']) . ' · ' . (int) $f['invitados'] . ' invitados', $texto);
         }
 
-        // 6) Agradecer y pedir una reseña (del día siguiente hasta una semana después)
-        $st = $this->db->prepare("SELECT e.id AS ref_id, e.id AS evento_id, e.codigo, e.nombre AS evento, e.fecha, c.nombre AS cliente, c.telefono
+        // 5b) Formulario del evento sin llenar (migración 070): desde N días antes hasta el cierre, cada 4 días
+        foreach ((new Cuestionarios($this->db))->porRecordar($negocioId, $hoy, self::MENSAJES['cuestionario'][1]) as $f) {
+            $texto = 'Hola ' . self::primerNombre($f['cliente']) . ', te saludamos de ' . $neg . '. Para preparar cada detalle de tu evento del '
+                . self::fechaTexto($f['fecha']) . ', llena el formulario en tu portal (música, decoración, menú, horarios…): '
+                . $this->enlace('portal_cuestionario', ['t' => $f['token_cliente']]) . ' Se guarda solo y lo puedes completar hasta el '
+                . self::fechaTexto($f['cierre_fecha']) . '. ¡Gracias!';
+            $avance = $f['copiado'] ? (int) $f['respondidas'] . ' de ' . (int) $f['total'] . ' respuestas' : 'sin empezar';
+            $agregar('cuestionario', $f, $f['cliente'], $f['telefono'], 'Evento el ' . self::fechaTexto($f['fecha']) . ' · ' . $avance, $texto);
+        }
+
+        // 6) Agradecer y pedir una reseña (del día siguiente hasta una semana después), con el enlace de la encuesta (070)
+        $st = $this->db->prepare("SELECT e.id AS ref_id, e.id AS evento_id, e.codigo, e.nombre AS evento, e.fecha, c.nombre AS cliente, c.telefono,
+                                         e.token_encuesta, EXISTS (SELECT 1 FROM encuestas x WHERE x.evento_id = e.id) AS encuesta_hecha
                                     FROM eventos e JOIN clientes c ON c.id = e.cliente_id
                                    WHERE e.negocio_id = :n AND e.estado IN ('confirmado','realizado')
                                      AND e.fecha BETWEEN :hoy::date - 7 AND :hoy::date - 1
@@ -444,7 +460,10 @@ final class Cobranza
         foreach ($st->fetchAll() as $f) {
             $url = trim((string) $n['resenas_url']);
             $texto = 'Hola ' . self::primerNombre($f['cliente']) . ', gracias por celebrar "' . $f['evento'] . '" con nosotros en ' . $neg . '. ¡Fue un gusto! '
-                . ($url !== '' ? 'Nos ayudarías mucho dejando tu opinión aquí: ' . $url : 'Nos encantaría saber cómo te fue; respóndenos este mensaje con tu opinión.')
+                . (!$f['encuesta_hecha']
+                    ? '¿Nos cuentas cómo te fue? Toma un minuto: ' . $this->enlace('encuesta', ['t' => $f['token_encuesta']])
+                      . ($url !== '' ? ' Y si te gustó, déjanos tu reseña en Google: ' . $url : ' O respóndenos este mensaje con tu opinión.')
+                    : ($url !== '' ? 'Nos ayudarías mucho dejando tu opinión aquí: ' . $url : 'Nos encantaría saber cómo te fue; respóndenos este mensaje con tu opinión.'))
                 . ' ¡Gracias!';
             $agregar('resena', $f, $f['cliente'], $f['telefono'], 'Evento del ' . self::fechaTexto($f['fecha']), $texto);
         }
@@ -459,7 +478,7 @@ final class Cobranza
             'contrato'   => 'SELECT e.id FROM contratos x JOIN eventos e ON e.id = x.evento_id WHERE x.id = ? AND e.negocio_id = ?',
             'cotizacion' => 'SELECT e.id FROM cotizaciones x JOIN eventos e ON e.id = x.evento_id WHERE x.id = ? AND e.negocio_id = ?',
             'staff'      => 'SELECT e.id FROM evento_personal x JOIN eventos e ON e.id = x.evento_id WHERE x.id = ? AND e.negocio_id = ?',
-            'invitados', 'resena' => 'SELECT id FROM eventos WHERE id = ? AND negocio_id = ?',
+            'invitados', 'resena', 'cuestionario' => 'SELECT id FROM eventos WHERE id = ? AND negocio_id = ?',
             default      => null,
         };
         if ($sql === null) throw new RuntimeException('Tipo de mensaje no válido.');

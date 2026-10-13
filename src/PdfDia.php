@@ -127,6 +127,11 @@ final class PdfDia
         }
         $pdf->writeHTML($html, true, false, true, false, '');
 
+        // Respuestas del formulario del evento (migración 070), si el cliente ya respondió algo
+        if (!empty($h['formulario'])) {
+            $pdf->writeHTML(self::seccion('Formulario del cliente', $c) . PdfFormulario::tabla($h['formulario'], $c), true, false, true, false, '');
+        }
+
         if ($h['lineas']) {
             $filas = array_map(fn($l) => [
                 self::h(Cotizaciones::CATEGORIAS[$l['categoria']] ?? $l['categoria']),
@@ -166,6 +171,18 @@ final class PdfDia
         $pdf->writeHTML(self::seccion('Mobiliario y menaje', $c) . ($filas
             ? self::tabla([['Ítem', 34, 'left'], ['Categoría', 18, 'left'], ['Cantidad', 12, 'right'], ['Stock', 12, 'center'], ['Salió ✓', 12, 'center'], ['Volvió ✓', 12, 'center']], $filas, $c)
             : self::vacio('Sin mobiliario reservado.')), true, false, true, false, '');
+
+        // Incidencias del evento (060)
+        if (!empty($h['incidencias'])) {
+            $filas = array_map(fn($i) => [
+                '<b' . ($i['gravedad'] === 'grave' ? ' style="color:#B53D33;"' : '') . '>' . self::h(Incidencias::GRAVEDADES[$i['gravedad']] ?? $i['gravedad']) . '</b>',
+                self::h(Incidencias::AREAS[$i['area']] ?? $i['area']) . ($i['proveedor'] ? '<br>' . self::h($i['proveedor']) : ''),
+                self::h($i['descripcion']) . ($i['resolucion'] ? '<br><span style="color:#1C5A31;">' . self::h($i['resolucion']) . '</span>' : ''),
+                self::h(Incidencias::ESTADOS[$i['estado']] ?? $i['estado']),
+            ], $h['incidencias']);
+            $pdf->writeHTML(self::seccion('Incidencias (' . count($h['incidencias']) . ')', $c)
+                . self::tabla([['Gravedad', 12, 'left'], ['Área', 20, 'left'], ['Qué pasó', 54, 'left'], ['Estado', 14, 'left']], $filas, $c), true, false, true, false, '');
+        }
 
         if (!empty($ev['notas'])) {
             $pdf->writeHTML(self::seccion('Notas internas', $c) . '<p style="font-size:9pt;">' . self::texto($ev['notas']) . '</p>', true, false, true, false, '');

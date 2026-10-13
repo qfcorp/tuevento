@@ -283,6 +283,21 @@ $num = fn(float $v) => number_format($v, 2, ',', '');
     <?php endif; ?>
 </section>
 
+<?php /* Compras a proveedores del evento (060) */ $comprasEv ??= []; $activasEv = array_filter($comprasEv, fn($c) => in_array($c['estado'], \TuEvento\Compras::ACTIVAS, true)); ?>
+<section class="bloque" id="compras">
+    <div class="dia-titulo-acciones"><h2>Compras a proveedores</h2>
+        <?php if ($puede): ?><a class="boton boton-claro boton-chico" href="<?= e(url('compras', ['nueva' => 1, 'evento' => $ev['id']])) ?>#nueva">Nueva compra</a><?php endif; ?></div>
+    <p class="suave">Órdenes de compra de este evento (DJ, catering, flores…). Las pedidas, confirmadas y entregadas cuentan en la ganancia real; los pedidos de precio y las canceladas, no.</p>
+    <?php if (!$comprasEv): ?>
+        <p class="vacio">Sin compras para este evento.</p>
+    <?php else: $listaCompras = $comprasEv; $ocultarEvento = true; require RAIZ . '/app/vistas/_pv_compras.php'; ?>
+    <ul class="filas">
+        <li><strong>Total en compras</strong><span class="monto"><?= dinero($ganancia['compras'] ?? 0) ?></span></li>
+        <li><span>Saldo por pagar a proveedores</span><span class="monto"><?= dinero(array_sum(array_column($activasEv, 'saldo'))) ?></span></li>
+    </ul>
+    <?php endif; ?>
+</section>
+
 <section class="bloque" id="gastos">
     <h2>Gastos del evento</h2>
     <p class="suave">Lo que pagas a proveedores o compras para este evento. Sirve para saber cuánto ganaste de verdad.</p>
@@ -344,8 +359,9 @@ $num = fn(float $v) => number_format($v, 2, ',', '');
         </div>
         <div class="cb-caja">
             <h3>Lo que gastaste de verdad</h3>
-            <p class="suave">Gastos registrados + pagos al personal<?= $ganancia['personas'] ? ' (' . $ganancia['personas'] . ' personas)' : '' ?>.</p>
+            <p class="suave">Gastos registrados + compras a proveedores + pagos al personal<?= $ganancia['personas'] ? ' (' . $ganancia['personas'] . ' personas)' : '' ?>.</p>
             <dl class="ficha-datos"><dt>Gastos</dt><dd>−<?= dinero($ganancia['gastos']) ?></dd>
+                <?php if (($ganancia['compras'] ?? 0) > 0): ?><dt>Compras</dt><dd>−<?= dinero($ganancia['compras']) ?></dd><?php endif; ?>
                 <dt>Personal</dt><dd>−<?= dinero($ganancia['personal']) ?></dd>
                 <dt>Ganancia real</dt><dd class="<?= $ganancia['ganancia_real'] < 0 ? 'cb-rojo' : 'cb-verde' ?>"><?= dinero($ganancia['ganancia_real']) ?> <small>(<?= e(number_format($ganancia['margen_real'], 1, ',', '')) ?> %)</small></dd></dl>
         </div>

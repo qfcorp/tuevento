@@ -159,8 +159,19 @@ final class DiaEvento
         if (mb_strlen($act) < 2) throw new RuntimeException('Escribe qué pasa en ese momento (por ejemplo: Vals).');
         $resp = mb_substr(trim((string) ($d['responsable'] ?? '')), 0, 100) ?: null;
         $notas = mb_substr(trim((string) ($d['notas'] ?? '')), 0, 300) ?: null;
+        // Proveedor responsable del bloque (060): solo si viene en el formulario; debe ser un proveedor de este evento
+        $conProv = array_key_exists('evento_proveedor_id', $d);
+        $prov = $conProv ? ((int) $d['evento_proveedor_id'] ?: null) : null;
+        if ($prov) {
+            $st = $this->db->prepare('SELECT nombre FROM evento_proveedores WHERE id = ? AND evento_id = ?');
+            $st->execute([$prov, $eventoId]);
+            $nomProv = $st->fetchColumn();
+            if ($nomProv === false) throw new RuntimeException('Ese proveedor no está en este evento.');
+            $resp ??= mb_substr((string) $nomProv, 0, 100);
+        }
         if ($id) {
-            $st = $this->db->prepare('UPDATE cronograma SET hora = ?, duracion_min = ?, actividad = ?, responsable = ?, notas = ? WHERE id = ? AND evento_id = ?');
+            $st = $this->db->prepare('UPDATE cronograma SET hora = ?, duracion_min = ?, actividad = ?, responsable = ?, notas = ?'
+                                     . ($conProv ? ', evento_proveedor_id = ' . ($prov ?: 'NULL') : '') . ' WHERE id = ? AND evento_id = ?');
             $st->execute([$hora, $dur, mb_substr($act, 0, 150), $resp, $notas, $id, $eventoId]);
             if ($st->rowCount() !== 1) throw new RuntimeException('No se encontró ese momento del cronograma.');
             return $id;
@@ -173,8 +184,8 @@ final class DiaEvento
             if (self::momento($ev['fecha'], $ev['hora_inicio'], $b['hora']) <= $nuevo) $orden = $i + 1;
         }
         $this->db->prepare('UPDATE cronograma SET orden = orden + 1 WHERE evento_id = ? AND orden >= ?')->execute([$eventoId, $orden]);
-        $st = $this->db->prepare('INSERT INTO cronograma (evento_id, orden, hora, duracion_min, actividad, responsable, notas) VALUES (?,?,?,?,?,?,?) RETURNING id');
-        $st->execute([$eventoId, $orden, $hora, $dur, mb_substr($act, 0, 150), $resp, $notas]);
+        $st = $this->db->prepare('INSERT INTO cronograma (evento_id, orden, hora, duracion_min, actividad, responsable, notas, evento_proveedor_id) VALUES (?,?,?,?,?,?,?,?) RETURNING id');
+        $st->execute([$eventoId, $orden, $hora, $dur, mb_substr($act, 0, 150), $resp, $notas, $prov]);
         return (int) $st->fetchColumn();
     }
 
@@ -1052,6 +1063,7 @@ final class DiaEvento
             'cotizacion' => $cot,
             'invitados' => (new Invitados($this->db))->contadores($negocioId, $eventoId),
             'restricciones' => (new Invitados($this->db))->restricciones($negocioId, $eventoId),
+            'incidencias' => (new Incidencias($this->db))->deEvento($negocioId, $eventoId),   // 060
         ];
     }
 }

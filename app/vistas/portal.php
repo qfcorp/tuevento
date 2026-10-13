@@ -59,6 +59,8 @@ $sugeridoTxt = number_format($sugerido, 2, ',', '');
     </dl>
 </section>
 
+<?php require RAIZ . '/app/vistas/_pt_portal.php'; // formulario del evento, extras y encuesta (migración 070) ?>
+
 <section class="bloque" id="documentos">
     <h2>Tus documentos</h2>
     <?php if (!$cotizacion && !$contrato): ?>
