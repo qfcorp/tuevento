@@ -322,7 +322,7 @@ r=$(post_desde "r=admin_negocio&id=$NID_S" "r=admin_negocio&id=$NID_S&accion=pag
      --data-urlencode "inicio=$HOY" --data-urlencode "metodo=deuna" --data-urlencode "monto=60")
 check "Pago con monto especial y cambio a Quinta" "60.00|quinta" "$(sql "SELECT s.monto||'|'||n.plan_codigo FROM suscripciones s JOIN negocios n ON n.id=s.negocio_id WHERE s.negocio_id=$NID_S AND NOT s.anulada")"
 r=$(post_desde "r=admin_negocio&id=$NID_G" "r=admin_negocio&id=$NID_G&accion=prueba" --data-urlencode "dias=7")
-check "Extender prueba" "$(date -d "+21 days" +%Y-%m-%d)" "$(sql "SELECT prueba_hasta FROM negocios WHERE id=$NID_G")"
+check "Extender prueba" "$(date -d "+14 days" +%Y-%m-%d)" "$(sql "SELECT prueba_hasta FROM negocios WHERE id=$NID_G")"
 r=$(post_desde "r=admin_negocio&id=$NID_G" "r=admin_negocio&id=$NID_G&accion=notas" --data-urlencode "notas=Cliente piloto")
 check "Notas internas" "Cliente piloto" "$(sql "SELECT notas_admin FROM negocios WHERE id=$NID_G")"
 r=$(post_desde "r=admin_negocio&id=$NID_S" "r=admin_negocio&id=$NID_S&accion=estado" --data-urlencode "estado=suspendido")
@@ -342,7 +342,7 @@ check "Guardar plan con máximos" "42.00|3|4" "$(sql "SELECT precio_mensual||'|'
 r=$(post_desde "r=admin_planes" "r=admin_planes" --data-urlencode "accion=ajustes" --data-urlencode "dias_prueba=21" --data-urlencode "dias_gracia=3" \
      --data-urlencode "whatsapp_ventas=593996408397" --data-urlencode "semestral_paga=5" --data-urlencode "semestral_recibe=6" --data-urlencode "anual_paga=10" --data-urlencode "anual_recibe=12")
 check "Guardar ajustes" "21" "$(sql "SELECT valor FROM ajustes WHERE clave='dias_prueba'")"
-sql "UPDATE planes SET precio_mensual=39, max_espacios=2, max_usuarios=3 WHERE codigo='salon'; UPDATE ajustes SET valor='14' WHERE clave='dias_prueba'" > /dev/null
+sql "UPDATE planes SET precio_mensual=39, max_espacios=2, max_usuarios=3 WHERE codigo='salon'; UPDATE ajustes SET valor='7' WHERE clave='dias_prueba'" > /dev/null
 get "r=admin_planes" > /dev/null
 contiene "Registro de acciones del panel" "$TMP/pag.html" "Plan salon actualizado"
 check "Nuevo negocio (formulario)" "200" "$(get "r=admin_nuevo")"

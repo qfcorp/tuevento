@@ -16,7 +16,7 @@ Se armó juntando lo mejor de los programas existentes y lo que Tukán ya tenía
 
 ## Decisiones tomadas
 - [x] Nombre provisional: **TuEvento** (se puede cambiar)
-- [x] Planes: **Salón $39/mes** (hasta 2 espacios y 3 usuarios) · **Quinta $69/mes** (todo, ilimitado). Semestral paga 5 recibe 6; anual paga 10 recibe 12 + dominio. Prueba gratis 14 días. Precios y lo que incluye cada plan se cambian después (panel Tukán → Planes).
+- [x] Planes: **Salón $39/mes** (hasta 2 espacios y 3 usuarios) · **Quinta $69/mes** (todo, ilimitado). Semestral paga 5 recibe 6; anual paga 10 recibe 12 + dominio. Prueba gratis 7 días. Precios y lo que incluye cada plan se cambian después (panel Tukán → Planes).
 - [x] Plan Quinta incluye: portal del cliente completo, invitados con QR, día del evento, mobiliario y boda en vivo.
 - [x] **Sin facturación electrónica** por ahora (misma decisión pendiente que la veterinaria: opción B, proveedor registrado en el SRI).
 - [x] Tecnología igual que TuSalón: PHP + PostgreSQL, en el servidor qfcorp, dirección **tuevento.tukanec.com**.

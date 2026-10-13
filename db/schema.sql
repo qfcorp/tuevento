@@ -127,7 +127,7 @@ CREATE TABLE ajustes (
     valor                 VARCHAR(200) NOT NULL
 );
 INSERT INTO ajustes (clave, valor) VALUES
-    ('dias_prueba', '14'),
+    ('dias_prueba', '7'),
     ('semestral_paga', '5'), ('semestral_recibe', '6'),
     ('anual_paga', '10'),    ('anual_recibe', '12'),
     ('dias_gracia', '3'),

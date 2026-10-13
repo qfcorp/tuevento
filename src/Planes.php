@@ -12,12 +12,12 @@ use RuntimeException;
  *  - Salón $39 / Quinta $69 al mes (se cambian en el panel de Tukán)
  *  - Semestral: paga 5, recibe 6
  *  - Anual: paga 10, recibe 12 + dominio propio (a nombre de Tukán)
- *  - Prueba gratis: 14 días
+ *  - Prueba gratis: 7 días
  */
 final class Planes
 {
     public const AJUSTES = [
-        'dias_prueba' => '14',
+        'dias_prueba' => '7',
         'semestral_paga' => '5', 'semestral_recibe' => '6',
         'anual_paga' => '10', 'anual_recibe' => '12',
         'dias_gracia' => '3',
