@@ -63,6 +63,8 @@ bash tests/run_web.sh
 - Texto en PHP: `"«$etq»"` NO funciona (PHP toma los bytes de « » como parte del nombre de la variable); usa `"«{$etq}»"`.
 - Los `mod_*.js` se cargan con `defer` en todas las páginas: llama a la función de arranque al FINAL del archivo (si la llamas antes de definir los `const`, falla con "Cannot access … before initialization").
 
+- Panel Tukán Central (095): el contrato es el protocolo **Tukán Central v1** (igual en todos los programas Tukán; no lo cambies solo aquí). `public/tukan_central.php` no pasa por `index.php`; valida en el orden del protocolo con `TukanCentral::validar()` (firma con `hash_equals`, v/tipo/inst, tiempo ±30 s y máximo 60 s, nonce de un solo uso en `tukan_central_nonces`, correo) y antes cuenta el límite de 30/min/IP (`tukan_central_pedidos`, responde 429). Sin ID o secreto (o secreto de menos de 32) responde 404. El estado sale de `PanelTukan` (`negocios()`, `cobradoMes()`, `ingresoMensual()`): si cambias cómo cuenta el panel, el estado cambia igual. `negocios.vencidos` = Vencido + Prueba terminada (lo mismo que "Sin pagar") y `suspendidos` = Suspendido + Cancelado, así los grupos suman el total. El estado no abre sesión (`TUKAN_SIN_SESION`). La sesión del SSO es la misma del ingreso normal (`admin_id`) más `desde_central` (muestra "← Panel Tukán"; `admin_salir` y el ingreso local la quitan). `TUKAN_SOLO_CENTRAL=1` solo apaga el ingreso local si el conector está configurado.
+
 ## Archivos de cada módulo
 | Módulo | Pruebas | Migración | Clases |
 |---|---|---|---|
@@ -76,7 +78,9 @@ bash tests/run_web.sh
 | Portal del cliente 2: formulario del evento, extras en línea, encuesta de satisfacción | logica_70, web_70 | 070 | Cuestionarios, Extras, Encuestas, PdfFormulario |
 | Anexos de contrato por extras aprobados | logica_70, web_70 | 090 | Anexos (PDF con PdfDocumentos::contrato) |
 | Plano visual del salón y metas de ventas | logica_80, web_80 | 080 | Planos, PdfPlano, Metas (editor: `public/assets/mod_plano.js` + `mod_plano.css`, prefijo `pl-`; metas: `mod_metas.css`, prefijo `mt-`) |
+| Conector con el Panel Tukán Central (SSO, estado, solo central, `deploy/conectar_central.sh`) | logica_95, web_95 | 095 | TukanCentral, TukanCentralRechazo (entrada `public/tukan_central.php`, fuera del enrutador) |
 
 ## Servidor
 - Cron cada hora: `php /var/www/tuevento/bin/tareas.php` · respaldo diario 3:25: `deploy/respaldo.sh`
 - Super usuario: `php bin/crear_admin.php` · Telegram: `TELEGRAM_BOT_TOKEN`, `TELEGRAM_BOT_USERNAME`, `TELEGRAM_WEBHOOK_SECRET`
+- Panel Tukán Central: `sudo bash /var/www/tuevento/deploy/conectar_central.sh {ID} {SECRETO} {URL}` · `TUKAN_SOLO_CENTRAL=1` (solo desde el central; 0 = vuelve el ingreso local)

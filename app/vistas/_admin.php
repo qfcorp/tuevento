@@ -3,6 +3,8 @@
 $rutaActual = (string) ($_GET['r'] ?? '');
 $menuAdmin = ['admin' => 'Resumen', 'admin_negocios' => 'Negocios', 'admin_nuevo' => 'Nuevo negocio', 'admin_planes' => 'Planes y precios'];
 $avisos = tomar_avisos();
+// Si entró desde el Panel Tukán Central, botón para volver allá
+$volverCentral = (!empty($_SESSION['desde_central']) && \TuEvento\TukanCentral::config()) ? \TuEvento\TukanCentral::urlCentral() : null;
 ?>
 <!doctype html>
 <html lang="es">
@@ -23,6 +25,7 @@ $avisos = tomar_avisos();
     <a class="admin-marca" href="<?= e(url('admin')) ?>"><span class="marca-sello" aria-hidden="true">Tk</span>
         <span><strong>Panel Tukán</strong><small>TuEvento · super administrador</small></span></a>
     <nav class="admin-menu" aria-label="Menú del panel">
+        <?php if ($volverCentral): ?><a class="admin-central" href="<?= e($volverCentral) ?>">← Panel Tukán</a><?php endif; ?>
         <?php foreach ($menuAdmin as $r => $txt): ?>
             <a href="<?= e(url($r)) ?>" class="<?= $rutaActual === $r || ($r === 'admin_negocios' && $rutaActual === 'admin_negocio') ? 'activo' : '' ?>"
                <?= $rutaActual === $r ? 'aria-current="page"' : '' ?>><?= $txt ?></a>

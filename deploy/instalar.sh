@@ -34,7 +34,7 @@ sudo chown -R "$YO":www-data "$APP"
 sudo mkdir -p "$APP/uploads/espacios" "$APP/uploads/logos" "$APP/uploads/comprobantes" "$APP/uploads/firmas" "$APP/config"
 sudo chown -R www-data:www-data "$APP/uploads" && sudo chmod -R 750 "$APP/uploads"
 sudo chown "$YO":www-data "$APP/config" && sudo chmod 750 "$APP/config"
-chmod +x "$APP/deploy/respaldo.sh" 2>/dev/null || true
+chmod +x "$APP/deploy/respaldo.sh" "$APP/deploy/conectar_central.sh" 2>/dev/null || true
 
 echo "== 2b. Librerias (composer: TCPDF para los PDF y los codigos QR)"
 if ! command -v composer > /dev/null; then
@@ -81,8 +81,8 @@ done
 
 echo "== 4. Configuracion"
 EXTRA=""
-if [ -f "$APP/config/.env" ]; then   # se conservan Telegram y Payphone si ya estaban
-  EXTRA="$(grep -E '^(TELEGRAM_|PAYPHONE_API_BASE=)' "$APP/config/.env" || true)"
+if [ -f "$APP/config/.env" ]; then   # se conservan Telegram, Payphone y la conexion con el Panel Tukan Central si ya estaban
+  EXTRA="$(grep -E '^(TELEGRAM_|PAYPHONE_API_BASE=|TUKAN_)' "$APP/config/.env" || true)"
 fi
 {
   echo "TUEVENTO_DB_HOST=127.0.0.1"
@@ -96,6 +96,7 @@ fi
 mv "$APP/config/.env.nuevo" "$APP/config/.env"
 chmod 640 "$APP/config/.env" && sudo chgrp www-data "$APP/config/.env" && echo "   listo"
 echo "$EXTRA" | grep -q '^TELEGRAM_BOT_TOKEN=' && echo "   Telegram: se conservo la configuracion" || echo "   Telegram: sin configurar (agrega TELEGRAM_BOT_TOKEN, TELEGRAM_BOT_USERNAME y TELEGRAM_WEBHOOK_SECRET en config/.env)"
+echo "$EXTRA" | grep -q '^TUKAN_CENTRAL_SECRET=' && echo "   Panel Tukan Central: se conservo la conexion" || echo "   Panel Tukan Central: sin conectar (sudo bash $APP/deploy/conectar_central.sh ID SECRETO URL)"
 
 echo "== 5. nginx"
 if command -v nginx > /dev/null; then
@@ -148,6 +149,8 @@ fi
 echo "7) Tareas: $(php "$APP/bin/tareas.php" < /dev/null 2>&1 | tail -1)"
 echo "8) Respaldo: $(sudo APP="$APP" "$APP/deploy/respaldo.sh" < /dev/null 2>&1 | tail -1)"
 echo "9) Super usuarios del panel: $(PGPASSWORD="$CLAVE" psql -h 127.0.0.1 -U "$ROL" -d "$BASE" -tAc "SELECT count(*) FROM superadmins" < /dev/null)"
+grep -q '^TUKAN_CENTRAL_SECRET=' "$APP/config/.env" 2>/dev/null && echo "10) Panel Tukan Central: conectado" || echo "10) Panel Tukan Central: sin conectar"
 echo "================================="
 echo "Para crear o cambiar tu super usuario:  php $APP/bin/crear_admin.php"
 echo "Panel Tukan: https://$DOMINIO/?r=admin_entrar"
+echo "Conectar con el Panel Tukan Central:  sudo bash $APP/deploy/conectar_central.sh ID SECRETO URL"

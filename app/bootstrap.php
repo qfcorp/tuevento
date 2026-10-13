@@ -33,17 +33,19 @@ if (is_file(RAIZ . '/vendor/autoload.php')) {
     require RAIZ . '/vendor/autoload.php';
 }
 
-// 3) Sesión segura
+// 3) Sesión segura (el estado para el Panel Tukán Central no la necesita: define TUKAN_SIN_SESION)
 if (PHP_SAPI !== 'cli') {
-    session_name('tuevento');
-    session_set_cookie_params([
-        'lifetime' => 0,
-        'path'     => '/',
-        'secure'   => es_https(),
-        'httponly' => true,
-        'samesite' => 'Lax',
-    ]);
-    session_start();
+    if (!defined('TUKAN_SIN_SESION')) {
+        session_name('tuevento');
+        session_set_cookie_params([
+            'lifetime' => 0,
+            'path'     => '/',
+            'secure'   => es_https(),
+            'httponly' => true,
+            'samesite' => 'Lax',
+        ]);
+        session_start();
+    }
     header('X-Frame-Options: SAMEORIGIN');
     header('X-Content-Type-Options: nosniff');
     header('Referrer-Policy: same-origin');

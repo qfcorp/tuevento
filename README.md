@@ -35,7 +35,8 @@ Dirección: **tuevento.tukanec.com** (servidor qfcorp). Web de la marca: tukanso
 | Cotización / firma de contrato | `/?r=cot&t=…` · `/?r=firmar&t=…` · anexo `/?r=firmar_anexo&t=…` · verificación `/?r=verificar&c=<código>` |
 | Invitado / puerta / en vivo / personal | `/?r=invitacion&t=…` · `/?r=puerta&t=…` · `/?r=vivo&t=…` · `/?r=staff&t=…` |
 | Proveedor (portal) / verificar orden de compra | `/?r=portal_proveedor&t=<enlace secreto>` · `/?r=verificar_oc&c=<código>` |
-| Tukán (super administrador) | `/?r=admin_entrar` · cuenta creada con `php bin/crear_admin.php` en el servidor |
+| Tukán (super administrador) | `/?r=admin_entrar` · cuenta creada con `php bin/crear_admin.php` en el servidor · o con un clic desde el Panel Tukán Central |
+| Panel Tukán Central (conector) | `/tukan_central.php?accion=sso&t=…` (entrar) · `/tukan_central.php?accion=estado&t=…` (cifras en JSON) |
 
 ## Tecnología
 PHP 8.3+, PostgreSQL 16 (extensiones `btree_gist` y `pgcrypto`), TCPDF (con composer) para los PDF. Sin librerías de JavaScript.
@@ -51,6 +52,23 @@ Después, en Cloudflare (Zero Trust → Networks → Tunnels → tu túnel → P
 
 Super usuario del panel Tukán: `php /var/www/tuevento/bin/crear_admin.php`
 
+## Conectar con el Panel Tukán Central (panel.tukanec.com)
+El panel central muestra las cifras de todos los programas Tukán y deja entrar a cada panel con un clic.
+1. En el panel central, agrega la instalación de TuEvento: te da un **ID** (ej. `tuevento`) y un **SECRETO** (64 letras y números).
+2. En el servidor, una sola línea:
+   ```bash
+   sudo bash /var/www/tuevento/deploy/conectar_central.sh {ID} {SECRETO} {URL}
+   ```
+   Ejemplo: `sudo bash /var/www/tuevento/deploy/conectar_central.sh tuevento 3f9a…c1 https://panel.tukanec.com`.
+   Guarda `TUKAN_CENTRAL_ID`, `TUKAN_CENTRAL_SECRET` y `TUKAN_CENTRAL_URL` en `config/.env` (lo demás no se toca), prepara las tablas y hace una prueba: debe terminar en `OK`.
+3. Listo: al entrar desde el panel central, el panel de TuEvento muestra el botón **← Panel Tukán** para volver.
+
+- Sin `TUKAN_CENTRAL_ID` o `TUKAN_CENTRAL_SECRET`, `/tukan_central.php` responde 404 y todo sigue como antes. El instalador conserva estas líneas al actualizar.
+- **Entrar solo desde el panel central:** agrega `TUKAN_SOLO_CENTRAL=1` en `config/.env`. La página `/?r=admin_entrar` dice "El ingreso del super usuario es solo desde el Panel Tukán" y no acepta contraseñas. El ingreso de los negocios no cambia.
+- **Emergencia** (el panel central no responde): pon `TUKAN_SOLO_CENTRAL=0` en `config/.env` y entra con tu clave; si no la recuerdas, `php /var/www/tuevento/bin/crear_admin.php` la cambia.
+- Cada entrada desde el panel central queda en "Últimos movimientos del panel" ("Entró desde el Panel Tukán Central"). La primera vez se crea el super usuario con el correo del panel central (con una contraseña al azar que nadie conoce).
+- Seguridad: cada enlace dura 60 segundos y sirve una sola vez; máximo 30 pedidos por minuto por IP; el estado no lleva datos personales (solo nombres de negocios). Detalle del protocolo: `PROTOCOLO.md` del panel central (Tukán Central v1).
+
 ## Tareas automáticas y respaldo
 El instalador deja programado:
 ```
@@ -65,8 +83,11 @@ Telegram (opcional) en `config/.env`: `TELEGRAM_BOT_TOKEN`, `TELEGRAM_BOT_USERNA
 Solo en bases de prueba (se borran y se vuelven a crear):
 
 ```bash
-# Lógica (795 pruebas)
+# Lógica (1829 pruebas)
 TUEVENTO_DB_NAME=tuevento_prueba TUEVENTO_DB_USER=tuevento TUEVENTO_DB_PASS=prueba php tests/run_tests.php
-# Pantallas de punta a punta (916 pruebas; levanta un sitio de prueba solo)
+# Pantallas de punta a punta (1717 pruebas; levanta un sitio de prueba solo)
 PGPASSWORD=prueba bash tests/run_web.sh
+# Solo el conector con el Panel Tukán Central
+TUEVENTO_DB_NAME=tuevento_prueba TUEVENTO_DB_USER=tuevento TUEVENTO_DB_PASS=prueba php tests/run_tests.php logica_95
+PGPASSWORD=prueba bash tests/run_web.sh web_95
 ```

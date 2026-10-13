@@ -69,7 +69,15 @@ Se armó juntando lo mejor de los programas existentes y lo que Tukán ya tenía
 - [x] Se usa en la ficha, el ranking, los selectores de compras y del día del evento, y la puntualidad (también en el portal del proveedor). Sin cambiar nada, los resultados son los mismos de antes
 - [x] Pruebas: logica_60 (389) y web_60 (258), migración 091
 
+## Hecho (13 oct 2026) — conexión con el Panel Tukán Central
+- [x] `tukan_central.php` (protocolo Tukán Central v1): entrar con un clic desde el panel central (crea el super usuario la primera vez y después usa el mismo; queda en el registro) y cifras para el panel central (negocios por estado igual que el panel, nuevos en 30 días, cobrado del mes y del mes anterior, pruebas que vencen en 7 días, pagos vencidos, eventos y cotizaciones del mes, usuarios, ingreso mensual)
+- [x] Botón "← Panel Tukán" en el panel cuando se entró desde el central; `TUKAN_SOLO_CENTRAL=1` apaga el ingreso local del super usuario (emergencia: ponerlo en 0 y `bin/crear_admin.php`)
+- [x] Cada enlace dura 60 s y sirve una vez, 30 pedidos por minuto por IP, sin datos personales; sin configurar responde 404
+- [x] Comando para conectar: `sudo bash /var/www/tuevento/deploy/conectar_central.sh {ID} {SECRETO} {URL}` (guarda en config/.env y hace una prueba local)
+- [x] Pruebas: logica_95 (120) y web_95 (157), migración 095. Totales: lógica 1829/1829 y pantallas 1717/1717
+
 ## Pendiente
+0. [ ] DIMI: cuando el Panel Tukán Central esté listo, correr `sudo bash /var/www/tuevento/deploy/conectar_central.sh {ID} {SECRETO} {URL}` con los datos que da el panel (después de actualizar TuEvento)
 1. [ ] DIMI: instalar en el servidor (comando en el README) y crear la ruta del túnel `tuevento.tukanec.com`
 2. [ ] DIMI: crear el super usuario del panel Tukán (`php /var/www/tuevento/bin/crear_admin.php`)
 3. [ ] Probar Payphone con claves reales de un local (solo se probó con simulador)

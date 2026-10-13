@@ -10,6 +10,11 @@ PUERTO=${PUERTO:-8199}
 export BASE="http://127.0.0.1:$PUERTO"
 export TMP=$(mktemp -d)
 export TUEVENTO_UPLOADS="$TMP/uploads"
+# Conector con el Panel Tukán Central (web_95_central.sh): datos de prueba, el sitio y las pruebas los ven igual
+export TUKAN_CENTRAL_ID=tuevento-prueba
+export TUKAN_CENTRAL_SECRET=0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+export TUKAN_CENTRAL_URL=http://central.prueba.local
+export TUKAN_SOLO_CENTRAL=0
 # Base limpia
 psql -h 127.0.0.1 -U tuevento -d postgres -qc "DROP DATABASE IF EXISTS $DB" > /dev/null 2>&1
 psql -h 127.0.0.1 -U tuevento -d postgres -qc "CREATE DATABASE $DB" > /dev/null

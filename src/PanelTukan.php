@@ -109,16 +109,11 @@ final class PanelTukan
             $cuenta[$n['estado_cuenta']]++;
             $porPlan[$n['plan_nombre']] = ($porPlan[$n['plan_nombre']] ?? 0) + 1;
         }
-        $st = $this->db->prepare("SELECT COALESCE(sum(monto),0) FROM suscripciones WHERE NOT anulada AND to_char(pagado_en,'YYYY-MM') = ?");
-        $st->execute([$hoy->format('Y-m')]);
-        $cobradoMes = (float) $st->fetchColumn();
+        $cobradoMes = $this->cobradoMes($hoy->format('Y-m'));
         $st = $this->db->prepare("SELECT COALESCE(sum(monto),0) FROM suscripciones WHERE NOT anulada AND to_char(pagado_en,'YYYY') = ?");
         $st->execute([$hoy->format('Y')]);
         $cobradoAnio = (float) $st->fetchColumn();
-        // Ingreso mensual recurrente: lo que vale al mes cada pago vigente
-        $st = $this->db->prepare('SELECT COALESCE(sum(monto / meses_recibidos),0) FROM suscripciones WHERE NOT anulada AND inicio <= ? AND fin >= ?');
-        $st->execute([$hoy->format('Y-m-d'), $hoy->format('Y-m-d')]);
-        $mensual = round((float) $st->fetchColumn(), 2);
+        $mensual = $this->ingresoMensual($hoy);
 
         $en3 = $hoy->modify('+3 days')->format('Y-m-d');
         $en15 = $hoy->modify('+15 days')->format('Y-m-d');
@@ -134,6 +129,22 @@ final class PanelTukan
             'nuevos_semana' => count(array_filter($todos, fn($n) => substr((string) $n['creado_en'], 0, 10) >= $hace7)),
             'eventos_30' => array_sum(array_map(fn($n) => (int) $n['eventos_30'], $todos)),
         ];
+    }
+
+    /** Lo cobrado en un mes ('YYYY-MM'): pagos de suscripción no anulados. Lo usan el resumen y el Panel Tukán Central. */
+    public function cobradoMes(string $mes): float
+    {
+        $st = $this->db->prepare("SELECT COALESCE(sum(monto),0) FROM suscripciones WHERE NOT anulada AND to_char(pagado_en,'YYYY-MM') = ?");
+        $st->execute([$mes]);
+        return round((float) $st->fetchColumn(), 2);
+    }
+
+    /** Ingreso mensual recurrente: lo que vale al mes cada pago vigente. */
+    public function ingresoMensual(DateTimeImmutable $hoy): float
+    {
+        $st = $this->db->prepare('SELECT COALESCE(sum(monto / meses_recibidos),0) FROM suscripciones WHERE NOT anulada AND inicio <= ? AND fin >= ?');
+        $st->execute([$hoy->format('Y-m-d'), $hoy->format('Y-m-d')]);
+        return round((float) $st->fetchColumn(), 2);
     }
 
     // ------------------------------------------------------------------
