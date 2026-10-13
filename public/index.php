@@ -12,7 +12,7 @@ $publicas = [
     'login', 'registro', 'privacidad', 'admin_entrar', 'telegram',
     'sitio', 'consulta', 'disponible', 'imagen_publica',      // página pública del negocio
     'cot', 'firmar', 'verificar',                              // cotización, firma y verificación del contrato
-    'portal', 'portal_pagar', 'payphone',                      // portal del cliente y pagos
+    'portal', 'portal_pagar', 'payphone', 'portal_invitados', // portal del cliente: pagos y lista de invitados
     'invitacion', 'puerta', 'ingreso',                         // invitados: confirmación, control de ingreso con QR
     'vivo', 'staff', 'ical',                                   // cronograma en vivo, portal del personal, calendario externo
 ];
