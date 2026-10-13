@@ -58,11 +58,12 @@ entrar() { # email clave
 }
 # Crea un evento por SQL rápido para probar pantallas: crear_evento_sql <fecha> [estado] -> imprime el id
 crear_evento_sql() {
-  local fecha=$1 estado=${2:-consulta}
+  local fecha=$1 estado=${2:-consulta} espacio=${3:-}
   local cli; cli=$(sql "INSERT INTO clientes (negocio_id, nombre, telefono) VALUES ($NID, 'Cliente Web $RANDOM', '0991234567') RETURNING id" | head -1)
   local n; n=$(sql "SELECT count(*)+1 FROM eventos WHERE negocio_id=$NID")
   local ev; ev=$(sql "INSERT INTO eventos (negocio_id, codigo, cliente_id, tipo, nombre, fecha, invitados, estado) VALUES ($NID, 'EV-T-'||lpad('$n',4,'0'), $cli, 'boda', 'Boda de prueba $n', '$fecha', 120, '$estado') RETURNING id" | head -1)
-  local esp; esp=$(sql "SELECT id FROM espacios WHERE negocio_id=$NID ORDER BY orden LIMIT 1")
+  local esp=$espacio
+  [ -z "$esp" ] && esp=$(sql "SELECT id FROM espacios WHERE negocio_id=$NID ORDER BY orden LIMIT 1")
   local bloquea=false; case "$estado" in separado|confirmado|realizado) bloquea=true;; esac
   sql "INSERT INTO evento_espacios (negocio_id, evento_id, espacio_id, periodo, bloquea) VALUES ($NID, $ev, $esp, tsrange('$fecha 15:00','$fecha 23:59'), $bloquea)" > /dev/null
   echo "$ev"

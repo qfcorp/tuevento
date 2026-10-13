@@ -10,7 +10,7 @@ $iconos = [
 ];
 $menu = ['inicio' => 'Inicio', 'calendario' => 'Calendario', 'eventos' => 'Eventos', 'cobros' => 'Cobros', 'mas' => 'Más'];
 $grupoMas = ['mas', 'clientes', 'cliente', 'seguimiento', 'catalogo', 'paquetes', 'espacios', 'personal', 'proveedores', 'mobiliario',
-             'reportes', 'configuracion', 'usuarios', 'mi_cuenta', 'planes', 'notificaciones', 'mensajes'];
+             'reportes', 'configuracion', 'usuarios', 'mi_cuenta', 'planes', 'notificaciones', 'mensajes', 'exportar'];
 $grupoEventos = ['eventos', 'evento', 'evento_nuevo', 'evento_editar', 'cotizacion', 'contrato', 'evento_pagos', 'evento_dia', 'invitados'];
 $campana = 0;
 if ($u) {
@@ -88,6 +88,7 @@ $modulosJs = glob(RAIZ . '/public/assets/mod_*.js') ?: [];
         <?php endif; ?>
         <?php if (es_dueno($u)): ?>
         <a href="<?= e(url('configuracion')) ?>">Configuración</a>
+        <a href="<?= e(url('contrato')) ?>">Plantillas de contrato</a>
         <a href="<?= e(url('usuarios')) ?>">Usuarios</a>
         <a href="<?= e(url('planes')) ?>">Mi plan</a>
         <?php endif; ?>

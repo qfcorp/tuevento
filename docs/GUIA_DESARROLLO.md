@@ -35,3 +35,24 @@ TUEVENTO_DB_NAME=tuevento_prueba TUEVENTO_DB_USER=tuevento TUEVENTO_DB_PASS=prue
 # Pantallas (levanta un sitio de prueba solo)
 bash tests/run_web.sh
 ```
+
+## Cuidados (aprendidos al construirlo)
+- `vista()` y `vista_publica()` usan `extract(..., EXTR_SKIP)`: una vista **no recibe** variables llamadas `nombre`, `datos`, `titulo`, `marca` ni `u` (chocan con los parámetros). Usa otros nombres.
+- Las clases genéricas de `app.css` (`.hora`, `.columna`, `.ahora`…) vienen de TuSalón: en los módulos usa un prefijo propio (`doc-`, `dia-`, `g-`, `ev-`).
+- `Eventos::guardarCliente` no deja vaciar datos al editar; para la ficha del cliente se usa `Ventas::editarCliente()`.
+- `Pagos::registrar()` deja en `$pagos->ultimoMensaje` lo que pasó con la fecha (ej. "Reserva pagada: la fecha quedó separada.").
+- Números: `numero()` y `Cotizaciones::num()` entienden 1.234,50 · 1234,50 · 1234.50 · 12.000.
+
+## Archivos de cada módulo
+| Módulo | Pruebas | Migración | Clases |
+|---|---|---|---|
+| Núcleo | logica_00, web_00 | schema.sql | Eventos, Cotizaciones, Pagos, Contratos, Planes, Altas, Notificaciones, Telegram, Fotos, Pdf, WhatsApp, Letras |
+| Ventas y calendario | logica_10, web_10 | 010 | Ventas |
+| Cotizaciones y contratos | logica_20, web_20 | 020 | Catalogo, PdfDocumentos |
+| Cobros y portal del cliente | logica_30, web_30 | 030 | Cobranza, PdfCobros |
+| Día del evento e invitados | logica_40, web_40 | 040 | DiaEvento, Invitados, PdfDia, Qr |
+| Gestión y panel Tukán | logica_50, web_50 | 050 | Automaticas, Reportes, PanelTukan, Usuarios, Configuracion |
+
+## Servidor
+- Cron cada hora: `php /var/www/tuevento/bin/tareas.php` · respaldo diario 3:25: `deploy/respaldo.sh`
+- Super usuario: `php bin/crear_admin.php` · Telegram: `TELEGRAM_BOT_TOKEN`, `TELEGRAM_BOT_USERNAME`, `TELEGRAM_WEBHOOK_SECRET`

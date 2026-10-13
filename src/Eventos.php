@@ -42,7 +42,7 @@ final class Eventos
     public const PASOS = [
         'consulta'   => ['cotizado', 'separado', 'perdido'],
         'cotizado'   => ['consulta', 'separado', 'perdido'],
-        'separado'   => ['confirmado', 'cotizado', 'cancelado'],
+        'separado'   => ['confirmado', 'realizado', 'cotizado', 'cancelado'],
         'confirmado' => ['realizado', 'separado', 'cancelado'],
         'realizado'  => ['confirmado'],
         'perdido'    => ['consulta', 'cotizado'],
@@ -671,10 +671,12 @@ final class Eventos
         $st = $this->db->prepare('SELECT titulo, dias_antes, orden FROM plantilla_tareas
                                    WHERE negocio_id = ? AND (tipo_evento IS NULL OR tipo_evento = ?) ORDER BY dias_antes DESC, orden');
         $st->execute([$negocioId, $tipo]);
-        $ins = $this->db->prepare('INSERT INTO evento_tareas (evento_id, titulo, vence, orden) VALUES (?,?,?::date - ?::int,?)');
+        $ins = $this->db->prepare('INSERT INTO evento_tareas (evento_id, titulo, vence, orden)
+                                    VALUES (?,?, CASE WHEN ?::int < 0 THEN ?::date - ?::int ELSE LEAST(?::date, GREATEST(CURRENT_DATE, ?::date - ?::int)) END, ?)');
         $n = 0;
         foreach ($st->fetchAll() as $t) {
-            $ins->execute([$eventoId, $t['titulo'], $fecha, (int) $t['dias_antes'], $n++]);
+            $d = (int) $t['dias_antes'];
+            $ins->execute([$eventoId, $t['titulo'], $d, $fecha, $d, $fecha, $fecha, $d, $n++]);
         }
         return $n;
     }

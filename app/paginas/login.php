@@ -21,6 +21,17 @@ if (es_post()) {
             $_SESSION['usuario_id'] = (int) $fila['id'];
             unset($_SESSION['intentos_login']);
             db()->prepare('UPDATE usuarios SET ultimo_ingreso = now() WHERE id = ?')->execute([$fila['id']]);
+            $temporal = false;
+            try {
+                $t = db()->prepare('SELECT clave_temporal FROM usuarios WHERE id = ?');
+                $t->execute([$fila['id']]);
+                $temporal = (bool) $t->fetchColumn();
+            } catch (\PDOException) { /* base sin la migración 050 */ }
+            if ($temporal) {
+                aviso('Tu contraseña es temporal. Cámbiala por una tuya para seguir.');
+                header('Location: ' . url('mi_cuenta') . '#clave');
+                exit;
+            }
             redirigir('inicio');
         }
         $intentos['n']++;

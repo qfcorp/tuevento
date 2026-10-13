@@ -24,6 +24,9 @@ final class Pagos
     public const ESTADOS = ['confirmado' => 'Confirmado', 'por_revisar' => 'Por revisar', 'rechazado' => 'Rechazado',
                             'pendiente' => 'Pendiente', 'anulado' => 'Anulado'];
 
+    /** Mensaje de la última revisión de separación (ej. "Reserva pagada: la fecha quedó separada."). */
+    public ?string $ultimoMensaje = null;
+
     public function __construct(private PDO $db, private ?string $carpeta = null) {}
 
     public static function apiPayphone(): string
@@ -96,7 +99,7 @@ final class Pagos
         $limpias = [];
         $suma = 0.0;
         foreach ($filas as $f) {
-            $monto = round((float) str_replace(',', '.', (string) ($f['monto'] ?? 0)), 2);
+            $monto = round(Cotizaciones::num($f['monto'] ?? 0), 2);
             $concepto = trim((string) ($f['concepto'] ?? ''));
             if ($monto <= 0 && $concepto === '') continue;
             if ($monto <= 0) throw new RuntimeException("El valor de \"$concepto\" debe ser mayor que 0.");
@@ -171,7 +174,7 @@ final class Pagos
     public function registrar(int $negocioId, int $eventoId, array $d, ?array $usuario = null, ?array $archivo = null): int
     {
         $this->evento($negocioId, $eventoId);
-        $monto = round((float) str_replace(',', '.', (string) ($d['monto'] ?? 0)), 2);
+        $monto = round(Cotizaciones::num($d['monto'] ?? 0), 2);
         if ($monto <= 0) throw new RuntimeException('Escribe el valor del pago.');
         $metodo = (string) ($d['metodo'] ?? 'transferencia');
         if (!isset(self::METODOS[$metodo])) throw new RuntimeException('Elige la forma de pago.');
@@ -203,7 +206,7 @@ final class Pagos
             if ($comprobante) Fotos::borrar('comprobantes', $comprobante);
             throw $e;
         }
-        if ($tipo === 'evento') $this->revisarSeparacion($negocioId, $eventoId, $usuario);
+        $this->ultimoMensaje = $tipo === 'evento' ? $this->revisarSeparacion($negocioId, $eventoId, $usuario) : null;
         return $id;
     }
 

@@ -324,6 +324,7 @@ function numero(mixed $v): ?float
     $v = str_replace(' ', '', $v);
     // 1.234,50 -> 1234.50 ; 1234,50 -> 1234.50 ; 1234.50 -> 1234.50
     if (str_contains($v, ',') && str_contains($v, '.')) $v = str_replace('.', '', $v);
+    elseif (preg_match('/^-?\d{1,3}(\.\d{3})+$/', $v)) $v = str_replace('.', '', $v);   // 12.000 = doce mil
     return (float) str_replace(',', '.', $v);
 }
 

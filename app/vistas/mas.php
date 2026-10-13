@@ -17,6 +17,7 @@
     <?php endif; ?>
     <?php if (es_dueno($u)): ?>
     <a href="<?= e(url('configuracion')) ?>">Configuración<small>Datos, reglas, cobros, página pública</small></a>
+    <a href="<?= e(url('contrato')) ?>">Plantillas de contrato<small>Cláusulas y variables del contrato</small></a>
     <a href="<?= e(url('usuarios')) ?>">Usuarios<small>Vendedores y coordinadores</small></a>
     <a href="<?= e(url('planes')) ?>">Mi plan<small>Planes y pagos de TuEvento</small></a>
     <?php endif; ?>

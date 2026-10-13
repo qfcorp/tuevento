@@ -27,7 +27,11 @@ document.addEventListener('DOMContentLoaded', () => {
     // Mostrar/ocultar bloques según una opción: <select data-mostrar="clase"> + <div data-si="valor" class="clase">
     document.querySelectorAll('[data-mostrar]').forEach(sel => {
         const aplicar = () => {
-            const valor = sel.type === 'checkbox' ? (sel.checked ? '1' : '0') : sel.value;
+            let valor = sel.type === 'checkbox' ? (sel.checked ? '1' : '0') : sel.value;
+            if (sel.type === 'radio') {
+                const marcado = (sel.form || document).querySelector('input[name="' + sel.name + '"]:checked');
+                valor = marcado ? marcado.value : '';
+            }
             document.querySelectorAll('.' + sel.dataset.mostrar).forEach(b => {
                 b.hidden = !(b.dataset.si || '').split(',').includes(valor);
             });

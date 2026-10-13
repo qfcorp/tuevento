@@ -74,6 +74,8 @@ final class Cotizaciones
                           $hoy->modify('+' . (int) $n['validez_cotizacion'] . ' days')->format('Y-m-d'),
                           (int) $ev['invitados'], $n['iva_pct'], $n['condiciones'], $usuarioId]);
             $id = (int) $st->fetchColumn();
+            $this->db->prepare("UPDATE cotizaciones SET estado = 'reemplazada' WHERE evento_id = ? AND id <> ? AND estado IN ('borrador','enviada')")
+                     ->execute([$eventoId, $id]);
             if ($paqueteId) {
                 $this->aplicarPaquete($negocioId, $id, $paqueteId);
             } elseif ($anterior) {
@@ -181,20 +183,20 @@ final class Cotizaciones
             $orden = 0;
             foreach ($lineas as $l) {
                 if (trim((string) ($l['descripcion'] ?? '')) === '') continue;
-                $cant = (float) str_replace(',', '.', (string) ($l['cantidad'] ?? 0));
-                $precio = (float) str_replace(',', '.', (string) ($l['precio_unitario'] ?? 0));
+                $cant = self::num($l['cantidad'] ?? 0);
+                $precio = self::num($l['precio_unitario'] ?? 0);
                 if ($cant <= 0) throw new RuntimeException('La cantidad de "' . trim($l['descripcion']) . '" debe ser mayor que 0.');
                 if ($precio < 0) throw new RuntimeException('El precio de "' . trim($l['descripcion']) . '" no puede ser negativo.');
                 $l['cantidad'] = $cant;
                 $l['precio_unitario'] = $precio;
-                $l['costo_unitario'] = (float) str_replace(',', '.', (string) ($l['costo_unitario'] ?? 0));
+                $l['costo_unitario'] = self::num($l['costo_unitario'] ?? 0);
                 $l['producto_id'] = !empty($l['producto_id']) ? (int) $l['producto_id'] : null;
                 $l['orden'] = $orden++;
                 $this->agregarLinea($cotizacionId, $l);
             }
             $inv = isset($cabecera['invitados']) ? (int) $cabecera['invitados'] : (int) $cot['invitados'];
             if ($inv < 1) throw new RuntimeException('Escribe cuántos invitados.');
-            $desc = isset($cabecera['descuento']) ? round((float) str_replace(',', '.', (string) $cabecera['descuento']), 2) : (float) $cot['descuento'];
+            $desc = isset($cabecera['descuento']) ? round(self::num($cabecera['descuento']), 2) : (float) $cot['descuento'];
             if ($desc < 0) throw new RuntimeException('El descuento no puede ser negativo.');
             $valida = (string) ($cabecera['valida_hasta'] ?? $cot['valida_hasta']);
             if (!DateTimeImmutable::createFromFormat('!Y-m-d', $valida)) throw new RuntimeException('Revisa la fecha de validez.');
@@ -210,6 +212,16 @@ final class Cotizaciones
             if ($propia && $this->db->inTransaction()) $this->db->rollBack();
             throw $e;
         }
+    }
+
+    /** Número escrito a la ecuatoriana: 1.234,50 / 1234,50 / 1234.50 / 12.000 */
+    public static function num(mixed $v): float
+    {
+        $v = str_replace(' ', '', trim((string) $v));
+        if ($v === '') return 0.0;
+        if (str_contains($v, ',') && str_contains($v, '.')) $v = str_replace('.', '', $v);
+        elseif (preg_match('/^-?\d{1,3}(\.\d{3})+$/', $v)) $v = str_replace('.', '', $v);
+        return (float) str_replace(',', '.', $v);
     }
 
     /** Cambia los invitados y recalcula todas las líneas "por persona". */
