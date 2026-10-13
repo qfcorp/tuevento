@@ -22,6 +22,9 @@ use RuntimeException;
  *     "Extras: …", por la diferencia, que vence con el saldo (X días antes del evento, o hoy si esa fecha ya pasó).
  *     Lo pagado se vuelve a repartir (Pagos::reaplicar), así un saldo a favor cubre los extras. Si el evento no tenía
  *     plan, se arma el plan automático completo. Las cuotas siguen sumando el total del evento.
+ *  4) Si el evento ya tiene contrato FIRMADO, se prepara un anexo para que el cliente lo firme (Anexos, migración 090).
+ *     Si no, los extras entran en el contrato cuando se genere (los toma de la cotización aceptada).
+ * Un pedido aprobado NO se puede deshacer: si el cliente se arrepiente, se hace una cotización nueva sin los extras.
  */
 final class Extras
 {
@@ -308,12 +311,17 @@ final class Extras
             $this->historial($negocioId, $eventoId, $usuario, $usuario['nombre'] ?? 'Sistema',
                 'Aprobó los extras del portal (' . self::resumenLineas($items) . '): el evento sube ' . self::plata($monto) . ' a ' . self::plata($tot['total'])
                 . '. Cotización N.º ' . $numero . ' (versión ' . $version . ')' . ($cuotaId ? ' y cuota nueva de extras' : ''));
+            // 4) Si el evento ya tiene contrato firmado: anexo para que el cliente lo firme (migración 090)
+            $anexoId = (new Anexos($this->db))->crearParaPedido($negocioId, $pedidoId, $usuario, $hoy);
+            $sinFirmar = $anexoId ? null : $this->q("SELECT numero FROM contratos WHERE negocio_id = ? AND evento_id = ? AND estado IN ('borrador','enviado')
+                                                      ORDER BY numero DESC LIMIT 1", [$negocioId, $eventoId])->fetchColumn();
             if ($propia) $this->db->commit();
         } catch (\Throwable $e) {
             if ($propia && $this->db->inTransaction()) $this->db->rollBack();
             throw $e;
         }
-        return ['cotizacion_id' => $nueva, 'numero' => $numero, 'version' => $version, 'monto' => $monto, 'total' => (float) $tot['total'], 'cuota_id' => $cuotaId];
+        return ['cotizacion_id' => $nueva, 'numero' => $numero, 'version' => $version, 'monto' => $monto, 'total' => (float) $tot['total'], 'cuota_id' => $cuotaId,
+                'anexo_id' => $anexoId, 'contrato_sin_firmar' => $sinFirmar === false || $sinFirmar === null ? null : (int) $sinFirmar];
     }
 
     public function rechazar(int $negocioId, int $pedidoId, array $usuario, string $nota): void

@@ -1,7 +1,8 @@
 <?php
 use TuEvento\Contratos;
 
-/** @var array $plantillas @var ?array $editar @var ?array $previa @var ?string $textoPrevia @var array $ejemplo */
+/** @var array $plantillas @var ?array $editar @var ?array $previa @var ?string $textoPrevia @var array $ejemplo
+ *  @var array $anexo @var ?string $editarAnexo @var array $ejemploAnexo @var ?string $textoPreviaAnexo (anexo por extras, migración 090) */
 ?>
 <div class="cabecera">
     <div>
@@ -93,4 +94,6 @@ use TuEvento\Contratos;
     </ul>
     <?php endif; ?>
 </section>
+<?php require RAIZ . '/app/vistas/_anexo_plantilla.php'; // anexo por extras aprobados (migración 090) ?>
+
 <p class="suave">Los contratos ya generados no cambian cuando editas una plantilla. Para usar el texto nuevo en un evento, anula su contrato y genera uno nuevo.</p>

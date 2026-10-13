@@ -192,6 +192,7 @@ if ($ver === 'proveedores') $datos['catalogoProv'] = $dia->proveedores($nid, tru
 // Proveedores y compras (060): puntajes, compras unidas, incidencias del evento
 $fichaProv = new \TuEvento\ProveedoresFicha(db());
 $datos['puntajesProv'] = in_array($ver, ['proveedores'], true) ? $fichaProv->puntajes($nid) : [];
+$datos['toleranciaProv'] = $fichaProv->tolerancia($nid);   // minutos de tolerancia del negocio (091)
 $datos['incidenciasEv'] = (new \TuEvento\Incidencias(db()))->deEvento($nid, $id);
 $datos['conteos']['incidencias'] = count(array_filter($datos['incidenciasEv'], fn($i) => $i['estado'] !== 'resuelta'));
 $datos['comprasEv'] = $u['rol'] !== 'coordinador' ? array_column((new \TuEvento\Compras(db()))->deEvento($nid, $id), null, 'id') : [];

@@ -353,3 +353,143 @@ contiene "Plan Salón: también tiene el formulario" "$TMP/pag.html" "Formulario
 check "Plan Salón: formulario en el portal" "200" "$(get "r=portal_cuestionario&t=$TOKB")"
 contiene "Plan Salón: con preguntas" "$TMP/pag.html" "data-pt-autoguardar"
 check "Plan Salón: plantillas propias" "9" "$(sql "SELECT count(*) FROM cuestionario_plantillas WHERE negocio_id = $NID2")"
+
+echo "13. Anexo de contrato por extras aprobados (migración 090)"
+FIRMA70=$(php -r '$i=imagecreatetruecolor(400,150);imagefill($i,0,0,imagecolorallocate($i,255,255,255));$n=imagecolorallocate($i,10,10,40);imagesetthickness($i,4);for($k=0;$k<6;$k++)imageline($i,20+$k*50,120-($k%2)*80,70+$k*50,40+($k%2)*80,$n);ob_start();imagepng($i);echo "data:image/png;base64,".base64_encode(ob_get_clean());')
+entrar "$EMAIL1" "claveSegura1"
+NID=$NID1
+# Sin contrato firmado: aprobar avisa que los extras entran en el contrato cuando se genere
+EVN=$(crear_evento_sql "$(date -d "+70 days" +%F)" separado)
+aceptar_cot "$EVN" > /dev/null
+TOKN=$(sql "SELECT token_cliente FROM eventos WHERE id = $EVN")
+r=$(post_portal "r=portal_extras&t=$TOKN" --data-urlencode "accion=pedir" --data-urlencode "cant[$P_HORA]=1")
+PEDN=$(sql "SELECT id FROM extras_pedidos WHERE evento_id = $EVN")
+get "r=evento_formulario&id=$EVN" > /dev/null
+contiene "Antes de aprobar: dice que no hace falta anexo" "$TMP/pag.html" "no hace falta anexo"
+r=$(post_desde "r=evento_formulario&id=$EVN" "r=evento_formulario&id=$EVN" --data-urlencode "accion=aprobar" --data-urlencode "pedido_id=$PEDN")
+check "Sin contrato firmado: no hay anexo" "0" "$(sql "SELECT count(*) FROM contrato_anexos WHERE evento_id = $EVN")"
+get "r=evento_formulario&id=$EVN" > /dev/null
+contiene "Aviso: los extras entran en el contrato cuando se genere" "$TMP/pag.html" "los extras entran en el contrato cuando lo generes"
+# Con contrato firmado
+EVK=$(crear_evento_sql "$(date -d "+75 days" +%F)" separado)
+aceptar_cot "$EVK" > /dev/null
+sql "UPDATE clientes SET identificacion = '1712345678' WHERE id = (SELECT cliente_id FROM eventos WHERE id = $EVK)" > /dev/null
+TOKK=$(sql "SELECT token_cliente FROM eventos WHERE id = $EVK")
+r=$(post_desde "r=contrato&id=$EVK" "r=contrato&id=$EVK&accion=generar")
+KID=$(sql "SELECT id FROM contratos WHERE evento_id = $EVK ORDER BY id DESC LIMIT 1")
+r=$(post_desde "r=contrato&id=$EVK&k=$KID" "r=contrato&id=$EVK&accion=enviar" --data-urlencode "contrato_id=$KID")
+KTOK=$(sql "SELECT token FROM contratos WHERE id = $KID")
+r=$(post_desde "r=firmar&t=$KTOK" "r=firmar&t=$KTOK" --data-urlencode "nombre=Cliente Web Anexo" --data-urlencode "identificacion=1712345678" --data-urlencode "firma=$FIRMA70" --data-urlencode "acepto=1")
+check "Contrato firmado por el cliente" "firmado" "$(sql "SELECT estado FROM contratos WHERE id = $KID")"
+r=$(post_portal "r=portal_extras&t=$TOKK" --data-urlencode "accion=pedir" --data-urlencode "cant[$P_HORA]=2" --data-urlencode "cant[$P_LOCA]=1")
+PEDK=$(sql "SELECT id FROM extras_pedidos WHERE evento_id = $EVK")
+get "r=evento_formulario&id=$EVK" > /dev/null
+contiene "Antes de aprobar: avisa que se prepara un anexo" "$TMP/pag.html" "al aprobar se prepara un anexo"
+r=$(post_desde "r=evento_formulario&id=$EVK" "r=evento_formulario&id=$EVK" --data-urlencode "accion=aprobar" --data-urlencode "pedido_id=$PEDK")
+check "Contrato firmado: se prepara el anexo" "1|enviado|667.00" "$(sql "SELECT numero || '|' || estado || '|' || monto FROM contrato_anexos WHERE evento_id = $EVK")"
+AID=$(sql "SELECT id FROM contrato_anexos WHERE evento_id = $EVK")
+ATOK=$(sql "SELECT token FROM contrato_anexos WHERE id = $AID")
+ACOD=$(sql "SELECT codigo_verificacion FROM contrato_anexos WHERE id = $AID")
+KNUM=$(sql "SELECT numero FROM contratos WHERE id = $KID")
+check "El anexo es del contrato firmado" "$KID" "$(sql "SELECT contrato_id FROM contrato_anexos WHERE id = $AID")"
+check "Huella SHA-256 guardada = huella del texto" "t" "$(sql "SELECT hash_sha256 = encode(sha256(convert_to(texto, 'UTF8')), 'hex') FROM contrato_anexos WHERE id = $AID")"
+get "r=evento_formulario&id=$EVK" > /dev/null
+contiene "Aviso: se preparó un anexo" "$TMP/pag.html" "se preparó un anexo para que el cliente lo firme"
+contiene "El pedido muestra el anexo por firmar" "$TMP/pag.html" "Anexo 1 al contrato N.º $KNUM: por firmar"
+check "Pestaña del contrato" "200" "$(get "r=contrato&id=$EVK")"
+contiene "Contrato: lista de anexos" "$TMP/pag.html" "Anexos del contrato"
+contiene "Contrato: anexo por firmar" "$TMP/pag.html" "Por firmar"
+contiene "Contrato: WhatsApp con el enlace del anexo" "$TMP/pag.html" "r%3Dfirmar_anexo%26t%3D$ATOK"
+contiene "Contrato: PDF del anexo" "$TMP/pag.html" "r=pdf&amp;tipo=anexo&amp;id=$AID"
+check "PDF del anexo (local)" "200 application/pdf" "$(pdf_get70 "r=pdf&tipo=anexo&id=$AID")"
+check "Es un PDF de verdad" "%PDF" "$(head -c 4 "$TMP/doc70.pdf")"
+pdftotext "$TMP/doc70.pdf" "$TMP/doc70.txt" 2>/dev/null
+contiene "El PDF trae el título del anexo" "$TMP/doc70.txt" "ANEXO 1 AL CONTRATO N.º $KNUM"
+contiene "El PDF trae la cláusula de lo que no cambia" "$TMP/doc70.txt" "se mantienen igual"
+get "r=mensajes" > /dev/null
+contiene "Mensajes de hoy: anexo por firmar" "$TMP/pag.html" "Anexos de contrato que falta firmar"
+contiene "Mensaje con el enlace de firma" "$TMP/pag.html" "r%3Dfirmar_anexo%26t%3D$ATOK"
+r=$(post_desde "r=mensajes" "r=mensajes&accion=enviado" --data-urlencode "tipo=anexo" --data-urlencode "ref_id=$AID")
+r=$(post_desde "r=mensajes" "r=mensajes&accion=enviado" --data-urlencode "tipo=anexo" --data-urlencode "ref_id=$AID")
+check "Marcar enviado (sin duplicar en el día)" "1" "$(sql "SELECT count(*) FROM mensajes_enviados WHERE tipo = 'anexo' AND ref_id = $AID")"
+get "r=mensajes" > /dev/null
+no_contiene "Marcado: ya no sale hoy" "$TMP/pag.html" "Anexos de contrato que falta firmar"
+contiene "Sale en enviados hoy" "$TMP/pag.html" "Anexo</span>"
+# Portal y firma del cliente
+get "r=portal&t=$TOKK" > /dev/null
+contiene "Portal: tarjeta del anexo por firmar" "$TMP/pag.html" "Tienes un anexo por firmar"
+contiene "Portal: enlace a la firma" "$TMP/pag.html" "r=firmar_anexo&amp;t=$ATOK"
+contiene "Portal: el anexo en tus documentos" "$TMP/pag.html" "Firmar anexo"
+check "Página de firma del anexo (sin sesión)" "200" "$(curl -s -o "$TMP/pag.html" -w '%{http_code}' "$BASE/?r=firmar_anexo&t=$ATOK")"
+contiene "Muestra el texto del anexo" "$TMP/pag.html" "ANEXO 1 AL CONTRATO N.º $KNUM"
+contiene "Muestra los extras" "$TMP/pag.html" "Hora adicional — 2 × \$150,00 + IVA = \$300,00"
+contiene "Muestra el valor de los extras" "$TMP/pag.html" "\$667,00"
+contiene "Recuadro para firmar con el dedo" "$TMP/pag.html" "data-firma=\"firma-dato\""
+check "Enlace falso: 404" "404" "$(get "r=firmar_anexo&t=$(printf 'ef%.0s' {1..24})")"
+check "El enlace del contrato no abre el anexo: 404" "404" "$(get "r=firmar_anexo&t=$KTOK")"
+check "PDF público del anexo" "200 application/pdf" "$(pdf_get70 "r=firmar_anexo&t=$ATOK&pdf=1")"
+r=$(post_desde "r=firmar_anexo&t=$ATOK" "r=firmar_anexo&t=$ATOK" --data-urlencode "nombre=Cliente Web Anexo" --data-urlencode "identificacion=1712345678" --data-urlencode "firma=$FIRMA70")
+contiene "Sin aceptar: error claro" "$TMP/post.html" "Marca la casilla"
+check "Sin aceptar: no se firma" "enviado" "$(sql "SELECT estado FROM contrato_anexos WHERE id = $AID")"
+r=$(post_desde "r=firmar_anexo&t=$ATOK" "r=firmar_anexo&t=$ATOK" --data-urlencode "nombre=Cliente Web Anexo" --data-urlencode "identificacion=1712345678" --data-urlencode "firma=$FIRMA70" --data-urlencode "acepto=1")
+check "Firmar redirige a la misma página" "302 $BASE/?r=firmar_anexo&t=$ATOK" "$r"
+check "Anexo firmado" "firmado|Cliente Web Anexo" "$(sql "SELECT estado || '|' || firmante_nombre FROM contrato_anexos WHERE id = $AID")"
+check "Aviso al local de la firma" "1" "$(sql "SELECT count(DISTINCT texto) FROM notificaciones WHERE negocio_id = $NID1 AND texto LIKE '✍️ %firmó el anexo 1%'")"
+check "Historial de la firma" "1" "$(sql "SELECT count(*) FROM registro_cambios WHERE evento_id = $EVK AND accion LIKE 'Firmó el anexo 1%'")"
+get "r=firmar_anexo&t=$ATOK" > /dev/null
+contiene "Firmado: lo confirma" "$TMP/pag.html" "Anexo firmado"
+contiene "Firmado: descarga del PDF" "$TMP/pag.html" "Descargar mi anexo firmado"
+pdf_get70 "r=firmar_anexo&t=$ATOK&pdf=1" > /dev/null
+pdftotext "$TMP/doc70.pdf" "$TMP/doc70.txt" 2>/dev/null
+contiene "PDF firmado: con los datos de la firma" "$TMP/doc70.txt" "Anexo firmado electrónicamente por el cliente"
+check "Verificación del anexo por QR" "200" "$(get "r=verificar&c=$ACOD")"
+contiene "Verificación: auténtico y firmado" "$TMP/pag.html" "Anexo auténtico y firmado"
+contiene "Verificación: título del anexo" "$TMP/pag.html" "Anexo 1 al contrato N.º $KNUM"
+get "r=portal&t=$TOKK" > /dev/null
+no_contiene "Portal: ya no pide firmar" "$TMP/pag.html" "Tienes un anexo por firmar"
+contiene "Portal: anexo firmado con su PDF" "$TMP/pag.html" "r=firmar_anexo&amp;t=$ATOK&amp;pdf=1"
+get "r=mensajes" > /dev/null
+no_contiene "Firmado: ya no se recuerda" "$TMP/pag.html" "r%3Dfirmar_anexo%26t%3D$ATOK"
+get "r=contrato&id=$EVK" > /dev/null
+contiene "Contrato: anexo firmado" "$TMP/pag.html" "firmado el"
+# Plantilla del anexo en Plantillas de contrato
+check "Plantillas de contrato" "200" "$(get "r=contrato")"
+contiene "Sección del anexo" "$TMP/pag.html" "Anexo por extras"
+check "Editar la plantilla del anexo" "200" "$(get "r=contrato&plantilla=anexo")"
+contiene "Variables del anexo" "$TMP/pag.html" "{{nuevo_total}}"
+r=$(post_desde "r=contrato&plantilla=anexo" "r=contrato&accion=guardar_anexo" --data-urlencode "texto=Anexo {{numero_anexo}} {{garantia}} con texto suficiente para pasar la validación del largo mínimo")
+get "r=contrato&plantilla=anexo" > /dev/null
+contiene "Variable del contrato en el anexo: error" "$TMP/pag.html" "no existen en el anexo"
+r=$(post_desde "r=contrato&plantilla=anexo" "r=contrato&accion=guardar_anexo" --data-urlencode "texto=ANEXO {{numero_anexo}} AL CONTRATO {{numero_contrato}} de {{cliente}}: extras por {{total_extras}}. Lo demás sigue igual.")
+check "Plantilla del anexo guardada" "1" "$(sql "SELECT count(*) FROM plantillas_contrato WHERE negocio_id = $NID1 AND tipo = 'anexo' AND texto LIKE 'ANEXO {{numero_anexo}} AL CONTRATO {{numero_contrato}} de%'")"
+get "r=contrato&previa=anexo" > /dev/null
+contiene "Vista previa con datos de ejemplo" "$TMP/pag.html" "ANEXO 1 AL CONTRATO 12 de Ana Lucía Torres Vega"
+get "r=contrato&id=$EVN" > /dev/null
+contiene "Evento sin contrato: ofrece prepararlo" "$TMP/pag.html" "accion=generar"
+no_contiene "Preparar contrato no ofrece la plantilla del anexo" "$TMP/pag.html" "Anexo por extras"
+check "Un segundo anexo usa la plantilla nueva" "1" "$( r=$(post_portal "r=portal_extras&t=$TOKK" --data-urlencode "accion=pedir" --data-urlencode "cant[$P_HORA]=1"); P=$(sql "SELECT id FROM extras_pedidos WHERE evento_id = $EVK AND estado = 'pendiente'"); post_desde "r=evento_formulario&id=$EVK" "r=evento_formulario&id=$EVK" --data-urlencode "accion=aprobar" --data-urlencode "pedido_id=$P" > /dev/null; sql "SELECT count(*) FROM contrato_anexos WHERE evento_id = $EVK AND numero = 2 AND texto LIKE 'ANEXO 2 AL CONTRATO $KNUM de %extras por \$172,50.%'")"
+# Roles
+AID2=$(sql "SELECT id FROM contrato_anexos WHERE evento_id = $EVK AND numero = 2")
+entrar "coord70$NID1@prueba.ec" "claveSegura1"
+check "Coordinador: no abre el contrato" "302" "$(get "r=contrato&id=$EVK")"
+check "Coordinador: no ve el PDF del anexo (403)" "403" "$(get "r=pdf&tipo=anexo&id=$AID")"
+entrar "cons70$NID1@prueba.ec" "claveSegura1"
+check "Consulta: ve la lista de anexos" "200" "$(get "r=contrato&id=$EVK")"
+contiene "Consulta: anexos con su estado" "$TMP/pag.html" "Anexos del contrato"
+no_contiene "Consulta: sin botón para enviar el anexo" "$TMP/pag.html" "Enviar para firmar por WhatsApp"
+check "Consulta: no ve el PDF del anexo (403)" "403" "$(get "r=pdf&tipo=anexo&id=$AID")"
+entrar "vend70$NID1@prueba.ec" "claveSegura1"
+check "Vendedor: PDF del anexo" "200 application/pdf" "$(pdf_get70 "r=pdf&tipo=anexo&id=$AID2")"
+get "r=contrato&id=$EVK" > /dev/null
+contiene "Vendedor: puede enviar el anexo por WhatsApp" "$TMP/pag.html" "Enviar para firmar por WhatsApp"
+# Otro negocio
+entrar "$EMAIL" "claveSegura1"
+NID=$NID2
+get "r=pdf&tipo=anexo&id=$AID" > /dev/null
+contiene "Otro negocio: no ve mi anexo" "$TMP/pag.html" "No se encontró el anexo"
+no_contiene "Otro negocio: sin el texto de mi anexo" "$TMP/pag.html" "ANEXO 1 AL CONTRATO"
+check "Otro negocio: no ve mi contrato" "404" "$(get "r=contrato&id=$EVK")"
+get "r=mensajes" > /dev/null
+no_contiene "Otro negocio: sin mis anexos en mensajes" "$TMP/pag.html" "firmar_anexo"
+r=$(post_desde "r=mi_cuenta" "r=mensajes&accion=enviado" --data-urlencode "tipo=anexo" --data-urlencode "ref_id=$AID2")
+check "Otro negocio: no marca mis anexos" "0" "$(sql "SELECT count(*) FROM mensajes_enviados WHERE tipo = 'anexo' AND ref_id = $AID2 AND negocio_id = $NID2")"

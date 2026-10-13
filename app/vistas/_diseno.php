@@ -14,7 +14,7 @@ $grupoMas = ['mas', 'clientes', 'cliente', 'seguimiento', 'catalogo', 'paquetes'
 $grupoEventos = ['eventos', 'evento', 'evento_nuevo', 'evento_editar', 'cotizacion', 'contrato', 'evento_pagos', 'evento_dia', 'invitados'];
 array_push($grupoMas, 'cuestionarios', 'extras'); $grupoEventos[] = 'evento_formulario';   // portal del cliente (070)
 $grupoMas[] = 'metas'; if (!empty($_GET['id'])) $grupoEventos[] = 'plano'; else $grupoMas[] = 'plano';   // plano y metas (080)
-array_push($grupoMas, 'proveedor', 'compras', 'compra', 'por_pagar', 'incidencias');   // proveedores y compras (060)
+array_push($grupoMas, 'proveedor', 'compras', 'compra', 'por_pagar', 'incidencias', 'puntaje_proveedores');   // proveedores y compras (060, 091)
 $campana = 0;
 if ($u) {
     $campana = (new \TuEvento\Notificaciones(db()))->sinLeer((int) $u['id']);

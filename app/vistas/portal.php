@@ -82,6 +82,7 @@ $sugeridoTxt = number_format($sugerido, 2, ',', '');
                 <a class="boton boton-chico" href="<?= e(url('firmar', ['t' => $contrato['token']])) ?>">Firmar contrato</a>
             <?php endif; ?></li>
         <?php endif; ?>
+        <?php require RAIZ . '/app/vistas/_pt_anexos_portal.php'; // anexos del contrato (migración 090) ?>
     </ul>
     <?php endif; ?>
 </section>

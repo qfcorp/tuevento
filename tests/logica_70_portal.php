@@ -8,7 +8,7 @@
  *  - Encuesta de satisfacción: NPS, una respuesta por evento, freno por IP, aviso al dueño, reporte y resumen del mes.
  *  - Aislamiento entre negocios y enlaces secretos.
  */
-use TuEvento\{Cobranza, Cotizaciones, Cuestionarios, Encuestas, Eventos, Extras, Pagos, Reportes};
+use TuEvento\{Anexos, Cobranza, Contratos, Cotizaciones, Cuestionarios, Encuestas, Eventos, Extras, Pagos, Pdf, PdfDocumentos, Reportes};
 
 $db = base_limpia();
 $hoy = new DateTimeImmutable('today');
@@ -482,3 +482,150 @@ $resumen = (new Reportes($db))->resumenMes($nid, $mesAyer, $hoy);
 check('El resumen mensual trae el NPS', $rm['nps'], $resumen['nps']);
 check('El texto del reporte mensual muestra el NPS', true, str_contains(Reportes::textoResumenMes($resumen, 'Quinta Los Arrayanes'), 'NPS'));
 check('Sin encuestas, el texto no habla de NPS', false, str_contains(Reportes::textoResumenMes((new Reportes($db))->resumenMes($nidB, $mesAyer, $hoy), 'Otro'), 'NPS'));
+
+titulo('16. Anexo de contrato: solo si el contrato ya está firmado');
+$con = new Contratos($db);
+$anx = new Anexos($db);
+$pdfTexto = function (object $pdf): string {
+    $tmp = tempnam(sys_get_temp_dir(), 'pdf');
+    file_put_contents($tmp, Pdf::comoTexto($pdf));
+    $t = (string) shell_exec('pdftotext -layout ' . escapeshellarg($tmp) . ' - 2>/dev/null');
+    @unlink($tmp);
+    return preg_replace('/\s+/u', ' ', $t);
+};
+$negocioA = $db->query("SELECT * FROM negocios WHERE id = $nid")->fetch();
+// Sin contrato: no hay anexo, los extras entran en el contrato cuando se genere
+$eNoK = $eventoVendido('Sofía Sin Contrato', 'boda', 120, $salon);
+$rn = $ext->aprobar($nid, $ext->pedir($nid, $eNoK, [$pHora => 1], '', '8.8.1.1'), $dueno, '', $hoy);
+check('Sin contrato: no se prepara anexo', null, $rn['anexo_id']);
+check('Sin contrato: no avisa de contrato pendiente', null, $rn['contrato_sin_firmar']);
+$kNoK = $con->generar($nid, $eNoK, null, $dueno, $hoy);
+check('El contrato que se genera después ya trae los extras', true, str_contains($con->obtener($nid, $kNoK)['texto'], 'Hora adicional'));
+check('El contrato sigue saliendo de la plantilla de contrato (no la del anexo)', true, str_starts_with($con->obtener($nid, $kNoK)['texto'], 'CONTRATO DE PRESTACIÓN'));
+// Contrato enviado pero sin firmar: tampoco hay anexo, pero se avisa que ese contrato no incluye los extras
+$con->enviar($nid, $kNoK, $dueno);
+$rn2 = $ext->aprobar($nid, $ext->pedir($nid, $eNoK, [$pLoca => 1], '', '8.8.1.2'), $dueno, '', $hoy);
+check('Contrato sin firmar: no hay anexo', null, $rn2['anexo_id']);
+check('Contrato sin firmar: se avisa cuál no incluye los extras', (int) $con->obtener($nid, $kNoK)['numero'], $rn2['contrato_sin_firmar']);
+// Contrato firmado: se prepara el anexo
+$eK = $eventoVendido('Isabel Cristina Mora', 'boda', 100, $jardin);
+$db->exec("UPDATE clientes SET identificacion = '1712345678' WHERE id = (SELECT cliente_id FROM eventos WHERE id = $eK)");
+$kK = $con->generar($nid, $eK, null, $dueno, $hoy);
+$con->enviar($nid, $kK, $dueno);
+$tokK = (string) $db->query("SELECT token FROM contratos WHERE id = $kK")->fetchColumn();
+$con->firmar($tokK, 'Isabel Cristina Mora', '1712345678', firma_png(), true, '1.2.3.4');
+$K = $con->obtener($nid, $kK);
+check('Contrato firmado', 'firmado', $K['estado']);
+$total0K = $totalEvento($eK);
+$pk = $ext->pedir($nid, $eK, [$pHora => '2', $pLoca => 1], '', '8.8.1.3');
+$rk = $ext->aprobar($nid, $pk, $dueno, '', $hoy);
+check('Contrato firmado: se prepara el anexo', true, is_int($rk['anexo_id']));
+$A = $anx->obtener($nid, $rk['anexo_id']);
+check('Número propio: Anexo 1 al contrato N.º X', 'Anexo 1 al contrato N.º ' . $K['numero'], $A['titulo']);
+check('Queda listo para firmar', 'enviado', $A['estado']);
+check('Se puede firmar', true, $A['firmable']);
+check('Ligado al contrato y al pedido', [$kK, $pk], [(int) $A['contrato_id'], (int) $A['pedido_id']]);
+check('Monto del anexo = lo que subió el evento', $rk['monto'], (float) $A['monto']);
+check('El dinero no cambia: el evento sube 667 una sola vez', round($total0K + 667, 2), $totalEvento($eK));
+$t = $A['texto'];
+$cuotaK = $db->query('SELECT * FROM cuotas WHERE id = ' . (int) $rk['cuota_id'])->fetch();
+check('Variables: sin {{}} pendientes', false, str_contains($t, '{{'));
+check('Variables: título con los números', true, str_starts_with($t, 'ANEXO 1 AL CONTRATO N.º ' . $K['numero']));
+check('Variables: cliente', true, str_contains($t, 'Isabel Cristina Mora'));
+check('Variables: cédula del cliente', true, str_contains($t, '1712345678'));
+check('Variables: evento', true, str_contains($t, $ev->obtener($nid, $eK)['nombre']));
+check('Variables: fecha de firma del contrato original', 1, preg_match('/firmado el \\w+ ' . (new DateTimeImmutable(substr((string) $K['firmado_en'], 0, 10)))->format('j') . ' de /u', $t));
+check('Variables: lista de extras con cantidad, precio y subtotal', true, str_contains($t, '• Hora adicional — 2 × $150,00 + IVA = $300,00') && str_contains($t, '• Hora loca — 1 × $280,00 + IVA = $280,00'));
+check('Variables: subtotal y IVA de los extras', true, str_contains($t, 'suman $580,00 más $87,00 de IVA'));
+check('Variables: total de los extras con IVA y en letras', true, str_contains($t, 'es decir $667,00 (seiscientos sesenta y siete dólares'));
+check('Variables: total anterior y nuevo total', true, str_contains($t, 'pasa de $' . number_format($total0K, 2, ',', '.') . ' a $' . number_format($total0K + 667, 2, ',', '.')));
+check('Variables: cuota de extras con su valor y fecha', true, str_contains($t, '"' . $cuotaK['concepto'] . '" por $667,00, hasta el ' . (new DateTimeImmutable($cuotaK['vence']))->format('d/m/Y')));
+check('Variables: plan de pagos completo con la cuota nueva', true, str_contains($t, '• ' . $cuotaK['concepto'] . ': $667,00'));
+check('Cláusula: lo demás del contrato sigue igual', true, str_contains($t, 'se mantienen igual y siguen vigentes'));
+check('Huella SHA-256 del texto', hash('sha256', $t), $A['hash_sha256']);
+check('Íntegro', true, $A['integro']);
+check('Código de verificación de 12 letras', 1, preg_match('/^[A-F0-9]{12}$/', (string) $A['codigo_verificacion']));
+check('Historial: preparó el anexo', 1, (int) $db->query("SELECT count(*) FROM registro_cambios WHERE evento_id = $eK AND accion LIKE 'Preparó el anexo 1 al contrato%'")->fetchColumn());
+check('Un anexo por pedido: crearlo otra vez devuelve el mismo', $rk['anexo_id'], $anx->crearParaPedido($nid, $pk, $dueno, $hoy));
+$rk2 = $ext->aprobar($nid, $ext->pedir($nid, $eK, [$pHora => 1], '', '8.8.1.4'), $dueno, '', $hoy);
+check('Segundo pedido aprobado: Anexo 2', 'Anexo 2 al contrato N.º ' . $K['numero'], $anx->obtener($nid, $rk2['anexo_id'])['titulo']);
+check('Dos anexos por firmar', 2, count($anx->porFirmar($nid, $eK)));
+check('El contrato vigente sigue siendo el contrato (no el anexo)', $kK, (int) $con->vigente($nid, $eK)['id']);
+
+titulo('17. Plantilla del anexo');
+$pl = $anx->plantilla($nid);
+check('Plantilla de tipo anexo creada sola', 'anexo', $pl['tipo']);
+check('Una sola plantilla de anexo por negocio', 1, (int) $db->query("SELECT count(*) FROM plantillas_contrato WHERE negocio_id = $nid AND tipo = 'anexo'")->fetchColumn());
+check('Las plantillas de contrato no muestran la del anexo', false, in_array('anexo', array_column($con->plantillas($nid), 'tipo'), true));
+check_error('Variable que no existe en el anexo', 'no existen en el anexo', fn() => $anx->guardarPlantilla($nid, Anexos::plantillaDefecto() . ' {{garantia}}'));
+check_error('Texto muy corto', 'muy corto', fn() => $anx->guardarPlantilla($nid, 'Anexo {{cliente}}'));
+check_error('La plantilla del anexo no se edita como contrato', 'No se encontró la plantilla', fn() => $con->guardarPlantilla($nid, (int) $pl['id'], 'X anexo', Contratos::plantillaDefecto(), false));
+$anx->guardarPlantilla($nid, "ANEXO ESPECIAL {{numero_anexo}} de {{cliente}}: extras {{total_extras}}. Todo lo demás del contrato {{numero_contrato}} sigue igual.");
+$rk3 = $ext->aprobar($nid, $ext->pedir($nid, $eK, [$pLoca => 1], '', '8.8.1.5'), $dueno, '', $hoy);
+check('El anexo nuevo usa la plantilla editada', 'ANEXO ESPECIAL 3 de Isabel Cristina Mora: extras $322,00. Todo lo demás del contrato ' . $K['numero'] . ' sigue igual.', $anx->obtener($nid, $rk3['anexo_id'])['texto']);
+check('Los anexos ya hechos no cambian', $t, $anx->obtener($nid, $rk['anexo_id'])['texto']);
+$anx->restaurarPlantilla($nid);
+check('Restaurar el texto de fábrica', Anexos::plantillaDefecto(), $anx->plantilla($nid)['texto']);
+
+titulo('18. Recordatorio por WhatsApp del anexo');
+$mA = array_column($cob->mensajesDelDia($nid, $hoy)['anexo'], null, 'ref_id');
+check('Mensajes de hoy: los 3 anexos por firmar', 3, count(array_intersect_key($mA, array_flip([$rk['anexo_id'], $rk2['anexo_id'], $rk3['anexo_id']]))));
+check('Mensaje con el enlace de firma del anexo', true, str_contains($mA[$rk['anexo_id']]['texto'], 'r=firmar_anexo&t=' . $A['token']));
+check('Mensaje con el monto', true, str_contains($mA[$rk['anexo_id']]['texto'], '$667,00'));
+check('Motivo con el título', true, str_contains($mA[$rk['anexo_id']]['motivo'], 'Anexo 1 al contrato'));
+$cob->marcarEnviado($nid, 'anexo', $rk['anexo_id'], $dueno, $hoy);
+$cob->marcarEnviado($nid, 'anexo', $rk['anexo_id'], $dueno, $hoy);
+check('Marcar dos veces el mismo día no duplica', 1, (int) $db->query("SELECT count(*) FROM mensajes_enviados WHERE tipo = 'anexo' AND ref_id = {$rk['anexo_id']}")->fetchColumn());
+check('Marcado: no sale hoy', false, isset(array_column($cob->mensajesDelDia($nid, $hoy)['anexo'], null, 'ref_id')[$rk['anexo_id']]));
+check('Tampoco en 2 días', false, isset(array_column($cob->mensajesDelDia($nid, $hoy->modify('+2 days'))['anexo'], null, 'ref_id')[$rk['anexo_id']]));
+check('A los 3 días vuelve a salir si sigue sin firmar', true, isset(array_column($cob->mensajesDelDia($nid, $hoy->modify('+3 days'))['anexo'], null, 'ref_id')[$rk['anexo_id']]));
+check('Otro negocio: sin anexos en sus mensajes', 0, count($cob->mensajesDelDia($nidB, $hoy)['anexo']));
+check_error('Otro negocio no marca mis anexos', 'ya no está en la lista', fn() => $cob->marcarEnviado($nidB, 'anexo', $rk['anexo_id'], $duenoB, $hoy));
+
+titulo('19. El cliente firma el anexo con su enlace');
+check('Enlace falso', null, $anx->porToken(str_repeat('b', 48)));
+check('El enlace del contrato no abre el anexo', null, $anx->porToken($tokK));
+check_error('Firmar con enlace falso', 'no es válido', fn() => $anx->firmar(str_repeat('b', 48), 'Isabel Mora', '1712345678', firma_png(), true));
+check_error('Sin aceptar', 'Marca la casilla', fn() => $anx->firmar($A['token'], 'Isabel Mora', '1712345678', firma_png(), false));
+check_error('Nombre muy corto', 'nombre completo', fn() => $anx->firmar($A['token'], 'Isa', '1712345678', firma_png(), true));
+check_error('Cédula mal escrita', 'Escribe tu cédula', fn() => $anx->firmar($A['token'], 'Isabel Mora', '12345', firma_png(), true));
+check_error('Firma vacía', 'vacía', fn() => $anx->firmar($A['token'], 'Isabel Mora', '1712345678', firma_png(true), true));
+$antesF = $avisos('✍️ %firmó el anexo 1%', $nid);
+$F = $anx->firmar($A['token'], 'Isabel Cristina Mora', '1712345678', firma_png(), true, '5.6.7.8', 'Prueba');
+check('Anexo firmado', 'firmado', $F['estado']);
+check('Guarda quién, cuándo y desde dónde', ['Isabel Cristina Mora', '1712345678', '5.6.7.8'], [$F['firmante_nombre'], $F['firmante_identificacion'], $F['firma_ip']]);
+check('Guarda la imagen de la firma', true, \TuEvento\Fotos::ruta('firmas', $F['firma_archivo']) !== null);
+check('Aviso al local (dueño y vendedores)', $antesF + count((new \TuEvento\Notificaciones($db))->destinos($nid, ['dueno', 'vendedor'])), $avisos('✍️ %firmó el anexo 1%', $nid));
+check('Historial: el cliente firmó', 1, (int) $db->query("SELECT count(*) FROM registro_cambios WHERE evento_id = $eK AND accion LIKE 'Firmó el anexo 1 al contrato%'")->fetchColumn());
+check_error('Firmar dos veces', 'ya fue firmado', fn() => $anx->firmar($A['token'], 'Isabel Cristina Mora', '1712345678', firma_png(), true));
+check('Ya no se recuerda', false, isset(array_column($cob->mensajesDelDia($nid, $hoy->modify('+3 days'))['anexo'], null, 'ref_id')[$rk['anexo_id']]));
+check('Sigue íntegro después de firmar', true, $anx->obtener($nid, $rk['anexo_id'])['integro']);
+$V = $anx->verificar(strtolower($F['codigo_verificacion']));
+check('Verificación por el código del QR', [(int) $rk['anexo_id'], 'Anexo', 'firmado'], [(int) $V['id'], $V['documento_corto'], $V['estado']]);
+check('Verificación con código inventado', null, $anx->verificar('ABCDEF123456'));
+$pdf = PdfDocumentos::contrato($negocioA, $anx->obtener($nid, $rk['anexo_id']), 'https://prueba.tuevento.ec/?r=verificar&c=' . $F['codigo_verificacion']);
+check('PDF del anexo', '%PDF', substr(Pdf::comoTexto($pdf), 0, 4));
+$tp = $pdfTexto($pdf);
+check('El PDF dice que es el anexo firmado', true, str_contains($tp, 'Anexo firmado electrónicamente por el cliente'));
+check('El PDF lleva el código y la huella', true, str_contains($tp, $F['codigo_verificacion']) && str_contains($tp, substr($F['hash_sha256'], 0, 20)));
+check('El PDF del contrato sigue diciendo contrato', true, str_contains($pdfTexto(PdfDocumentos::contrato($negocioA, $K, null)), 'Contrato firmado electrónicamente'));
+// Texto alterado: no se firma
+$A2 = $anx->obtener($nid, $rk2['anexo_id']);
+$db->exec("UPDATE contrato_anexos SET texto = texto || ' (cambiado)' WHERE id = {$rk2['anexo_id']}");
+check('Texto cambiado: la huella ya no coincide', false, $anx->obtener($nid, $rk2['anexo_id'])['integro']);
+check_error('Texto cambiado: no se firma', 'fue alterado', fn() => $anx->firmar($A2['token'], 'Isabel Cristina Mora', '1712345678', firma_png(), true));
+$db->prepare('UPDATE contrato_anexos SET texto = ? WHERE id = ?')->execute([$A2['texto'], $rk2['anexo_id']]);
+// Contrato anulado: los anexos pendientes quedan sin efecto
+$con->anular($nid, $kK, 'Cambio de espacio', $dueno);
+check('Contrato anulado: el anexo pendiente ya no se firma', false, $anx->obtener($nid, $rk2['anexo_id'])['firmable']);
+check('Contrato anulado: no quedan anexos por firmar', 0, count($anx->porFirmar($nid, $eK)));
+check('Contrato anulado: ya no se recuerdan', 0, count(array_filter($cob->mensajesDelDia($nid, $hoy->modify('+3 days'))['anexo'], fn($m) => $m['evento_id'] === $eK)));
+check_error('Contrato anulado: firmar el anexo', 'ya no se puede firmar', fn() => $anx->firmar($A2['token'], 'Isabel Cristina Mora', '1712345678', firma_png(), true));
+check('El anexo firmado se conserva', 'firmado', $anx->obtener($nid, $rk['anexo_id'])['estado']);
+
+titulo('20. Anexos: un negocio nunca ve los de otro');
+check('Otro negocio no abre mi anexo', null, $anx->obtener($nidB, $rk['anexo_id']));
+check('Otro negocio no ve anexos de mi evento', 0, count($anx->deEvento($nidB, $eK)));
+check('Otro negocio no busca anexos por mi pedido', null, $anx->porPedido($nidB, $pk));
+check_error('Otro negocio no prepara anexos de mis pedidos', 'no está aprobado', fn() => $anx->crearParaPedido($nidB, $pk));
+check('Otro negocio: su plantilla de anexo es propia', true, (int) $anx->plantilla($nidB)['id'] !== (int) $pl['id']);

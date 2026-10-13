@@ -60,7 +60,10 @@ if (es_post()) {
                 if ($accion === 'aprobar') {
                     $r = $extras->aprobar($nid, $pid, $u, campo('nota'));
                     aviso('Extras aprobados: el evento sube ' . dinero($r['monto']) . ' (nuevo total ' . dinero($r['total']) . '). Se creó la cotización N.º '
-                        . $r['numero'] . ' (versión ' . $r['version'] . ')' . ($r['cuota_id'] ? ' y una cuota nueva en el plan de pagos' : '') . '. Avísale al cliente por WhatsApp.');
+                        . $r['numero'] . ' (versión ' . $r['version'] . ')' . ($r['cuota_id'] ? ' y una cuota nueva en el plan de pagos' : '') . '. '
+                        . ($r['anexo_id'] ? 'Como el contrato ya está firmado, se preparó un anexo para que el cliente lo firme: envíale el enlace por WhatsApp.'
+                           : ($r['contrato_sin_firmar'] ? 'Ojo: el contrato N.º ' . $r['contrato_sin_firmar'] . ' (sin firmar) no incluye estos extras; anúlalo y prepara uno nuevo para que los incluya.'
+                              : 'El evento todavía no tiene contrato firmado: los extras entran en el contrato cuando lo generes.') . ' Avísale al cliente por WhatsApp.'));
                 } else {
                     $extras->rechazar($nid, $pid, $u, campo('nota'));
                     aviso('Pedido no aprobado. El cliente ve tu nota en su portal; avísale por WhatsApp.');
@@ -85,10 +88,13 @@ if ($verDinero) {
     $st->execute([$nid, $id]);
     $borradores = (int) $st->fetchColumn();
 }
+$anexosPorPedido = [];   // anexo de contrato de cada pedido aprobado (090)
+if ($verDinero) foreach ((new \TuEvento\Anexos(db()))->deEvento($nid, $id) as $a) if ($a['pedido_id']) $anexosPorPedido[(int) $a['pedido_id']] = $a;
+$contratoFirmado = $verDinero && (new \TuEvento\Anexos(db()))->contratoFirmado($nid, $id) !== null;
 $borradorPregunta = $_SESSION['pt_pregunta_borrador'] ?? null;
 unset($_SESSION['pt_pregunta_borrador']);
 vista('evento_formulario', [
     'ev' => $ev, 'tab' => $tab, 'form' => $form, 'comercial' => $comercial && puede_editar($u), 'verDinero' => $verDinero,
     'pedidos' => $pedidos, 'borradores' => $borradores, 'encuesta' => (new Encuestas(db()))->deEvento($nid, $id),
-    'borradorPregunta' => $borradorPregunta,
+    'borradorPregunta' => $borradorPregunta, 'anexosPorPedido' => $anexosPorPedido, 'contratoFirmado' => $contratoFirmado,
 ], ($verDinero ? 'Formulario y extras · ' : 'Formulario · ') . $ev['nombre']);

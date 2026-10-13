@@ -197,3 +197,25 @@ a.cifra-tarjeta { text-decoration: none; color: inherit; }
     .pv-pagos li { flex-direction: column; align-items: stretch; }
     .pv-pagos li .derecha { text-align: left; justify-content: flex-start; }
 }
+
+/* Cómo se calcula el puntaje (091) */
+.pv-explica ul { margin: 0; padding-left: 18px; display: grid; gap: 6px; }
+.pv-config-grupo { border: 1px solid var(--linea); border-radius: 10px; padding: 10px 12px 2px; margin: 0 0 14px; min-width: 0; }
+.pv-config-grupo legend { font-weight: 700; padding: 0 6px; }
+.pv-peso { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 8px 0; border-bottom: 1px dashed var(--linea); }
+.pv-peso label { display: flex; flex-direction: column; min-width: 0; }
+.pv-peso label small { font-weight: 400; }
+.pv-peso-campo { flex: none; display: flex; align-items: center; gap: 4px; font-weight: 600; }
+.pv-peso-campo input { width: 76px; text-align: right; }
+.pv-suma { margin: 10px 0; font-weight: 700; padding: 8px 10px; border-radius: 8px; }
+.pv-suma-ok { background: var(--ok-claro); color: #1C5A31; }
+.pv-suma-mal { background: var(--rojo-claro); color: #7E2A23; }
+.pv-previa { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.pv-previa li { border: 1px solid var(--linea); border-radius: 10px; padding: 10px 12px; }
+.pv-previa-nombre { display: flex; flex-direction: column; }
+.pv-previa-cifras { display: flex; align-items: center; gap: 10px; margin-top: 8px; }
+.pv-previa-col { display: flex; flex-direction: column; align-items: center; gap: 2px; flex: 1; }
+.pv-previa-flecha { font-size: 1.3rem; color: var(--tinta-suave); }
+.pv-previa-detalle { margin: 8px 0 0; }
+.pv-config .boton[disabled] { opacity: .5; cursor: default; }
+@media (min-width: 700px) { .pv-config .pv-vista { position: sticky; top: 16px; } }

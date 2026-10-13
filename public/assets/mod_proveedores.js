@@ -56,3 +56,41 @@ document.addEventListener('DOMContentLoaded', () => {
         calcular();
     });
 });
+
+// Cómo se calcula el puntaje (091): suma de los pesos y vista previa en vivo (sin guardar)
+document.addEventListener('DOMContentLoaded', () => {
+    const form = document.querySelector('form[data-pv-puntaje]');
+    if (!form) return;
+    const suma = form.querySelector('[data-pv-suma]');
+    const vista = document.querySelector('[data-pv-vista]');
+    const error = document.querySelector('[data-pv-error]');
+    const pesos = ['peso_calificacion', 'peso_puntualidad', 'peso_cumplimiento', 'peso_incidencias'];
+    let espera = null, pedido = 0;
+    const sumar = () => {
+        const t = pesos.reduce((a, n) => a + (parseInt(form.elements[n].value, 10) || 0), 0);
+        suma.textContent = t === 100 ? '✓ Suman 100 %' : 'Suman ' + t + ' %: deben sumar 100 %';
+        suma.classList.toggle('pv-suma-ok', t === 100);
+        suma.classList.toggle('pv-suma-mal', t !== 100);
+        return t;
+    };
+    const previa = async () => {
+        if (!vista) return;
+        const n = ++pedido;
+        const datos = new FormData(form);
+        datos.set('accion', 'vista_previa');
+        try {
+            const r = await fetch(form.action + '&json=1', { method: 'POST', body: datos, credentials: 'same-origin' });
+            const j = await r.json();
+            if (n !== pedido) return;   // llegó una respuesta vieja
+            if (j.ok) { vista.innerHTML = j.html; error.hidden = true; }
+            else { error.textContent = j.error || 'Revisa los valores.'; error.hidden = false; }
+        } catch (e) { /* sin conexión: queda el botón "Ver cómo quedaría" */ }
+    };
+    form.addEventListener('input', () => {
+        sumar();
+        clearTimeout(espera);
+        espera = setTimeout(previa, 450);
+    });
+    form.addEventListener('change', () => { clearTimeout(espera); espera = setTimeout(previa, 150); });
+    sumar();
+});

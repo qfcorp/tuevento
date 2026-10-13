@@ -13,27 +13,27 @@ $enmascarar = function (?string $id): string {
 </header>
 
 <?php if ($codigo !== '' && $k): ?>
-    <?php $ok = $k['integro'] && $k['estado'] !== 'anulado'; ?>
+    <?php $ok = $k['integro'] && $k['estado'] !== 'anulado'; $doc = $k['documento_corto'] ?? 'Contrato'; // 'Anexo' para los anexos (090) ?>
     <section class="bloque doc-verif <?= $ok ? 'doc-verif-ok' : 'doc-verif-mal' ?>" aria-live="polite">
         <p class="doc-verif-icono" aria-hidden="true"><?= $ok ? '✓' : '✕' ?></p>
         <?php if (!$k['integro']): ?>
             <h2>El texto NO coincide</h2>
             <p>El contrato existe, pero su texto fue cambiado después de prepararlo. <strong>No confíes en este documento</strong> y consulta con el local.</p>
         <?php elseif ($k['estado'] === 'anulado'): ?>
-            <h2>Contrato anulado</h2>
+            <h2><?= e($doc) ?> anulado</h2>
             <p>Este contrato existe y su texto está íntegro, pero el local lo <strong>anuló</strong>. Ya no tiene validez.</p>
         <?php elseif ($k['estado'] === 'firmado'): ?>
-            <h2>Contrato auténtico y firmado</h2>
+            <h2><?= e($doc) ?> auténtico y firmado</h2>
             <p>El texto está íntegro: no fue cambiado desde que se preparó.</p>
         <?php else: ?>
-            <h2>Contrato auténtico, sin firmar todavía</h2>
+            <h2><?= e($doc) ?> auténtico, sin firmar todavía</h2>
             <p>El texto está íntegro, pero el cliente aún no lo ha firmado.</p>
         <?php endif; ?>
     </section>
     <section class="bloque">
         <dl class="ficha-datos doc-verif-datos">
             <dt>Local</dt><dd><?= e($k['negocio']) ?><?= $k['negocio_ruc'] ? ' · RUC ' . e($k['negocio_ruc']) : '' ?></dd>
-            <dt>Contrato</dt><dd>N.º <?= (int) $k['numero'] ?> · <?= e(Contratos::ESTADOS[$k['estado']] ?? $k['estado']) ?></dd>
+            <dt><?= e($doc) ?></dt><dd><?= isset($k['titulo']) ? e($k['titulo']) : 'N.º ' . (int) $k['numero'] ?> · <?= e(isset($k['titulo']) ? (\TuEvento\Anexos::ESTADOS[$k['estado']] ?? $k['estado']) : (Contratos::ESTADOS[$k['estado']] ?? $k['estado'])) ?></dd>
             <dt>Evento</dt><dd><?= e($k['evento']) ?> (<?= e($k['evento_codigo']) ?>)</dd>
             <dt>Fecha del evento</dt><dd><?= e(fecha_larga($k['evento_fecha'])) ?></dd>
             <?php if ($k['estado'] === 'firmado'): ?>

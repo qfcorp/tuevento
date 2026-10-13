@@ -5,7 +5,7 @@
  * cuentas por pagar y antigüedad de saldos, ganancia real con compras, comparar precios, cumplimiento y puntualidad,
  * puntaje y ranking, incidencias, portal del proveedor, tareas automáticas, PDFs y aislamiento entre negocios.
  */
-use TuEvento\{Adjuntos, AvisosProveedores, Automaticas, Cobranza, Compras, DiaEvento, Eventos, FacturaXml, Incidencias, Pdf, PdfCompras,
+use TuEvento\{Adjuntos, AvisosProveedores, Automaticas, Cobranza, Compras, DiaEvento, Eventos, FacturaXml, Incidencias, Pdf, PdfCompras, PuntajeProveedores,
               ProveedoresFicha, Reportes};
 
 $db = base_limpia();
@@ -566,3 +566,131 @@ check('El portal del proveedor de B no ve órdenes de A', 0, count($co->delPorta
 check_error('El proveedor de B no responde órdenes de A', 'No se encontró esa orden', fn() => $co->responderDesdePortal($PB, $c6, true));
 check_error('El proveedor de B no marca llegada en eventos de A', 'No se encontró ese evento', fn() => $fi->portalLlegue($PB, $epDj));
 check('Costo de compras de un evento de A pedido por B: cero', 0.0, $co->costoEvento($nidB, $e1));
+
+titulo('19. Puntaje configurable por negocio (091)');
+$pj = new PuntajeProveedores($db);
+$C = fn(array $x) => array_merge(PuntajeProveedores::RECOMENDADO, $x);
+check('Sin configuración: los valores recomendados', PuntajeProveedores::RECOMENDADO, $pj->config($nid));
+check('Sin configuración: es la recomendada', true, $pj->esRecomendada($nid));
+// Los valores recomendados dan EXACTAMENTE la fórmula de antes (40/30/20/10, incidencias 10/25/50, tope en Bueno)
+$base = $fi->puntajes($nid, $hoy);
+$antes = function (array $r): ?int {
+    $partes = [];
+    if ($r['calificacion'] !== null) $partes[] = [$r['calificacion'] * 20, 40];
+    if ($r['puntualidad'] !== null) $partes[] = [$r['puntualidad'], 30];
+    if ($r['cumplimiento'] !== null) $partes[] = [$r['cumplimiento'], 20];
+    if (!$partes) return null;
+    $partes[] = [100 - min(100, $r['graves'] * 50 + $r['medias'] * 25 + max(0, $r['incidencias'] - $r['graves'] - $r['medias']) * 10), 10];
+    return (int) round(array_sum(array_map(fn($x) => $x[0] * $x[1], $partes)) / array_sum(array_column($partes, 1)));
+};
+check('Recomendados = fórmula de antes (todos los proveedores)', array_map($antes, $base), array_map(fn($r) => $r['puntaje'], $base));
+check('Pasar la configuración recomendada a mano da lo mismo', $base, $fi->puntajes($nid, $hoy, PuntajeProveedores::RECOMENDADO));
+// Dos fotógrafos: uno puntual con 2 estrellas, otro tarde con 5 estrellas
+$e4 = $ev->crear($nid, ['cliente' => ['nombre' => 'Rocío Andrade', 'telefono' => '0944444444'], 'tipo' => 'boda', 'fecha' => $dia(-10),
+    'hora_inicio' => '18:00', 'hora_fin' => '23:00', 'invitados' => 90, 'espacios' => [$jardin]], null, $hoy->modify('-40 days'));
+$db->exec("UPDATE eventos SET estado = 'realizado' WHERE id = $e4");
+$db->exec("UPDATE proveedores SET activo = true WHERE id IN ($pFoto2, $pFoto3)");
+$epF2 = $de->agregarProveedorEvento($nid, $e4, ['proveedor_id' => $pFoto2, 'hora_llegada' => '14:00']);
+$epF3 = $de->agregarProveedorEvento($nid, $e4, ['proveedor_id' => $pFoto3, 'hora_llegada' => '14:00']);
+$fi->marcarLlegada($nid, $epF2, '13:55', $dueno);
+$fi->marcarLlegada($nid, $epF3, '15:00', $dueno);
+$fi->evaluar($nid, $epF2, ['cumplimiento' => 'cumplio', 'calificacion' => '2'], $dueno);
+$fi->evaluar($nid, $epF3, ['cumplimiento' => 'cumplio', 'calificacion' => '5'], $dueno);
+$orden = fn(array $cfg) => array_values(array_filter(array_map(fn($r) => $r['proveedor_id'], $fi->ranking($nid, $hoy, true, $cfg)), fn($id) => in_array($id, [$pFoto2, $pFoto3], true)));
+$soloCal = $C(['peso_calificacion' => 100, 'peso_puntualidad' => 0, 'peso_cumplimiento' => 0, 'peso_incidencias' => 0]);
+$soloPun = $C(['peso_calificacion' => 0, 'peso_puntualidad' => 100, 'peso_cumplimiento' => 0, 'peso_incidencias' => 0]);
+check('Solo estrellas: 5★ = 100 y 2★ = 40', [100, 40], [$fi->puntaje($nid, $pFoto3, $hoy, $soloCal)['puntaje'], $fi->puntaje($nid, $pFoto2, $hoy, $soloCal)['puntaje']]);
+check('Solo estrellas: gana el de 5★ en el ranking', [$pFoto3, $pFoto2], $orden($soloCal));
+check('Solo puntualidad: gana el puntual', [$pFoto2, $pFoto3], $orden($soloPun));
+check('Solo puntualidad: el que llegó 1 hora tarde tiene 0', 0, $fi->puntaje($nid, $pFoto3, $hoy, $soloPun)['puntaje']);
+$sinPun = $C(['peso_calificacion' => 50, 'peso_puntualidad' => 0, 'peso_cumplimiento' => 50, 'peso_incidencias' => 0]);
+$r3 = $fi->puntaje($nid, $pFoto3, $hoy, $sinPun);
+check('Peso 0: la puntualidad no se toma en cuenta', 100, $r3['puntaje']);
+check('Peso 0: no aparece en el detalle', ['peso_calificacion', 'peso_cumplimiento'], array_keys($r3['detalle']));
+check('Detalle con el peso real de cada parte', 50.0, $r3['detalle']['peso_calificacion']['peso']);
+$repartido = $fi->puntaje($nid, $pFoto3, $hoy, $C(['peso_calificacion' => 40, 'peso_puntualidad' => 30, 'peso_cumplimiento' => 0, 'peso_incidencias' => 30]));
+check('Lo que no tiene datos o pesa 0 reparte su peso (40/30/30)', (int) round((100 * 40 + 0 * 30 + 100 * 30) / 100), $repartido['puntaje']);
+// Tolerancia
+check('Con 10 min de tolerancia, llegar 60 min tarde es tarde', 0, $fi->puntaje($nid, $pFoto3, $hoy, $soloPun)['puntualidad']);
+check('Con 60 min de tolerancia, cuenta a tiempo', 100, $fi->puntaje($nid, $pFoto3, $hoy, $C(['tolerancia_min' => 60]))['puntualidad']);
+check('Tolerancia en la puntualidad de un evento', 'a_tiempo', ProveedoresFicha::puntualidad(['fecha' => $dia(-10), 'hora_inicio' => '18:00', 'hora_llegada' => '14:00', 'llegada_real' => $dia(-10) . ' 14:15'], 20)['estado']);
+check('…y sin ella (10 min recomendados)', 'tarde', ProveedoresFicha::puntualidad(['fecha' => $dia(-10), 'hora_inicio' => '18:00', 'hora_llegada' => '14:00', 'llegada_real' => $dia(-10) . ' 14:15'])['estado']);
+// Tope con incidencia grave
+$inc->crear($nid, ['evento_id' => $e4, 'proveedor_id' => $pFoto3, 'gravedad' => 'grave', 'descripcion' => 'Perdió las fotos de la ceremonia'], null, $dueno);
+$r = $fi->puntaje($nid, $pFoto3, $hoy, $soloCal);
+check('Grave con tope (recomendado): 100 puntos pero nivel Bueno', [100, 'bueno', true], [$r['puntaje'], $r['nivel'], $r['tope_aplicado']]);
+check('Tope en Regular', 'regular', $fi->puntaje($nid, $pFoto3, $hoy, $C(['peso_calificacion' => 100, 'peso_puntualidad' => 0, 'peso_cumplimiento' => 0, 'peso_incidencias' => 0, 'tope_nivel' => 'regular']))['nivel']);
+check('Sin tope: Excelente', 'excelente', $fi->puntaje($nid, $pFoto3, $hoy, $C(['peso_calificacion' => 100, 'peso_puntualidad' => 0, 'peso_cumplimiento' => 0, 'peso_incidencias' => 0, 'tope_grave' => false]))['nivel']);
+$conInc = $C(['peso_calificacion' => 50, 'peso_puntualidad' => 0, 'peso_cumplimiento' => 0, 'peso_incidencias' => 50, 'tope_grave' => false]);
+check('Una grave resta 50 (recomendado): (100 + 50) / 2', 75, $fi->puntaje($nid, $pFoto3, $hoy, $conInc)['puntaje']);
+check('Si la grave resta 100: (100 + 0) / 2', 50, $fi->puntaje($nid, $pFoto3, $hoy, array_merge($conInc, ['resta_grave' => 100]))['puntaje']);
+// Umbrales
+check('Umbrales: 92 es Bueno si Excelente empieza en 95', 'bueno', PuntajeProveedores::nivel(92, $C(['umbral_excelente' => 95, 'umbral_bueno' => 90, 'umbral_regular' => 80])));
+check('Umbrales: 85 es Regular con esos niveles', 'regular', PuntajeProveedores::nivel(85, $C(['umbral_excelente' => 95, 'umbral_bueno' => 90, 'umbral_regular' => 80])));
+check('Umbrales: 79 es Malo con esos niveles', 'malo', PuntajeProveedores::nivel(79, $C(['umbral_excelente' => 95, 'umbral_bueno' => 90, 'umbral_regular' => 80])));
+check('Umbrales recomendados: 85 Excelente, 84 Bueno', ['excelente', 'bueno'], [PuntajeProveedores::nivel(85, PuntajeProveedores::RECOMENDADO), PuntajeProveedores::nivel(84, PuntajeProveedores::RECOMENDADO)]);
+// Periodo: un evento de hace 8 meses
+$e5 = $ev->crear($nid, ['cliente' => ['nombre' => 'Mario Vega', 'telefono' => '0933333333'], 'tipo' => 'cumpleanos', 'fecha' => $dia(-240),
+    'hora_inicio' => '15:00', 'hora_fin' => '20:00', 'invitados' => 50, 'espacios' => [$jardin]], null, $hoy->modify('-300 days'));
+$db->exec("UPDATE eventos SET estado = 'realizado' WHERE id = $e5");
+$epF2b = $de->agregarProveedorEvento($nid, $e5, ['proveedor_id' => $pFoto2]);
+$fi->evaluar($nid, $epF2b, ['calificacion' => '1'], $dueno);
+check('Todo el historial: 2 eventos y 1,5★', [2, 1.5], [$fi->puntaje($nid, $pFoto2, $hoy)['eventos'], $fi->puntaje($nid, $pFoto2, $hoy)['calificacion']]);
+check('Últimos 12 meses: también cuenta', 1.5, $fi->puntaje($nid, $pFoto2, $hoy, $C(['periodo_meses' => 12]))['calificacion']);
+check('Últimos 6 meses: solo el evento reciente (2★)', [1, 2.0], [$fi->puntaje($nid, $pFoto2, $hoy, $C(['periodo_meses' => 6]))['eventos'], $fi->puntaje($nid, $pFoto2, $hoy, $C(['periodo_meses' => 6]))['calificacion']]);
+$incViejo = $inc->crear($nid, ['evento_id' => $e5, 'proveedor_id' => $pFoto2, 'gravedad' => 'leve', 'descripcion' => 'Llegó sin batería extra'], null, $dueno);
+check('Periodo: la incidencia vieja no cuenta en 6 meses', [1, 0], [$fi->puntaje($nid, $pFoto2, $hoy)['incidencias'], $fi->puntaje($nid, $pFoto2, $hoy, $C(['periodo_meses' => 6]))['incidencias']]);
+// Mínimo de eventos
+$min3 = $fi->puntaje($nid, $pFoto2, $hoy, $C(['minimo_eventos' => 3]));
+check('Mínimo 3 eventos: sin puntaje', [null, null, true], [$min3['puntaje'], $min3['nivel'], $min3['pocos_datos']]);
+check('Mínimo 3 eventos: "Sin datos suficientes"', 'Sin datos suficientes', ProveedoresFicha::textoSinPuntaje($min3));
+check('Mínimo 2 eventos: ya tiene puntaje', true, $fi->puntaje($nid, $pFoto2, $hoy, $C(['minimo_eventos' => 2]))['puntaje'] !== null);
+check('Sin datos de verdad: "Sin datos"', 'Sin datos', ProveedoresFicha::textoSinPuntaje($fi->puntaje($nid, $pFoto1, $hoy)));
+check('Mínimo 2: el de 1 evento queda sin puntaje y va después en el ranking', [$pFoto2, $pFoto3], $orden($C(['minimo_eventos' => 2, 'peso_calificacion' => 0, 'peso_puntualidad' => 100, 'peso_cumplimiento' => 0, 'peso_incidencias' => 0])));
+check('…aunque con mínimo 0 iría primero', [$pFoto3, $pFoto2], $orden($C(['minimo_eventos' => 0, 'peso_calificacion' => 100, 'peso_puntualidad' => 0, 'peso_cumplimiento' => 0, 'peso_incidencias' => 0, 'tope_grave' => false])));
+// Validación
+$ok = PuntajeProveedores::RECOMENDADO;
+check_error('Los pesos deben sumar 100', 'Ahora suman 95 %', fn() => PuntajeProveedores::validar(array_merge($ok, ['peso_incidencias' => 5])));
+check_error('Peso con letras', 'número entero', fn() => PuntajeProveedores::validar(array_merge($ok, ['peso_calificacion' => 'mucho'])));
+check_error('Peso negativo', 'número entero', fn() => PuntajeProveedores::validar(array_merge($ok, ['peso_calificacion' => '-10', 'peso_puntualidad' => '80'])));
+check_error('Tolerancia demasiado grande', 'va de 0 a 120', fn() => PuntajeProveedores::validar(array_merge($ok, ['tolerancia_min' => '200'])));
+check_error('Leve no puede restar más que grave', 'leve ≤ media ≤ grave', fn() => PuntajeProveedores::validar(array_merge($ok, ['resta_leve' => '60'])));
+check_error('Niveles desordenados', 'de mayor a menor', fn() => PuntajeProveedores::validar(array_merge($ok, ['umbral_bueno' => '90'])));
+check_error('Excelente más de 100', 'va de 1 a 100', fn() => PuntajeProveedores::validar(array_merge($ok, ['umbral_excelente' => '120'])));
+check_error('Periodo inventado', 'periodo', fn() => PuntajeProveedores::validar(array_merge($ok, ['periodo_meses' => '3'])));
+check_error('Tope en Excelente no tiene sentido', 'nivel máximo', fn() => PuntajeProveedores::validar(array_merge($ok, ['tope_nivel' => 'excelente'])));
+check_error('Mínimo de eventos fuera de rango', 'va de 0 a 50', fn() => PuntajeProveedores::validar(array_merge($ok, ['minimo_eventos' => '80'])));
+check('Valores del formulario (texto) se aceptan', $C(['peso_calificacion' => 50, 'peso_incidencias' => 0, 'tope_grave' => false]),
+      PuntajeProveedores::validar(['peso_calificacion' => '50', 'peso_puntualidad' => '30', 'peso_cumplimiento' => '20', 'peso_incidencias' => '0', 'tolerancia_min' => '10',
+          'resta_leve' => '10', 'resta_media' => '25', 'resta_grave' => '50', 'tope_nivel' => 'bueno', 'umbral_excelente' => '85', 'umbral_bueno' => '70',
+          'umbral_regular' => '50', 'periodo_meses' => '0', 'minimo_eventos' => '0']));
+check('La base no deja guardar pesos que no suman 100', true, (function () use ($db, $nid) {
+    try { $db->prepare('INSERT INTO puntaje_proveedores_config (negocio_id, peso_calificacion) VALUES (?, 90)')->execute([$nid]); return false; } catch (PDOException) { return true; }
+})());
+// Guardar y registro de cambios
+$cambios = $pj->guardar($nid, array_merge($ok, ['peso_calificacion' => '50', 'peso_puntualidad' => '20', 'tolerancia_min' => '15', 'tope_grave' => '']), $dueno);
+check('Guardar: lista de cambios con antes y después', true, in_array('peso de la calificación: 40 % → 50 %', $cambios, true) && in_array('tolerancia: 10 min → 15 min', $cambios, true));
+check('Guardar: 4 cambios', 4, count($cambios));
+check('Ya no es la recomendada', false, $pj->esRecomendada($nid));
+check('Se aplica a los puntajes del negocio', $fi->puntajes($nid, $hoy, $pj->config($nid)), $fi->puntajes($nid, $hoy));
+check('Se aplica a la tolerancia del negocio', 15, $fi->tolerancia($nid));
+$rc = $db->query("SELECT quien, accion, evento_id FROM registro_cambios WHERE negocio_id = $nid AND accion LIKE 'Puntaje de proveedores:%' ORDER BY id DESC LIMIT 1")->fetch();
+check('Registro de cambios: quién', $dueno['nombre'], $rc['quien']);
+check('Registro de cambios: antes y después', true, str_contains($rc['accion'], 'peso de la calificación: 40 % → 50 %') && str_contains($rc['accion'], 'tope con incidencia grave: sí → no'));
+check('Registro de cambios: del negocio (sin evento)', null, $rc['evento_id']);
+check('Historial de la configuración', 1, count($pj->historial($nid)));
+check('Guardar lo mismo no anota nada', [[], 1], [$pj->guardar($nid, $pj->config($nid), $dueno), count($pj->historial($nid))]);
+$pLlega = $fi->marcarLlegada($nid, $epF3, '14:12', $dueno);
+check('"Llegó" usa la tolerancia guardada (12 min tarde con 15 de tolerancia)', 'a_tiempo', $pLlega['estado']);
+check('Los bloques del cronograma usan la tolerancia del negocio', true, $fi->bloquesDe($epDj)[1]['atraso'] === 40 && $fi->bloquesDe($epDj)[1]['a_tiempo'] === false);
+check('Explicación en palabras con lo guardado', true, str_contains(implode(' ', PuntajeProveedores::explicar($pj->config($nid))), 'calificación (estrellas) 50 %'));
+check('Explicación: el peso 0 se dice', true, str_contains(implode(' ', PuntajeProveedores::explicar($C(['peso_incidencias' => 0, 'peso_calificacion' => 50]))), 'No se toma en cuenta: sin incidencias'));
+// Aislamiento: la configuración de A no toca a B
+check('B sigue con los valores recomendados', PuntajeProveedores::RECOMENDADO, $pj->config($nidB));
+check('B sigue con 10 min de tolerancia', 10, $fi->tolerancia($nidB));
+check('El historial de A no se ve en B', 0, count($pj->historial($nidB)));
+$pj->guardar($nidB, array_merge($ok, ['minimo_eventos' => '5']), $duenoB);
+check('Guardar en B no cambia A', [0, 15], [$pj->config($nid)['minimo_eventos'], $pj->config($nid)['tolerancia_min']]);
+check('Volver a los recomendados', true, (function () use ($pj, $nid, $dueno) { $pj->recomendados($nid, $dueno); return $pj->esRecomendada($nid); })());
+check('Volver a los recomendados queda anotado', true, str_contains($pj->historial($nid)[0]['accion'], 'peso de la calificación: 50 % → 40 %'));
+check('Con los recomendados vuelve el resultado de siempre', array_map($antes, $fi->puntajes($nid, $hoy)), array_map(fn($r) => $r['puntaje'], $fi->puntajes($nid, $hoy)));

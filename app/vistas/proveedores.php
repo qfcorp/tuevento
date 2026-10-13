@@ -2,7 +2,7 @@
 use TuEvento\{Cotizaciones, ProveedoresFicha, WhatsApp};
 
 /** @var array $lista @var ?array $proveedor @var ?array $previo @var array $puntajes @var array $alertas @var bool $verRanking @var array $ranking
- *  @var bool $comercial @var bool $verDinero */
+ *  @var bool $comercial @var bool $verDinero @var array $cfgPuntaje (cómo se calcula el puntaje del negocio) */
 $editable = puede_editar($u);
 $p = $proveedor;
 $v = fn(string $k, $def = '') => e($previo[$k] ?? $p[$k] ?? $def);
@@ -33,8 +33,8 @@ $num = fn($x) => $x === null || $x === '' ? '' : rtrim(rtrim(number_format((floa
 <?php if ($verRanking): ?>
 <section class="bloque">
     <h2>Ranking de proveedores</h2>
-    <p class="suave">El puntaje junta la calificación (40 %), la puntualidad al llegar y en el cronograma (30 %), si cumplió (20 %) y las incidencias (10 %).
-        Se califica en el día del evento → Proveedores, después del evento.</p>
+    <p class="suave"><?= e(\TuEvento\PuntajeProveedores::explicar($cfgPuntaje)[0]) ?> Se califica en el día del evento → Proveedores, después del evento.
+        <a href="<?= e(url('puntaje_proveedores')) ?>">Cómo se calcula el puntaje</a></p>
     <?php if (!$ranking): ?>
         <p class="vacio">Todavía no tienes proveedores.</p>
     <?php else: ?>
@@ -53,7 +53,7 @@ $num = fn($x) => $x === null || $x === '' ? '' : rtrim(rtrim(number_format((floa
             <?php if ($r['puntaje'] !== null): ?>
                 <span class="pv-puntaje pv-nivel-<?= e($r['nivel']) ?>"><strong><?= (int) $r['puntaje'] ?></strong><small><?= e(ProveedoresFicha::NIVELES[$r['nivel']]) ?></small></span>
             <?php else: ?>
-                <span class="pv-puntaje pv-sin-datos"><small>Sin datos</small></span>
+                <span class="pv-puntaje pv-sin-datos"><small><?= e(ProveedoresFicha::textoSinPuntaje($r)) ?></small></span>
             <?php endif; ?>
         </li>
         <?php endforeach; ?>

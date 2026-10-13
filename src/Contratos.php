@@ -81,7 +81,7 @@ TXT;
 
     public function plantillas(int $negocioId): array
     {
-        $st = $this->db->prepare('SELECT * FROM plantillas_contrato WHERE negocio_id = ? ORDER BY predeterminada DESC, nombre');
+        $st = $this->db->prepare("SELECT * FROM plantillas_contrato WHERE negocio_id = ? AND tipo = 'contrato' ORDER BY predeterminada DESC, nombre");   // el anexo va aparte (Anexos)
         $st->execute([$negocioId]);
         return $st->fetchAll();
     }
@@ -94,9 +94,9 @@ TXT;
             $malas = array_diff(array_unique($m[1]), array_keys(self::VARIABLES));
             if ($malas) throw new RuntimeException('Estas variables no existen: {{' . implode('}}, {{', $malas) . '}}.');
         }
-        if ($predeterminada) $this->db->prepare('UPDATE plantillas_contrato SET predeterminada = false WHERE negocio_id = ?')->execute([$negocioId]);
+        if ($predeterminada) $this->db->prepare("UPDATE plantillas_contrato SET predeterminada = false WHERE negocio_id = ? AND tipo = 'contrato'")->execute([$negocioId]);
         if ($id) {
-            $st = $this->db->prepare('UPDATE plantillas_contrato SET nombre = ?, texto = ?, predeterminada = ? WHERE id = ? AND negocio_id = ?');
+            $st = $this->db->prepare("UPDATE plantillas_contrato SET nombre = ?, texto = ?, predeterminada = ? WHERE id = ? AND negocio_id = ? AND tipo = 'contrato'");
             $st->execute([trim($nombre), trim($texto), $predeterminada ? 'true' : 'false', $id, $negocioId]);
             if ($st->rowCount() !== 1) throw new RuntimeException('No se encontró la plantilla.');
             return $id;
@@ -168,12 +168,12 @@ TXT;
         if (in_array($ev['estado'], ['perdido', 'cancelado'], true)) throw new RuntimeException('Este evento no está activo.');
         $texto = null;
         if ($plantillaId) {
-            $st = $this->db->prepare('SELECT texto FROM plantillas_contrato WHERE id = ? AND negocio_id = ?');
+            $st = $this->db->prepare("SELECT texto FROM plantillas_contrato WHERE id = ? AND negocio_id = ? AND tipo = 'contrato'");
             $st->execute([$plantillaId, $negocioId]);
             $texto = $st->fetchColumn() ?: null;
             if ($texto === null) throw new RuntimeException('No se encontró la plantilla.');
         } else {
-            $st = $this->db->prepare('SELECT texto FROM plantillas_contrato WHERE negocio_id = ? ORDER BY predeterminada DESC, id LIMIT 1');
+            $st = $this->db->prepare("SELECT texto FROM plantillas_contrato WHERE negocio_id = ? AND tipo = 'contrato' ORDER BY predeterminada DESC, id LIMIT 1");
             $st->execute([$negocioId]);
             $texto = $st->fetchColumn() ?: self::plantillaDefecto();
         }

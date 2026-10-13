@@ -98,7 +98,7 @@ $telServicio = function (string $servicio) use ($proveedoresEv): ?string {
                     <?php endif; ?>
                     <?php if ($b['responsable']): ?><br><small><?= e($b['responsable']) ?></small><?php endif; ?>
                     <?php if (!empty($b['evento_proveedor_id']) && $bv && $bv['atraso'] !== null && !$vivo['prueba']): ?>
-                        <span class="pv-chip <?= $bv['atraso'] <= \TuEvento\ProveedoresFicha::TOLERANCIA_MIN ? 'pv-chip-verde' : 'pv-chip-rojo' ?>"><?= $bv['atraso'] <= \TuEvento\ProveedoresFicha::TOLERANCIA_MIN ? 'Proveedor a tiempo' : 'Proveedor ' . (int) $bv['atraso'] . ' min tarde' ?></span>
+                        <span class="pv-chip <?= $bv['atraso'] <= $toleranciaProv ? 'pv-chip-verde' : 'pv-chip-rojo' ?>"><?= $bv['atraso'] <= $toleranciaProv ? 'Proveedor a tiempo' : 'Proveedor ' . (int) $bv['atraso'] . ' min tarde' ?></span>
                     <?php endif; ?>
                     <?php if ($b['notas']): ?><br><small class="suave"><?= e($b['notas']) ?></small><?php endif; ?>
                     <?php if ($editable): ?>

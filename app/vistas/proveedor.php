@@ -61,8 +61,14 @@ $conteo = ['documentos' => count($documentos), 'incidencias' => (int) ($puntaje[
             <h2>Cómo cumple</h2>
             <?php if ($puntaje && $puntaje['puntaje'] !== null): ?>
                 <div class="pv-puntaje-grande pv-nivel-<?= e($puntaje['nivel']) ?>"><strong><?= (int) $puntaje['puntaje'] ?></strong><span>de 100 · <?= e(ProveedoresFicha::NIVELES[$puntaje['nivel']]) ?></span></div>
+            <?php elseif (!empty($puntaje['pocos_datos'])): ?>
+                <p class="suave"><strong>Sin datos suficientes:</strong> el puntaje se muestra desde <?= (int) $puntaje['minimo_eventos'] ?> eventos trabajados y lleva <?= (int) $puntaje['eventos'] ?>.</p>
             <?php else: ?>
                 <p class="suave">Todavía sin puntaje: califícalo en el día del evento → Proveedores, después de cada evento.</p>
+            <?php endif; ?>
+            <?php if (!empty($puntaje['detalle'])): ?>
+                <p class="pv-previa-detalle"><small><?= e(implode(' · ', array_map(fn($k, $x) => \TuEvento\PuntajeProveedores::PESOS[$k] . ' ' . $x['valor'] . ' (pesa ' . str_replace('.', ',', (string) $x['peso']) . ' %)', array_keys($puntaje['detalle']), $puntaje['detalle']))) ?>
+                    <?= !empty($puntaje['tope_aplicado']) ? ' · nivel limitado por una incidencia grave' : '' ?></small></p>
             <?php endif; ?>
             <dl class="ficha-datos">
                 <dt>Eventos trabajados</dt><dd><?= (int) ($puntaje['eventos'] ?? 0) ?><?= !empty($puntaje['proximos']) ? ' · ' . (int) $puntaje['proximos'] . ' próximos' : '' ?></dd>
@@ -70,6 +76,7 @@ $conteo = ['documentos' => count($documentos), 'incidencias' => (int) ($puntaje[
                     <?php if (!empty($puntaje['medidas']) || !empty($puntaje['bloques'])): ?><small>(<?= (int) $puntaje['a_tiempo'] + (int) $puntaje['bloques_a_tiempo'] ?> de <?= (int) $puntaje['medidas'] + (int) $puntaje['bloques'] ?> a tiempo)</small><?php endif; ?></dd>
                 <dt>Calificación</dt><dd><?= ($puntaje['calificacion'] ?? null) !== null ? $estrellas((int) round($puntaje['calificacion'])) . ' ' . e(number_format((float) $puntaje['calificacion'], 1, ',', '')) : '—' ?></dd>
                 <dt>Cumplió</dt><dd><?= ($puntaje['cumplimiento'] ?? null) !== null ? (int) $puntaje['cumplimiento'] . ' %' : '—' ?></dd>
+                <dt>Tolerancia</dt><dd><?= (int) $toleranciaProv ?> min <small><a href="<?= e(url('puntaje_proveedores')) ?>">Cómo se calcula el puntaje</a></small></dd>
                 <dt>Incidencias</dt><dd><?= (int) ($puntaje['incidencias'] ?? 0) ?><?= !empty($puntaje['graves']) ? ' · <span class="cb-rojo">' . (int) $puntaje['graves'] . ((int) $puntaje['graves'] === 1 ? ' grave' : ' graves') . '</span>' : '' ?></dd>
             </dl>
         </section>

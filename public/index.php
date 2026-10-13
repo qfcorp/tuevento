@@ -37,10 +37,13 @@ $deAdmin = ['admin', 'admin_negocios', 'admin_negocio', 'admin_nuevo', 'admin_pl
 array_push($publicas, 'portal_cuestionario', 'portal_extras', 'encuesta');
 array_push($privadas, 'evento_formulario', 'cuestionarios', 'extras');
 $deCoordinador[] = 'evento_formulario';   // el coordinador ve las respuestas del formulario (útil el día del evento)
+$publicas[] = 'firmar_anexo';             // anexo de contrato por extras aprobados (migración 090)
 // Proveedores y compras (migración 060): portal del proveedor, verificación de la orden de compra, ficha, compras, por pagar e incidencias
 array_push($publicas, 'portal_proveedor', 'verificar_oc');
 array_push($privadas, 'proveedor', 'compras', 'compra', 'por_pagar', 'incidencias', 'proveedor_archivo');
 array_push($deCoordinador, 'proveedor', 'incidencias', 'proveedor_archivo');   // ficha sin dinero, incidencias y documentos
+// Cómo se calcula el puntaje de proveedores (091): el dueño lo cambia; los demás ven la explicación
+$privadas[] = 'puntaje_proveedores'; $deCoordinador[] = 'puntaje_proveedores';
 
 $ruta = (string) ($_GET['r'] ?? 'inicio');
 if (in_array($ruta, $deAdmin, true) && !superadmin()) {

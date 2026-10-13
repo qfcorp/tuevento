@@ -57,6 +57,18 @@ Se armó juntando lo mejor de los programas existentes y lo que Tukán ya tenía
 - [x] Tareas automáticas: pagos por vencer y vencidos, documentos por vencer, proveedores sin confirmar
 - [x] Pruebas: logica_60 (321) y web_60 (210), migración 060; revisado en celular (390 px) y computadora sin errores de JavaScript
 
+## Hecho (13 oct 2026) — anexo de contrato por extras
+- [x] Si se aprueban extras y el contrato ya está firmado, se prepara solo un anexo ("Anexo 1 al contrato N.º X") con los extras, su valor, el nuevo total y la cuota "Extras"; el cliente lo firma con el dedo (huella SHA-256, QR de verificación, PDF firmado)
+- [x] Plantilla editable del anexo en Plantillas de contrato; tarjeta "Tienes un anexo por firmar" en el portal; anexos en la pestaña Contrato; recordatorio en Mensajes de hoy; aviso al local cuando se firma
+- [x] Decisión: un pedido de extras aprobado no se deshace (para quitar extras se hace una cotización nueva); sin contrato firmado no hay anexo, los extras entran en el contrato cuando se genere
+- [x] Pruebas: logica_70 y web_70 ampliadas (migración 090)
+
+## Hecho (13 oct 2026) — puntaje de proveedores configurable por local
+- [x] Proveedores → Cómo se calcula el puntaje: pesos de calificación, puntualidad, cumplimiento e incidencias (suman 100 %; 0 = no cuenta), minutos de tolerancia, cuánto resta cada incidencia (leve, media, grave), tope del nivel con incidencia grave, umbrales de Excelente/Bueno/Regular, periodo (todo, 12 o 6 meses) y mínimo de eventos ("Sin datos suficientes")
+- [x] Vista previa en vivo con 3 proveedores reales (puntaje y puesto antes → después) y botón "Volver a los valores recomendados"; solo el dueño guarda, el equipo ve la explicación; cada cambio queda anotado con quién, cuándo, antes y después
+- [x] Se usa en la ficha, el ranking, los selectores de compras y del día del evento, y la puntualidad (también en el portal del proveedor). Sin cambiar nada, los resultados son los mismos de antes
+- [x] Pruebas: logica_60 (389) y web_60 (258), migración 091
+
 ## Pendiente
 1. [ ] DIMI: instalar en el servidor (comando en el README) y crear la ruta del túnel `tuevento.tukanec.com`
 2. [ ] DIMI: crear el super usuario del panel Tukán (`php /var/www/tuevento/bin/crear_admin.php`)

@@ -151,6 +151,8 @@ $formGenerar = function (string $boton) use ($ev, $plantillas): string {
 <?php endif; ?>
 <?php endif; ?>
 
+<?php require RAIZ . '/app/vistas/_anexos_contrato.php'; // anexos por extras aprobados (migración 090) ?>
+
 <?php if ($historial): ?>
 <section class="bloque">
     <h2>Contratos de este evento</h2>

@@ -9,7 +9,7 @@ $codigo = strtoupper(preg_replace('/[^A-Za-z0-9]/', '', (string) ($_GET['c'] ?? 
 $k = null;
 $marca = null;
 if ($codigo !== '') {
-    $k = (new Contratos(db()))->verificar($codigo);
+    $k = (new Contratos(db()))->verificar($codigo) ?? (new \TuEvento\Anexos(db()))->verificar($codigo);   // también anexos (090)
     if ($k) {
         $st = db()->prepare('SELECT nombre, color, slug, logo, ciudad, ruc, razon_social FROM negocios WHERE id = ?');
         $st->execute([$k['negocio_id']]);

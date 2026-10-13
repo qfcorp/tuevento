@@ -63,4 +63,5 @@ $puntajes = $ficha->puntajes($nid);
 $alertas = $ficha->alertasDocumentos($nid);
 $verRanking = ($_GET['ver'] ?? '') === 'ranking';
 $ranking = $verRanking ? $ficha->ranking($nid, null, false) : [];
-vista('proveedores', compact('lista', 'proveedor', 'previo', 'puntajes', 'alertas', 'verRanking', 'ranking', 'comercial', 'verDinero'), 'Proveedores · TuEvento');
+$cfgPuntaje = (new \TuEvento\PuntajeProveedores(db()))->config($nid);   // 091
+vista('proveedores', compact('lista', 'proveedor', 'previo', 'puntajes', 'alertas', 'verRanking', 'ranking', 'comercial', 'verDinero', 'cfgPuntaje'), 'Proveedores · TuEvento');

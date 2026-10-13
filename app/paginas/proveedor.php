@@ -63,6 +63,7 @@ $compras = new Compras(db());
 $datosVista = [
     'p' => $p, 'secciones' => $secciones, 'ver' => $ver, 'verDinero' => $verDinero, 'comercial' => $comercial, 'negocio' => $negocio,
     'puntaje' => $ficha->puntaje($nid, $id),
+    'toleranciaProv' => $ficha->tolerancia($nid),
     'documentos' => $ficha->documentos($nid, $id),
     'portal' => $negocio['plan_codigo'] === 'quinta' ? url_completa('portal_proveedor', ['t' => $p['token']]) : null,
 ];

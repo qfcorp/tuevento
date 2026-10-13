@@ -242,3 +242,10 @@
 .pt-sat-comentarios li:first-child { border-top: 0; }
 .pt-sat-comentarios li[hidden] { display: none; }
 .pt-sat-comentarios p { margin: 0 0 2px; }
+
+/* ---------- Anexo de contrato por extras (migración 090) ---------- */
+.pt-tarjeta-anexo { border-color: #E9C46A; background: linear-gradient(135deg, #FFFBF1, #FFF3D6); box-shadow: 0 0 0 2px #F6E3B0, var(--sombra); }
+.pt-tarjeta-anexo .pt-tarjeta-icono { background: #FBE7B3; }
+.pt-tarjeta-anexo .pt-tarjeta-cuerpo p { color: var(--tinta); }
+.pt-tarjeta-anexo .boton { margin-bottom: 6px; }
+.pt-anexo-estado { margin: 0 0 6px; font-size: .92rem; display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; }

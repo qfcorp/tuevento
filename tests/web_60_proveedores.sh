@@ -426,3 +426,90 @@ PB=$(sql "SELECT id FROM proveedores WHERE negocio_id=$NID_B")
 check "Plan Salón: portal del proveedor cerrado" "404" "$(curl -s -o /dev/null -w '%{http_code}' "$BASE/?r=portal_proveedor&t=$(sql "SELECT token FROM proveedores WHERE id=$PB")")"
 check "Plan Salón: ficha sin enlace al portal" "200" "$(get "r=proveedor&id=$PB")"
 no_contiene "…no muestra el portal" "$TMP/pag.html" "portal_proveedor"
+
+echo "13. Cómo se calcula el puntaje (configurable por negocio)"
+EMAIL_B=$EMAIL
+PESOS_OK=(--data-urlencode "tolerancia_min=10" --data-urlencode "resta_leve=10" --data-urlencode "resta_media=25" --data-urlencode "resta_grave=50"
+          --data-urlencode "tope_grave=1" --data-urlencode "tope_nivel=bueno" --data-urlencode "umbral_excelente=85" --data-urlencode "umbral_bueno=70"
+          --data-urlencode "umbral_regular=50" --data-urlencode "periodo_meses=0")
+check "Otro negocio (B): pantalla del puntaje" "200" "$(get "r=puntaje_proveedores")"
+contiene "B: valores recomendados" "$TMP/pag.html" "Valores recomendados"
+entrar "$EMAIL_A" "claveSegura1"
+check "Dueño: pantalla del puntaje" "200" "$(get "r=puntaje_proveedores")"
+contiene "Dueño: formulario para cambiar" "$TMP/pag.html" "Cambiar el cálculo"
+contiene "Dueño: pide que los pesos sumen 100" "$TMP/pag.html" "Suman 100 %"
+contiene "Dueño: vista previa con proveedores reales" "$TMP/pag.html" "DJ Fiesta Total"
+contiene "Dueño: botón para volver a lo recomendado" "$TMP/pag.html" "Volver a los valores recomendados"
+contiene "Explica la fórmula de hoy" "$TMP/pag.html" "calificación (estrellas) 40 %"
+get "r=proveedores&ver=ranking" > /dev/null
+contiene "Ranking: enlace a cómo se calcula" "$TMP/pag.html" "r=puntaje_proveedores"
+contiene "Ranking: explica con los pesos del negocio" "$TMP/pag.html" "puntualidad 30 %"
+r=$(post "r=puntaje_proveedores&json=1" --data-urlencode "accion=vista_previa" --data-urlencode "peso_calificacion=100" --data-urlencode "peso_puntualidad=0" \
+  --data-urlencode "peso_cumplimiento=0" --data-urlencode "peso_incidencias=0" --data-urlencode "minimo_eventos=0" "${PESOS_OK[@]}")
+check "Vista previa en vivo (JSON)" "200" "${r%% *}"
+contiene "Vista previa: respuesta correcta" "$TMP/post.html" '"ok":true'
+contiene "Vista previa: muestra 'Con los cambios'" "$TMP/post.html" "Con los cambios"
+check "La vista previa no guarda nada" "0" "$(sql "SELECT count(*) FROM puntaje_proveedores_config WHERE negocio_id=$NID_A")"
+r=$(post "r=puntaje_proveedores&json=1" --data-urlencode "accion=vista_previa" --data-urlencode "peso_calificacion=40" --data-urlencode "peso_puntualidad=30" \
+  --data-urlencode "peso_cumplimiento=20" --data-urlencode "peso_incidencias=5" --data-urlencode "minimo_eventos=0" "${PESOS_OK[@]}")
+check "Vista previa con pesos que no suman 100: responde" "200" "${r%% *}"
+contiene "Vista previa: ok=false" "$TMP/post.html" '"ok":false'
+contiene "Vista previa: dice cuánto suman" "$TMP/post.html" "Ahora suman 95"
+r=$(post "r=puntaje_proveedores" --data-urlencode "accion=vista_previa" --data-urlencode "peso_calificacion=100" --data-urlencode "peso_puntualidad=0" \
+  --data-urlencode "peso_cumplimiento=0" --data-urlencode "peso_incidencias=0" --data-urlencode "minimo_eventos=0" "${PESOS_OK[@]}")
+check "Ver cómo quedaría (sin JavaScript)" "200" "${r%% *}"
+contiene "Sin JavaScript: dice que todavía no se guardó" "$TMP/post.html" "todavía no se guardó"
+post "r=puntaje_proveedores" --data-urlencode "accion=guardar" --data-urlencode "peso_calificacion=40" --data-urlencode "peso_puntualidad=30" \
+  --data-urlencode "peso_cumplimiento=20" --data-urlencode "peso_incidencias=5" --data-urlencode "minimo_eventos=0" "${PESOS_OK[@]}" > /dev/null
+check "Pesos que no suman 100: no se guarda" "0" "$(sql "SELECT count(*) FROM puntaje_proveedores_config WHERE negocio_id=$NID_A")"
+get "r=puntaje_proveedores" > /dev/null
+contiene "Mensaje: deben sumar 100" "$TMP/pag.html" "Los pesos deben sumar 100 %. Ahora suman 95 %."
+contiene "Recuerda lo que escribió" "$TMP/pag.html" 'name="peso_incidencias" value="5"'
+post "r=puntaje_proveedores" --data-urlencode "accion=guardar" --data-urlencode "peso_calificacion=100" --data-urlencode "peso_puntualidad=0" \
+  --data-urlencode "peso_cumplimiento=0" --data-urlencode "peso_incidencias=0" --data-urlencode "minimo_eventos=0" --data-urlencode "tolerancia_min=30" \
+  --data-urlencode "resta_leve=10" --data-urlencode "resta_media=25" --data-urlencode "resta_grave=50" --data-urlencode "tope_nivel=bueno" \
+  --data-urlencode "umbral_excelente=85" --data-urlencode "umbral_bueno=70" --data-urlencode "umbral_regular=50" --data-urlencode "periodo_meses=0" > /dev/null
+check "Guardado: pesos y tolerancia" "100|0|30|false" "$(sql "SELECT peso_calificacion||'|'||peso_incidencias||'|'||tolerancia_min||'|'||tope_grave FROM puntaje_proveedores_config WHERE negocio_id=$NID_A")"
+check "Registro de cambios con antes y después" "1" "$(sql "SELECT count(*) FROM registro_cambios WHERE negocio_id=$NID_A AND evento_id IS NULL AND accion LIKE 'Puntaje de proveedores:%peso de la calificación: 40 % → 100 %%'")"
+get "r=puntaje_proveedores" > /dev/null
+contiene "Ahora es configuración propia" "$TMP/pag.html" "Configuración propia"
+contiene "Cambios anteriores con quién" "$TMP/pag.html" "Dimitry Prueba"
+get "r=proveedores&ver=ranking" > /dev/null
+contiene "El ranking usa los pesos nuevos" "$TMP/pag.html" "calificación (estrellas) 100 %"
+get "r=proveedor&id=$PDJ" > /dev/null
+contiene "La ficha usa la tolerancia nueva" "$TMP/pag.html" "30 min"
+contiene "La ficha muestra cuánto pesa cada parte" "$TMP/pag.html" "pesa 100 %"
+post "r=puntaje_proveedores" --data-urlencode "accion=guardar" --data-urlencode "peso_calificacion=100" --data-urlencode "peso_puntualidad=0" \
+  --data-urlencode "peso_cumplimiento=0" --data-urlencode "peso_incidencias=0" --data-urlencode "minimo_eventos=5" --data-urlencode "tolerancia_min=30" \
+  --data-urlencode "resta_leve=10" --data-urlencode "resta_media=25" --data-urlencode "resta_grave=50" --data-urlencode "tope_nivel=bueno" \
+  --data-urlencode "umbral_excelente=85" --data-urlencode "umbral_bueno=70" --data-urlencode "umbral_regular=50" --data-urlencode "periodo_meses=6" > /dev/null
+get "r=proveedores&ver=ranking" > /dev/null
+contiene "Mínimo de eventos: 'Sin datos suficientes'" "$TMP/pag.html" "Sin datos suficientes"
+get "r=compras&nueva=1" > /dev/null
+no_contiene "El selector de compras no muestra puntaje sin datos suficientes" "$TMP/pag.html" " pts ·"
+post "r=puntaje_proveedores" --data-urlencode "accion=recomendados" > /dev/null
+check "Volver a los recomendados" "40|30|20|10|10|0|0" "$(sql "SELECT peso_calificacion||'|'||peso_puntualidad||'|'||peso_cumplimiento||'|'||peso_incidencias||'|'||tolerancia_min||'|'||minimo_eventos||'|'||periodo_meses FROM puntaje_proveedores_config WHERE negocio_id=$NID_A")"
+get "r=puntaje_proveedores" > /dev/null
+contiene "Otra vez valores recomendados" "$TMP/pag.html" "pv-chip pv-chip-verde\">Valores recomendados"
+post "r=puntaje_proveedores" --data-urlencode "accion=guardar" --data-urlencode "peso_calificacion=50" --data-urlencode "peso_puntualidad=30" \
+  --data-urlencode "peso_cumplimiento=20" --data-urlencode "peso_incidencias=0" --data-urlencode "minimo_eventos=0" "${PESOS_OK[@]}" > /dev/null
+check "Queda una configuración propia en A" "50" "$(sql "SELECT peso_calificacion FROM puntaje_proveedores_config WHERE negocio_id=$NID_A")"
+entrar "$VEND" "$CL_V"
+check "Vendedor: ve la explicación" "200" "$(get "r=puntaje_proveedores")"
+contiene "Vendedor: solo lectura" "$TMP/pag.html" "Esto lo decide el dueño"
+no_contiene "Vendedor: sin formulario" "$TMP/pag.html" "Cambiar el cálculo"
+check "Vendedor: no guarda" "403" "$(post_desde "r=mi_cuenta" "r=puntaje_proveedores" --data-urlencode "accion=recomendados" | cut -d' ' -f1)"
+check "Vendedor: no usa la vista previa" "403" "$(post_desde "r=mi_cuenta" "r=puntaje_proveedores&json=1" --data-urlencode "accion=vista_previa" | cut -d' ' -f1)"
+entrar "$COORD" "$CL_C"
+check "Coordinador: ve la explicación" "200" "$(get "r=puntaje_proveedores")"
+no_contiene "Coordinador: sin formulario" "$TMP/pag.html" "Cambiar el cálculo"
+check "Coordinador: no guarda" "403" "$(post_desde "r=mi_cuenta" "r=puntaje_proveedores" --data-urlencode "accion=recomendados" | cut -d' ' -f1)"
+entrar "$CONS" "$CL_K"
+check "Consulta: ve la explicación" "200" "$(get "r=puntaje_proveedores")"
+check "Consulta: no guarda" "403" "$(post_desde "r=mi_cuenta" "r=puntaje_proveedores" --data-urlencode "accion=recomendados" | cut -d' ' -f1)"
+check "Nadie más cambió la configuración de A" "50" "$(sql "SELECT peso_calificacion FROM puntaje_proveedores_config WHERE negocio_id=$NID_A")"
+entrar "$EMAIL_B" "claveSegura1"
+get "r=puntaje_proveedores" > /dev/null
+contiene "B sigue con los valores recomendados" "$TMP/pag.html" "calificación (estrellas) 40 %"
+no_contiene "B no ve los cambios de A" "$TMP/pag.html" "Cambios anteriores"
+check "B no tiene configuración guardada" "0" "$(sql "SELECT count(*) FROM puntaje_proveedores_config WHERE negocio_id=$NID_B")"

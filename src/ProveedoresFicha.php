@@ -28,8 +28,6 @@ final class ProveedoresFicha
     public const CUMPLIMIENTO = [
         'cumplio' => 'Cumplió', 'observaciones' => 'Cumplió con observaciones', 'incompleto' => 'Incompleto', 'no_llego' => 'No llegó',
     ];
-    /** Minutos de tolerancia para considerar que llegó (o empezó) a tiempo. */
-    public const TOLERANCIA_MIN = 10;
     /** Días antes del vencimiento de un documento para avisar. */
     public const DIAS_DOC = 30;
     public const BANCOS = ['Banco Pichincha', 'Banco Guayaquil', 'Produbanco', 'Banco del Pacífico', 'Banco Internacional', 'Banco Bolivariano',
@@ -37,6 +35,12 @@ final class ProveedoresFicha
                            'Cooperativa JEP', 'Cooperativa Jardín Azuayo', 'Cooperativa 29 de Octubre', 'Cooperativa Policía Nacional'];
 
     public function __construct(private PDO $db) {}
+
+    /** Minutos de tolerancia del negocio para "a tiempo" (Proveedores → Cómo se calcula el puntaje). */
+    public function tolerancia(int $negocioId): int
+    {
+        return (new PuntajeProveedores($this->db))->config($negocioId)['tolerancia_min'];
+    }
 
     private function q(string $sql, array $p = []): \PDOStatement
     {
@@ -265,15 +269,17 @@ final class ProveedoresFicha
 
     /**
      * Puntualidad de un proveedor del evento (fila con fecha, hora_inicio, hora_llegada, llegada_real, cumplimiento).
+     * $tolerancia = minutos del negocio (tolerancia()); null = la recomendada.
      * @return ?array{estado:string, min:?int, texto:string}  null si no hay cómo medirla
      */
-    public static function puntualidad(array $ep): ?array
+    public static function puntualidad(array $ep, ?int $tolerancia = null): ?array
     {
+        $tolerancia ??= PuntajeProveedores::RECOMENDADO['tolerancia_min'];
         if (($ep['cumplimiento'] ?? null) === 'no_llego') return ['estado' => 'no_llego', 'min' => null, 'texto' => 'No llegó'];
         if (empty($ep['llegada_real']) || empty($ep['hora_llegada'])) return null;
         $plan = self::momentoLlegada((string) $ep['fecha'], (string) $ep['hora_inicio'], (string) $ep['hora_llegada']);
         $min = (int) round(((new DateTimeImmutable((string) $ep['llegada_real']))->getTimestamp() - $plan->getTimestamp()) / 60);
-        if ($min <= self::TOLERANCIA_MIN) {
+        if ($min <= $tolerancia) {
             return ['estado' => 'a_tiempo', 'min' => $min, 'texto' => $min < -1 ? 'A tiempo (' . self::duracion(-$min) . ' antes)' : 'A tiempo'];
         }
         return ['estado' => 'tarde', 'min' => $min, 'texto' => 'Tarde ' . self::duracion($min)];
@@ -313,7 +319,7 @@ final class ProveedoresFicha
                  [$llegada->format('Y-m-d H:i:s'), $origen === 'proveedor' ? 'proveedor' : 'coordinador', $epId]);
         $ep['llegada_real'] = $llegada->format('Y-m-d H:i:s');
         if (($ep['cumplimiento'] ?? null) === 'no_llego') $ep['cumplimiento'] = null;
-        $p = self::puntualidad($ep);
+        $p = self::puntualidad($ep, $this->tolerancia($negocioId));
         if ($ep['proveedor_id']) {
             $this->anotar($negocioId, (int) $ep['proveedor_id'], 'llegada', ($origen === 'proveedor' ? 'Avisó que llegó' : 'Llegó') . ' a las ' . $llegada->format('H:i')
                 . ($p ? ' · ' . mb_strtolower($p['texto']) : '') . ' (' . $ep['evento'] . ')', $usuario, $origen === 'proveedor' ? 'proveedor' : 'usuario', $ep['compra_id'] ? (int) $ep['compra_id'] : null, (int) $ep['evento_id']);
@@ -355,20 +361,23 @@ final class ProveedoresFicha
 
     /**
      * Bloques del cronograma de los que el proveedor es responsable, con atraso en minutos (modo en vivo).
+     * $tolerancia = la del negocio (si no se pasa, se busca la del negocio del evento).
      * @return list<array{actividad:string, hora:string, atraso:?int, a_tiempo:?bool}>
      */
-    public function bloquesDe(int $eventoProveedorId): array
+    public function bloquesDe(int $eventoProveedorId, ?int $tolerancia = null): array
     {
         $res = [];
-        foreach ($this->q('SELECT c.actividad, c.hora, c.inicio_real, e.fecha, e.hora_inicio FROM cronograma c JOIN eventos e ON e.id = c.evento_id
-                            WHERE c.evento_proveedor_id = ? ORDER BY c.orden, c.id', [$eventoProveedorId])->fetchAll() as $b) {
+        $filas = $this->q('SELECT c.actividad, c.hora, c.inicio_real, e.fecha, e.hora_inicio, e.negocio_id FROM cronograma c JOIN eventos e ON e.id = c.evento_id
+                            WHERE c.evento_proveedor_id = ? ORDER BY c.orden, c.id', [$eventoProveedorId])->fetchAll();
+        if ($filas && $tolerancia === null) $tolerancia = $this->tolerancia((int) $filas[0]['negocio_id']);
+        foreach ($filas as $b) {
             $atraso = null;
             if ($b['inicio_real']) {
                 $plan = DiaEvento::momento($b['fecha'], $b['hora_inicio'], $b['hora']);
                 $atraso = (int) round(((new DateTimeImmutable($b['inicio_real']))->getTimestamp() - $plan->getTimestamp()) / 60);
             }
             $res[] = ['actividad' => $b['actividad'], 'hora' => substr((string) $b['hora'], 0, 5), 'atraso' => $atraso,
-                      'a_tiempo' => $atraso === null ? null : $atraso <= self::TOLERANCIA_MIN];
+                      'a_tiempo' => $atraso === null ? null : $atraso <= $tolerancia];
         }
         return $res;
     }
@@ -383,9 +392,10 @@ final class ProveedoresFicha
                             WHERE e.negocio_id = ? AND ep.proveedor_id = ? AND e.estado NOT IN ('perdido','cancelado')
                          ORDER BY e.fecha DESC, ep.hora_llegada", [$negocioId, $proveedorId])->fetchAll();
         $res = ['proximos' => [], 'pasados' => []];
+        $tol = $this->tolerancia($negocioId);
         foreach ($filas as $f) {
-            $f['puntualidad'] = self::puntualidad($f);
-            $f['bloques'] = $this->bloquesDe((int) $f['id']);
+            $f['puntualidad'] = self::puntualidad($f, $tol);
+            $f['bloques'] = $this->bloquesDe((int) $f['id'], $tol);
             if ($f['fecha'] >= $h) array_unshift($res['proximos'], $f);
             else $res['pasados'][] = $f;
         }
@@ -417,33 +427,39 @@ final class ProveedoresFicha
 
     /**
      * Puntaje de cada proveedor del negocio: [proveedor_id => tarjeta].
-     * Puntaje 0-100 = calificación (40 %) + puntualidad (30 %) + cumplimiento (20 %) + sin incidencias (10 %),
-     * repartido entre lo que se pudo medir (si no hay datos, no tiene puntaje). Con una incidencia grave, el nivel máximo es "bueno".
+     * La fórmula y sus reglas (pesos, tolerancia, incidencias, niveles, periodo, mínimo de eventos) son las del negocio:
+     * PuntajeProveedores::config() / ::calcular(). $cfg permite probar otra configuración sin guardarla (vista previa).
      */
-    public function puntajes(int $negocioId, ?DateTimeImmutable $hoy = null): array
+    public function puntajes(int $negocioId, ?DateTimeImmutable $hoy = null, ?array $cfg = null): array
     {
         $hoy ??= new DateTimeImmutable('today');
+        $cfg ??= (new PuntajeProveedores($this->db))->config($negocioId);
+        $tol = (int) $cfg['tolerancia_min'];
         $h = $hoy->format('Y-m-d');
         $anio = $hoy->format('Y');
+        // Periodo evaluado: desde hace N meses (0 = todo el historial)
+        $desde = $cfg['periodo_meses'] > 0 ? $hoy->modify('-' . (int) $cfg['periodo_meses'] . ' months')->format('Y-m-d') : '1900-01-01';
         $res = [];
         foreach ($this->q('SELECT id, nombre, servicio, activo, preferido FROM proveedores WHERE negocio_id = ?', [$negocioId])->fetchAll() as $p) {
             $res[(int) $p['id']] = ['proveedor_id' => (int) $p['id'], 'nombre' => $p['nombre'], 'servicio' => $p['servicio'], 'activo' => (bool) $p['activo'],
                                     'preferido' => (bool) $p['preferido'], 'eventos' => 0, 'proximos' => 0, 'medidas' => 0, 'a_tiempo' => 0, 'puntualidad' => null,
                                     'evaluados' => 0, 'cumplidos' => 0, 'cumplimiento' => null, 'calificacion' => null, 'calificaciones' => 0,
-                                    'incidencias' => 0, 'graves' => 0, 'medias' => 0, 'bloques' => 0, 'bloques_a_tiempo' => 0,
-                                    'comprado_anio' => 0.0, 'saldo' => 0.0, 'puntaje' => null, 'nivel' => null];
+                                    'incidencias' => 0, 'graves' => 0, 'medias' => 0, 'leves' => 0, 'bloques' => 0, 'bloques_a_tiempo' => 0,
+                                    'comprado_anio' => 0.0, 'saldo' => 0.0, 'puntaje' => null, 'nivel' => null, 'pocos_datos' => false,
+                                    'detalle' => [], 'tope_aplicado' => false, 'minimo_eventos' => (int) $cfg['minimo_eventos']];
         }
         if (!$res) return [];
         $eps = $this->q("SELECT ep.id, ep.proveedor_id, ep.hora_llegada, ep.llegada_real, ep.cumplimiento, ep.calificacion, e.fecha, e.hora_inicio
                            FROM evento_proveedores ep JOIN eventos e ON e.id = ep.evento_id
-                          WHERE e.negocio_id = ? AND ep.proveedor_id IS NOT NULL AND e.estado NOT IN ('perdido','cancelado')", [$negocioId])->fetchAll();
+                          WHERE e.negocio_id = ? AND ep.proveedor_id IS NOT NULL AND e.estado NOT IN ('perdido','cancelado') AND e.fecha >= ?::date",
+                        [$negocioId, $desde])->fetchAll();
         $sumaCal = [];
         foreach ($eps as $ep) {
             $pid = (int) $ep['proveedor_id'];
             if (!isset($res[$pid])) continue;
             $r = &$res[$pid];
             if ($ep['fecha'] < $h) $r['eventos']++; else $r['proximos']++;
-            $pu = self::puntualidad($ep);
+            $pu = self::puntualidad($ep, $tol);
             if ($pu) { $r['medidas']++; if ($pu['estado'] === 'a_tiempo') $r['a_tiempo']++; }
             if ($ep['cumplimiento']) { $r['evaluados']++; if (in_array($ep['cumplimiento'], ['cumplio', 'observaciones'], true)) $r['cumplidos'] += $ep['cumplimiento'] === 'cumplio' ? 1 : 0.5; }
             if ($ep['calificacion'] !== null) { $r['calificaciones']++; $sumaCal[$pid] = ($sumaCal[$pid] ?? 0) + (int) $ep['calificacion']; }
@@ -451,22 +467,26 @@ final class ProveedoresFicha
         }
         foreach ($this->q("SELECT ep.proveedor_id, c.hora, c.inicio_real, e.fecha, e.hora_inicio FROM cronograma c
                              JOIN evento_proveedores ep ON ep.id = c.evento_proveedor_id JOIN eventos e ON e.id = c.evento_id
-                            WHERE e.negocio_id = ? AND c.inicio_real IS NOT NULL AND ep.proveedor_id IS NOT NULL", [$negocioId])->fetchAll() as $b) {
+                            WHERE e.negocio_id = ? AND c.inicio_real IS NOT NULL AND ep.proveedor_id IS NOT NULL AND e.fecha >= ?::date", [$negocioId, $desde])->fetchAll() as $b) {
             $pid = (int) $b['proveedor_id'];
             if (!isset($res[$pid])) continue;
             $plan = DiaEvento::momento($b['fecha'], $b['hora_inicio'], $b['hora']);
             $atraso = (int) round(((new DateTimeImmutable($b['inicio_real']))->getTimestamp() - $plan->getTimestamp()) / 60);
             if (abs($atraso) > 720) continue;                    // modo en vivo usado de prueba otro día
             $res[$pid]['bloques']++;
-            if ($atraso <= self::TOLERANCIA_MIN) $res[$pid]['bloques_a_tiempo']++;
+            if ($atraso <= $tol) $res[$pid]['bloques_a_tiempo']++;
         }
-        foreach ($this->q("SELECT proveedor_id, count(*) AS n, count(*) FILTER (WHERE gravedad = 'grave') AS graves, count(*) FILTER (WHERE gravedad = 'media') AS medias
-                             FROM incidencias WHERE negocio_id = ? AND proveedor_id IS NOT NULL GROUP BY proveedor_id", [$negocioId])->fetchAll() as $i) {
+        // Incidencias del periodo: por la fecha de su evento (o la del reporte si no tiene evento)
+        foreach ($this->q("SELECT i.proveedor_id, count(*) AS n, count(*) FILTER (WHERE i.gravedad = 'grave') AS graves, count(*) FILTER (WHERE i.gravedad = 'media') AS medias
+                             FROM incidencias i LEFT JOIN eventos e ON e.id = i.evento_id
+                            WHERE i.negocio_id = ? AND i.proveedor_id IS NOT NULL AND COALESCE(e.fecha, i.creado_en::date) >= ?::date
+                         GROUP BY i.proveedor_id", [$negocioId, $desde])->fetchAll() as $i) {
             $pid = (int) $i['proveedor_id'];
             if (!isset($res[$pid])) continue;
             $res[$pid]['incidencias'] = (int) $i['n'];
             $res[$pid]['graves'] = (int) $i['graves'];
             $res[$pid]['medias'] = (int) $i['medias'];
+            $res[$pid]['leves'] = (int) $i['n'] - (int) $i['graves'] - (int) $i['medias'];
         }
         $montos = $this->q("SELECT c.proveedor_id,
                                    COALESCE(sum(" . Compras::SQL_BASE . ") FILTER (WHERE extract(year FROM c.fecha) = ?::int), 0) AS anio,
@@ -483,38 +503,33 @@ final class ProveedoresFicha
             $r['puntualidad'] = $medidas ? (int) round(($r['a_tiempo'] + $r['bloques_a_tiempo']) * 100 / $medidas) : null;
             $r['cumplimiento'] = $r['evaluados'] ? (int) round($r['cumplidos'] * 100 / $r['evaluados']) : null;
             $r['calificacion'] = $r['calificaciones'] ? round($sumaCal[$pid] / $r['calificaciones'], 1) : null;
-            $partes = [];
-            if ($r['calificacion'] !== null) $partes[] = [$r['calificacion'] * 20, 40];
-            if ($r['puntualidad'] !== null) $partes[] = [$r['puntualidad'], 30];
-            if ($r['cumplimiento'] !== null) $partes[] = [$r['cumplimiento'], 20];
-            if ($partes) {
-                $castigo = min(100, $r['graves'] * 50 + $r['medias'] * 25 + max(0, $r['incidencias'] - $r['graves'] - $r['medias']) * 10);
-                $partes[] = [100 - $castigo, 10];
-                $peso = array_sum(array_column($partes, 1));
-                $r['puntaje'] = (int) round(array_sum(array_map(fn($x) => $x[0] * $x[1], $partes)) / $peso);
-                $r['nivel'] = $r['puntaje'] >= 85 ? 'excelente' : ($r['puntaje'] >= 70 ? 'bueno' : ($r['puntaje'] >= 50 ? 'regular' : 'malo'));
-                if ($r['graves'] > 0 && $r['nivel'] === 'excelente') $r['nivel'] = 'bueno';   // con una incidencia grave no es "excelente"
-            }
+            $r = array_merge($r, PuntajeProveedores::calcular($r, $cfg));
         }
         unset($r);
         return $res;
     }
 
-    public function puntaje(int $negocioId, int $proveedorId, ?DateTimeImmutable $hoy = null): ?array
+    public function puntaje(int $negocioId, int $proveedorId, ?DateTimeImmutable $hoy = null, ?array $cfg = null): ?array
     {
-        return $this->puntajes($negocioId, $hoy)[$proveedorId] ?? null;
+        return $this->puntajes($negocioId, $hoy, $cfg)[$proveedorId] ?? null;
     }
 
     /** Ranking: de mayor a menor puntaje (los que no tienen datos al final). */
-    public function ranking(int $negocioId, ?DateTimeImmutable $hoy = null, bool $soloActivos = true): array
+    public function ranking(int $negocioId, ?DateTimeImmutable $hoy = null, bool $soloActivos = true, ?array $cfg = null): array
     {
-        $lista = array_values(array_filter($this->puntajes($negocioId, $hoy), fn($r) => !$soloActivos || $r['activo']));
+        $lista = array_values(array_filter($this->puntajes($negocioId, $hoy, $cfg), fn($r) => !$soloActivos || $r['activo']));
         usort($lista, fn($a, $b) => [$b['puntaje'] !== null, $b['puntaje'] ?? 0, $b['calificacion'] ?? 0, $b['eventos'], $a['nombre']]
                                 <=> [$a['puntaje'] !== null, $a['puntaje'] ?? 0, $a['calificacion'] ?? 0, $a['eventos'], $b['nombre']]);
         return $lista;
     }
 
-    public const NIVELES = ['excelente' => 'Excelente', 'bueno' => 'Bueno', 'regular' => 'Regular', 'malo' => 'Malo'];
+    public const NIVELES = PuntajeProveedores::NIVELES;
+
+    /** Lo que se muestra cuando no hay puntaje: "Sin datos suficientes" (no llega al mínimo de eventos) o "Sin datos". */
+    public static function textoSinPuntaje(?array $r): string
+    {
+        return !empty($r['pocos_datos']) ? 'Sin datos suficientes' : 'Sin datos';
+    }
 
     /** "★ 4,5 · 92 pts" para mostrar junto al nombre (vacío si no tiene datos). */
     public static function textoPuntaje(?array $r): string
@@ -564,9 +579,10 @@ final class ProveedoresFicha
                              FROM evento_proveedores ep JOIN eventos e ON e.id = ep.evento_id LEFT JOIN usuarios co ON co.id = e.coordinador_id
                             WHERE ep.proveedor_id = ? AND e.negocio_id = ? AND e.fecha >= ?::date AND e.estado IN ('separado','confirmado','realizado')
                          ORDER BY e.fecha, ep.hora_llegada NULLS LAST", [$proveedor['id'], $proveedor['negocio_id'], $desde])->fetchAll();
+        $tol = $this->tolerancia((int) $proveedor['negocio_id']);
         foreach ($filas as &$f) {
             $f['bloques'] = $this->q('SELECT hora, duracion_min, actividad, notas FROM cronograma WHERE evento_proveedor_id = ? ORDER BY orden, id', [$f['id']])->fetchAll();
-            $f['puntualidad'] = self::puntualidad($f);
+            $f['puntualidad'] = self::puntualidad($f, $tol);
         }
         unset($f);
         return $filas;

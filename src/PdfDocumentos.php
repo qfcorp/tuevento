@@ -128,7 +128,8 @@ final class PdfDocumentos
      */
     public static function contrato(array $negocio, array $c, ?string $enlaceVerificar = null): object
     {
-        $pdf = Pdf::nuevo($negocio, 'Contrato N.º ' . $c['numero']);
+        $pdf = Pdf::nuevo($negocio, $c['documento'] ?? ('Contrato N.º ' . $c['numero']));   // documento: 'Anexo 1 al contrato N.º 3' (Anexos, 090)
+        $doc = $c['documento_corto'] ?? 'Contrato';
         $rgb = Pdf::rgb((string) ($negocio['color'] ?? '#6B2D3C'));
         $hex = self::hex($rgb);
         $firmado = $c['estado'] === 'firmado';
@@ -190,7 +191,7 @@ final class PdfDocumentos
         $pdf->SetXY($x, $y + 3);
         $pdf->SetFont('dejavusans', 'B', 9);
         $pdf->SetTextColor($rgb[0], $rgb[1], $rgb[2]);
-        $pdf->Cell(0, 5, $firmado ? 'Contrato firmado electrónicamente por el cliente' : 'Contrato pendiente de firma', 0, 2);
+        $pdf->Cell(0, 5, $firmado ? $doc . ' firmado electrónicamente por el cliente' : $doc . ' pendiente de firma', 0, 2);
         $pdf->SetFont('dejavusans', '', 7.8);
         $pdf->SetTextColor(70, 62, 66);
         $pdf->Cell(0, 4, 'Código de verificación: ' . $c['codigo_verificacion'], 0, 2);

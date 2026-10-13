@@ -10,10 +10,11 @@ $ayudas = [
     'cotizacion' => 'Enviadas hace 3 días o más sin respuesta. Un mensaje a tiempo cierra más eventos.',
     'staff'      => 'Personas asignadas a los eventos de mañana que no han confirmado.',
     'invitados'  => 'Eventos de los próximos 10 días: pide la lista para organizar mesas y puerta.',
+    'anexo'      => 'Extras aprobados con el contrato ya firmado: el cliente tiene que firmar el anexo. Vuelve a salir en 3 días si sigue sin firmar.',
     'cuestionario' => 'Eventos que se acercan y el cliente todavía no llena su formulario (música, decoración, menú…). Vuelve a salir en 4 días si sigue pendiente.',
     'resena'     => 'Eventos de los últimos días: agradece y manda la encuesta de satisfacción. A quien le encantó, la encuesta le pide la reseña en Google.',
 ];
-$nombres = ['cuota' => 'Cuota', 'contrato' => 'Contrato', 'cotizacion' => 'Cotización', 'staff' => 'Personal', 'invitados' => 'Invitados', 'cuestionario' => 'Formulario', 'resena' => 'Reseña'];
+$nombres = ['cuota' => 'Cuota', 'contrato' => 'Contrato', 'cotizacion' => 'Cotización', 'staff' => 'Personal', 'invitados' => 'Invitados', 'cuestionario' => 'Formulario', 'anexo' => 'Anexo', 'resena' => 'Reseña'];
 ?>
 <div class="cabecera">
     <div><h1>Mensajes por WhatsApp de hoy</h1>
@@ -40,7 +41,7 @@ $nombres = ['cuota' => 'Cuota', 'contrato' => 'Contrato', 'cotizacion' => 'Cotiz
         <li class="cb-mensaje">
             <div class="cb-mensaje-cabeza">
                 <div><strong><?= e($m['para']) ?></strong>
-                    <small class="suave"><a href="<?= e(url($tipo === 'cuota' ? 'evento_pagos' : ($tipo === 'cuestionario' ? 'evento_formulario' : 'evento'), ['id' => $m['evento_id']])) ?>"><?= e($m['codigo']) ?></a> · <?= e($m['motivo']) ?></small></div>
+                    <small class="suave"><a href="<?= e(url($tipo === 'cuota' ? 'evento_pagos' : ($tipo === 'cuestionario' ? 'evento_formulario' : ($tipo === 'anexo' ? 'contrato' : 'evento')), ['id' => $m['evento_id']])) ?>"><?= e($m['codigo']) ?></a> · <?= e($m['motivo']) ?></small></div>
             </div>
             <details class="cb-texto">
                 <summary>Ver el mensaje</summary>

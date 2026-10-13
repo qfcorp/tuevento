@@ -4,10 +4,10 @@ use TuEvento\{Compras, ProveedoresFicha};
 /**
  * Dentro de la tarjeta de un proveedor del evento (día del evento → Proveedores):
  * su compra (si se ve el dinero), la llegada real con la puntualidad y la evaluación después del evento.
- * Usa $p (fila de evento_proveedores), $ev, $editable, $accion, $comprasEv, $hoyTxt.
+ * Usa $p (fila de evento_proveedores), $ev, $editable, $accion, $comprasEv, $hoyTxt, $toleranciaProv (minutos del negocio).
  */
 $compraP = $p['compra_id'] ? ($comprasEv[(int) $p['compra_id']] ?? null) : null;
-$puP = ProveedoresFicha::puntualidad($p + ['fecha' => $ev['fecha'], 'hora_inicio' => $ev['hora_inicio']]);
+$puP = ProveedoresFicha::puntualidad($p + ['fecha' => $ev['fecha'], 'hora_inicio' => $ev['hora_inicio']], $toleranciaProv ?? null);
 $diaLlego = $ev['fecha'] <= $hoyTxt;
 $nombresCal = [5 => 'Excelente', 4 => 'Muy bueno', 3 => 'Bueno', 2 => 'Regular', 1 => 'Malo'];
 ?>

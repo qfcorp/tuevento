@@ -30,6 +30,7 @@ final class Cobranza
     public const MENSAJES = [
         'cuota'      => ['Cuotas que vencen o ya vencieron', 3],
         'contrato'   => ['Contratos enviados que falta firmar', 3],
+        'anexo'      => ['Anexos de contrato que falta firmar', 3],   // migración 090 (Anexos)
         'cotizacion' => ['Cotizaciones sin respuesta', 4],
         'staff'      => ['Personal sin confirmar para mañana', 0],
         'invitados'  => ['Pedir la lista de invitados', 0],
@@ -389,6 +390,14 @@ final class Cobranza
             $agregar('contrato', $f, $f['cliente'], $f['telefono'], 'Contrato N.º ' . $f['numero'] . ' sin firmar · evento el ' . self::fechaTexto($f['fecha']), $texto);
         }
 
+        // 2b) Anexos de contrato por extras aprobados, sin firmar (migración 090): cada 3 días mientras sigan pendientes
+        foreach ((new Anexos($this->db))->porRecordar($negocioId, $hoy, self::MENSAJES['anexo'][1]) as $f) {
+            $f['ref_id'] = $f['id'];
+            $f['codigo'] = $f['evento_codigo'];
+            $texto = Anexos::textoFirma($f, $neg, $this->enlace('firmar_anexo', ['t' => $f['token']]));
+            $agregar('anexo', $f, $f['cliente'], $f['cliente_telefono'], Anexos::titulo($f) . ' sin firmar · extras por ' . self::dinero((float) $f['monto']), $texto);
+        }
+
         // 3) Cotizaciones enviadas hace 3 días o más, sin respuesta
         $st = $this->db->prepare("SELECT co.id AS ref_id, co.numero, co.token, co.total, co.fecha AS enviada, co.valida_hasta, e.id AS evento_id, e.codigo,
                                          e.nombre AS evento, e.fecha, c.nombre AS cliente, c.telefono
@@ -476,6 +485,7 @@ final class Cobranza
         $sql = match ($tipo) {
             'cuota'      => 'SELECT e.id FROM cuotas x JOIN eventos e ON e.id = x.evento_id WHERE x.id = ? AND e.negocio_id = ?',
             'contrato'   => 'SELECT e.id FROM contratos x JOIN eventos e ON e.id = x.evento_id WHERE x.id = ? AND e.negocio_id = ?',
+            'anexo'      => 'SELECT e.id FROM contrato_anexos x JOIN eventos e ON e.id = x.evento_id WHERE x.id = ? AND e.negocio_id = ?',
             'cotizacion' => 'SELECT e.id FROM cotizaciones x JOIN eventos e ON e.id = x.evento_id WHERE x.id = ? AND e.negocio_id = ?',
             'staff'      => 'SELECT e.id FROM evento_personal x JOIN eventos e ON e.id = x.evento_id WHERE x.id = ? AND e.negocio_id = ?',
             'invitados', 'resena', 'cuestionario' => 'SELECT id FROM eventos WHERE id = ? AND negocio_id = ?',

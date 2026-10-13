@@ -376,7 +376,7 @@ check('El total del año cuenta la meta solo hasta este mes (9 × 6000 + 4000)',
 check('Mes con ventas el año pasado y nada este año: -100 %', -100, (function () use ($met, $nid) {
     return $met->reporte($nid, '2027-10-01', '2027-10-31', null, new DateTimeImmutable('2027-11-01'))['meses']['2027-10']['variacion'];
 })());
-check('Otro negocio: sin metas ni ventas', [false, 0.0], (function () use ($met, $nid2) { $x = $met->reporte($nid2, '2026-09-01', '2026-10-31', null, $hoy); return [$x['hay_metas'], $x['total']['vendido']]; })());
+check('Otro negocio: sin metas ni ventas', [false, 0.0], (function () use ($met, $nid2, $hoy) { $x = $met->reporte($nid2, '2026-09-01', '2026-10-31', null, $hoy); return [$x['hay_metas'], $x['total']['vendido']]; })());
 check('Periodo de un mes = un solo mes (no los 6 anteriores)', 1, count($met->reporte($nid, '2026-10-01', '2026-10-31', null, $hoy)['meses']));
 check('Máximo 36 meses', 36, count(Metas::meses('2020-01-01', '2029-12-31')));
 

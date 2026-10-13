@@ -3,7 +3,7 @@ use TuEvento\{Cuestionarios, Encuestas, Extras, WhatsApp};
 /**
  * Pestaña "Formulario y extras" del evento.
  * @var array $ev @var string $tab @var array $form @var bool $comercial @var bool $verDinero @var array $pedidos @var int $borradores
- * @var ?array $encuesta @var ?array $borradorPregunta
+ * @var ?array $encuesta @var ?array $borradorPregunta @var array $anexosPorPedido @var bool $contratoFirmado
  */
 require RAIZ . '/app/vistas/_evento_tabs.php';
 require_once RAIZ . '/app/vistas/_pt_campos.php';
@@ -135,6 +135,12 @@ $f = $borradorPregunta ?? [];
             <?php if ($p['estado'] === 'aprobado'): ?>
                 <p class="libre">Se sumó <?= dinero($p['monto_agregado']) ?> al evento · cotización N.º <?= (int) $p['cotizacion_numero'] ?> (versión <?= (int) $p['cotizacion_version'] ?>)<?= $p['cuota_concepto'] ? ' · cuota «' . e($p['cuota_concepto']) . '»' : '' ?>.
                     <a href="<?= e(url('evento_pagos', ['id' => $id])) ?>">Ver pagos</a></p>
+                <?php $anx = $anexosPorPedido[(int) $p['id']] ?? null; if ($anx): ?>
+                    <p class="pt-anexo-estado"><span class="doc-estado doc-estado-<?= $anx['firmable'] ? 'enviado' : ($anx['estado'] === 'firmado' ? 'firmado' : 'anulado') ?>"><?= e($anx['titulo']) ?>: <?= $anx['firmable'] ? 'por firmar' : ($anx['estado'] === 'firmado' ? 'firmado' : 'sin efecto') ?></span>
+                        <a href="<?= e(url('contrato', ['id' => $id])) ?>#anexos">Ver el anexo</a></p>
+                <?php else: ?>
+                    <p class="suave ayuda-chica">Sin anexo: cuando se aprobó, el evento no tenía contrato firmado. Los extras entran en el contrato cuando lo generes.</p>
+                <?php endif; ?>
             <?php endif; ?>
             <?php if ($p['nota_negocio']): ?><p class="pt-pedido-nota"><strong>Nota para el cliente:</strong> <?= e($p['nota_negocio']) ?></p><?php endif; ?>
             <?php if (in_array($p['estado'], ['aprobado', 'rechazado'], true) && ($wa = WhatsApp::enlace($ev['cliente_telefono'], Extras::textoRespuesta($p, (string) $u['negocio'], $portal)))): ?>
@@ -146,7 +152,8 @@ $f = $borradorPregunta ?? [];
                     <?= campo_csrf() ?><input type="hidden" name="accion" value="aprobar"><input type="hidden" name="pedido_id" value="<?= (int) $p['id'] ?>">
                     <div class="campo"><label for="nota-a<?= (int) $p['id'] ?>">Nota para el cliente <small>(opcional)</small></label>
                         <input type="text" id="nota-a<?= (int) $p['id'] ?>" name="nota" maxlength="400" placeholder="Ej.: ¡Listo! La fotocabina llega a las 20:00"></div>
-                    <button class="boton boton-chico" type="submit" data-confirmar="¿Aprobar estos extras? Se crea una versión nueva de la cotización aceptada y se suma una cuota al plan de pagos.">Aprobar y sumar al evento</button>
+                    <button class="boton boton-chico" type="submit" data-confirmar="¿Aprobar estos extras? Se crea una versión nueva de la cotización aceptada y se suma una cuota al plan de pagos.<?= $contratoFirmado ? ' Como el contrato ya está firmado, se prepara un anexo para que el cliente lo firme.' : '' ?> Un pedido aprobado no se puede deshacer.">Aprobar y sumar al evento</button>
+                    <small class="suave" style="display:block;margin-top:6px"><?= $contratoFirmado ? 'El contrato ya está firmado: al aprobar se prepara un anexo para que el cliente lo firme.' : 'Todavía no hay contrato firmado: los extras entran en el contrato cuando lo generes (no hace falta anexo).' ?></small>
                     <?php if ($borradores): ?><small class="pt-advertencia">Hay <?= $borradores ?> cotización<?= $borradores === 1 ? '' : 'es' ?> en borrador o enviada sin aceptar: al aprobar quedará<?= $borradores === 1 ? '' : 'n' ?> reemplazada<?= $borradores === 1 ? '' : 's' ?>.</small><?php endif; ?>
                 </form>
                 <details class="pt-rechazar">

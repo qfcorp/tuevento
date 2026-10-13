@@ -16,7 +16,23 @@ $ptPedidos = $ptExtras->deEvento($ptNid, $ptEid);
 $ptPend = count(array_filter($ptPedidos, fn($p) => $p['estado'] === 'pendiente'));
 $ptEncuesta = in_array($ev['estado'], Encuestas::ESTADOS, true) && $ev['fecha'] < $ptHoy && Encuestas::motivoCerrada($ev + ['cuenta' => $negocio['estado']]) === null;
 $ptRespondio = $ptEncuesta ? (new Encuestas(db()))->deEvento($ptNid, $ptEid) : null;
+$ptAnexos = (new \TuEvento\Anexos(db()))->deEvento($ptNid, $ptEid);   // anexos por extras aprobados (090)
+$ptPorFirmar = array_values(array_filter($ptAnexos, fn($a) => $a['firmable']));
+$ptFirmados = array_values(array_filter($ptAnexos, fn($a) => $a['estado'] === 'firmado'));
 ?>
+<?php if ($ptPorFirmar && $activo): ?>
+<section class="bloque pt-tarjeta pt-tarjeta-anexo" id="anexo">
+    <div class="pt-tarjeta-icono" aria-hidden="true">✍️</div>
+    <div class="pt-tarjeta-cuerpo">
+        <h2><?= count($ptPorFirmar) === 1 ? 'Tienes un anexo por firmar' : 'Tienes ' . count($ptPorFirmar) . ' anexos por firmar' ?></h2>
+        <?php foreach ($ptPorFirmar as $a): ?>
+            <p><strong><?= e($a['titulo']) ?></strong>: suma a tu contrato los extras que aprobamos (<?= dinero($a['monto']) ?>). Toma un minuto desde tu celular.</p>
+            <a class="boton" href="<?= e(url('firmar_anexo', ['t' => $a['token']])) ?>">Leer y firmar el anexo</a>
+        <?php endforeach; ?>
+    </div>
+</section>
+<?php endif; ?>
+
 <?php if ($ptEncuesta): ?>
 <section class="bloque pt-tarjeta pt-tarjeta-encuesta" id="encuesta">
     <div class="pt-tarjeta-icono" aria-hidden="true">💛</div>
