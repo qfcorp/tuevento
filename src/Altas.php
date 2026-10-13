@@ -30,9 +30,16 @@ final class Altas
         }
     }
 
-    /** @return array{negocio_id:int, usuario_id:int, slug:string} */
-    public function crearNegocioConDueno(string $negocio, string $nombre, string $telefono, string $email, string $clave, string $plan, string $ciudad = 'Quito'): array
+    public const ORIGENES = ['registro', 'super', 'central'];
+
+    /**
+     * $origen: de dónde vino el cliente (registro = se registró solo, super = panel de Tukán, central = Panel Tukán Central).
+     * @return array{negocio_id:int, usuario_id:int, slug:string}
+     */
+    public function crearNegocioConDueno(string $negocio, string $nombre, string $telefono, string $email, string $clave, string $plan,
+                                         string $ciudad = 'Quito', string $origen = 'registro'): array
     {
+        if (!in_array($origen, self::ORIGENES, true)) throw new RuntimeException('Origen no válido.');
         $negocio = trim($negocio);
         $nombre = trim($nombre);
         $email = strtolower(trim($email));
@@ -53,8 +60,8 @@ final class Altas
         try {
             $slug = $this->slugLibre($negocio);
             $negocioId = $planes->crearNegocio($negocio, $slug, $plan);
-            $this->db->prepare('UPDATE negocios SET telefono = ?, whatsapp = ?, email = ?, ciudad = ?, condiciones = ? WHERE id = ?')
-                     ->execute([trim($telefono) ?: null, trim($telefono) ?: null, $email, trim($ciudad) ?: 'Quito', self::CONDICIONES, $negocioId]);
+            $this->db->prepare('UPDATE negocios SET telefono = ?, whatsapp = ?, email = ?, ciudad = ?, condiciones = ?, origen = ? WHERE id = ?')
+                     ->execute([trim($telefono) ?: null, trim($telefono) ?: null, $email, trim($ciudad) ?: 'Quito', self::CONDICIONES, $origen, $negocioId]);
             $st = $this->db->prepare("INSERT INTO usuarios (negocio_id, nombre, email, telefono, password_hash, rol) VALUES (?,?,?,?,?, 'dueno') RETURNING id");
             $st->execute([$negocioId, $nombre, $email, trim($telefono) ?: null, password_hash($clave, PASSWORD_DEFAULT)]);
             $usuarioId = (int) $st->fetchColumn();

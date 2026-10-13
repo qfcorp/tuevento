@@ -157,8 +157,11 @@ final class Planes
         return $hoy;
     }
 
+    /**
+     * Registra un pago de suscripción. $pagadoEn: fecha en que pagó (por defecto hoy; el Panel Tukán Central la manda).
+     */
     public function suscribir(int $negocioId, string $plan, string $periodo, DateTimeImmutable $inicio,
-                              string $metodoPago, ?string $dominio = null, ?float $monto = null): int
+                              string $metodoPago, ?string $dominio = null, ?float $monto = null, ?DateTimeImmutable $pagadoEn = null): int
     {
         $c = $this->cotizar($plan, $periodo);
         if ($monto !== null) {
@@ -170,13 +173,14 @@ final class Planes
         if ($propia) $this->db->beginTransaction();
         $st = $this->db->prepare(
             'INSERT INTO suscripciones (negocio_id, plan_codigo, periodo, meses_pagados, meses_recibidos,
-                                        monto, inicio, fin, metodo_pago, incluye_dominio, dominio)
-             VALUES (?,?,?,?,?,?,?,?,?,?,?) RETURNING id'
+                                        monto, inicio, fin, metodo_pago, incluye_dominio, dominio, pagado_en)
+             VALUES (?,?,?,?,?,?,?,?,?,?,?, COALESCE(?::date, CURRENT_DATE)) RETURNING id'
         );
         $st->execute([
             $negocioId, $plan, $periodo, $c['meses_pagados'], $c['meses_recibidos'], $c['monto'],
             $inicio->format('Y-m-d'), $fin->format('Y-m-d'), $metodoPago,
             $c['incluye_dominio'] ? 'true' : 'false', $c['incluye_dominio'] ? $dominio : null,
+            $pagadoEn?->format('Y-m-d'),
         ]);
         $id = (int) $st->fetchColumn();
         $this->db->prepare("UPDATE negocios SET estado = 'activo', plan_codigo = ?,

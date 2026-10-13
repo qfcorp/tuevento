@@ -28,7 +28,7 @@ final class PanelTukan
 
     private const SQL_NEGOCIOS = "
         SELECT n.id, n.nombre, n.slug, n.telefono, n.whatsapp, n.email, n.ciudad, n.plan_codigo, n.estado, n.prueba_hasta, n.activo_hasta,
-               n.notas_admin, n.creado_en, n.logo, pl.nombre AS plan_nombre,
+               n.notas_admin, n.creado_en, n.logo, n.origen, pl.nombre AS plan_nombre,
                u.nombre AS dueno, u.email AS dueno_email, u.telefono AS dueno_telefono, u.id AS dueno_usuario_id, u.ultimo_ingreso AS dueno_ingreso,
                (SELECT count(*) FROM espacios es WHERE es.negocio_id = n.id AND es.activo) AS espacios,
                (SELECT count(*) FROM usuarios us WHERE us.negocio_id = n.id AND us.activo) AS usuarios,
@@ -198,7 +198,7 @@ final class PanelTukan
         return ['email' => $u['email'], 'nombre' => $u['nombre'], 'clave' => $clave];
     }
 
-    /** Registra un pago de suscripción (valida todo lo que llega del formulario). */
+    /** Registra un pago de suscripción (valida todo lo que llega del formulario). 'fecha' (opcional): día en que pagó. */
     public function registrarPago(int $negocioId, array $d): array
     {
         $plan = (string) ($d['plan'] ?? '');
@@ -213,8 +213,13 @@ final class PanelTukan
         $monto = $montoTxt === '' ? ($metodo === 'cortesia' ? 0.0 : null) : (float) str_replace(',', '.', $montoTxt);
         $dominio = strtolower(trim((string) ($d['dominio'] ?? ''))) ?: null;
         if ($dominio !== null && !preg_match('/^[a-z0-9-]+(\.[a-z0-9-]+)+$/', $dominio)) throw new RuntimeException('El dominio no es válido (ej. quintalosarrayanes.com).');
+        $pagadoEn = null;
+        if (($fecha = (string) ($d['fecha'] ?? '')) !== '') {
+            $pagadoEn = DateTimeImmutable::createFromFormat('!Y-m-d', $fecha);
+            if (!$pagadoEn || $pagadoEn->format('Y-m-d') !== $fecha) throw new RuntimeException('La fecha del pago no es válida.');
+        }
         if (!$this->negocio($negocioId)) throw new RuntimeException('Negocio no encontrado.');
-        $id = $this->planes->suscribir($negocioId, $plan, $periodo, $fi, $metodo, $dominio, $monto);
+        $id = $this->planes->suscribir($negocioId, $plan, $periodo, $fi, $metodo, $dominio, $monto, $pagadoEn);
         $c = $this->planes->cotizar($plan, $periodo);
         return ['id' => $id, 'monto' => $monto ?? $c['monto'], 'plan' => $plan, 'periodo' => $periodo, 'metodo' => $metodo];
     }

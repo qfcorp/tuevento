@@ -76,6 +76,15 @@ Se armó juntando lo mejor de los programas existentes y lo que Tukán ya tenía
 - [x] Comando para conectar: `sudo bash /var/www/tuevento/deploy/conectar_central.sh {ID} {SECRETO} {URL}` (guarda en config/.env y hace una prueba local)
 - [x] Pruebas: logica_95 (120) y web_95 (157), migración 095. Totales: lógica 1829/1829 y pantallas 1717/1717
 
+## Hecho (13 oct 2026) — Panel Tukán Central v2
+- [x] El panel central ya puede, para TuEvento: ver todos los clientes con su estado y vencimiento, abrir su ficha (pagos, últimas acciones, notas, WhatsApp listo), ver las solicitudes (registros nuevos, pruebas por terminar o terminadas, planes por vencer o vencidos, dominios gratis) y marcarlas atendidas, y ver las finanzas por mes
+- [x] Desde el central: crear demos (con datos de ejemplo; la clave se ve una sola vez), alargar la prueba (no a quien ya paga), registrar pago con la fecha en que pagó, anular pago, suspender, reactivar, cancelar, cambiar plan, nueva clave del dueño, nota interna y cambiar precios de los planes. Si el central reintenta, no se cobra ni se crea dos veces
+- [x] "Por vencer" ahora es lo mismo en todos los programas: al día y vence en 7 días o menos. Los que están en días de gracia cuentan como vencidos (antes TuEvento los contaba como "por vencer")
+- [x] Entrar desde el central puede abrir directo la ficha de un negocio (`ir`); los errores traen un código para que el central diga qué pasó; límite 120 pedidos y 30 rechazados por minuto
+- [x] Se guarda de dónde vino cada negocio (se registró solo, panel de Tukán o demo del central)
+- [x] Pruebas: logica_96 (301) y web_96 (86), migración 096. Totales: lógica 2135/2135 y pantallas 1803/1803
+- Falta (no existe en TuEvento): pedidos de demo, comprobantes de pago y soporte. Si se quieren en el central, hay que construirlos aquí primero (subir comprobante desde la pantalla de prueba terminada y un formulario de ayuda)
+
 ## Pendiente
 0. [ ] DIMI: cuando el Panel Tukán Central esté listo, correr `sudo bash /var/www/tuevento/deploy/conectar_central.sh {ID} {SECRETO} {URL}` con los datos que da el panel (después de actualizar TuEvento)
 1. [ ] DIMI: instalar en el servidor (comando en el README) y crear la ruta del túnel `tuevento.tukanec.com`

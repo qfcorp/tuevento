@@ -36,7 +36,7 @@ Dirección: **tuevento.tukanec.com** (servidor qfcorp). Web de la marca: tukanso
 | Invitado / puerta / en vivo / personal | `/?r=invitacion&t=…` · `/?r=puerta&t=…` · `/?r=vivo&t=…` · `/?r=staff&t=…` |
 | Proveedor (portal) / verificar orden de compra | `/?r=portal_proveedor&t=<enlace secreto>` · `/?r=verificar_oc&c=<código>` |
 | Tukán (super administrador) | `/?r=admin_entrar` · cuenta creada con `php bin/crear_admin.php` en el servidor · o con un clic desde el Panel Tukán Central |
-| Panel Tukán Central (conector) | `/tukan_central.php?accion=sso&t=…` (entrar) · `/tukan_central.php?accion=estado&t=…` (cifras en JSON) |
+| Panel Tukán Central (conector) | v1: `/tukan_central.php?accion=sso&t=…` (entrar, con enlace directo `ir`) · `/tukan_central.php?accion=estado&t=…` (cifras en JSON) · v2: `POST /tukan_central.php?accion=<capacidades, clientes, cliente, cotizar, planes, solicitudes, solicitud, finanzas, ejecutar>` |
 
 ## Tecnología
 PHP 8.3+, PostgreSQL 16 (extensiones `btree_gist` y `pgcrypto`), TCPDF (con composer) para los PDF. Sin librerías de JavaScript.
@@ -67,7 +67,15 @@ El panel central muestra las cifras de todos los programas Tukán y deja entrar 
 - **Entrar solo desde el panel central:** agrega `TUKAN_SOLO_CENTRAL=1` en `config/.env`. La página `/?r=admin_entrar` dice "El ingreso del super usuario es solo desde el Panel Tukán" y no acepta contraseñas. El ingreso de los negocios no cambia.
 - **Emergencia** (el panel central no responde): pon `TUKAN_SOLO_CENTRAL=0` en `config/.env` y entra con tu clave; si no la recuerdas, `php /var/www/tuevento/bin/crear_admin.php` la cambia.
 - Cada entrada desde el panel central queda en "Últimos movimientos del panel" ("Entró desde el Panel Tukán Central"). La primera vez se crea el super usuario con el correo del panel central (con una contraseña al azar que nadie conoce).
-- Seguridad: cada enlace dura 60 segundos y sirve una sola vez; máximo 30 pedidos por minuto por IP; el estado no lleva datos personales (solo nombres de negocios). Detalle del protocolo: `PROTOCOLO.md` del panel central (Tukán Central v1).
+- Seguridad: cada enlace dura 60 segundos y sirve una sola vez (30 s las operaciones); máximo 120 pedidos y 30 rechazados por minuto por IP; el estado no lleva datos personales (solo nombres de negocios). Detalle del protocolo: `PROTOCOLO.md` (v1) y `PROTOCOLO_V2.md` (v2) del panel central.
+
+### Qué puede hacer el Panel Tukán Central (protocolo v2)
+Con el mismo ID y el mismo secreto, el panel central ve y maneja a los clientes de TuEvento sin entrar al panel:
+- **Clientes**: todos los negocios con su estado (en prueba, al día, por vencer en 7 días, vencido —incluye los días de gracia— y suspendido/cancelado), plan, vencimiento, dueño, último uso, pagos y lo que vale al mes. La ficha trae los pagos (también los anulados), las últimas acciones, las notas internas y los mensajes de WhatsApp listos.
+- **Solicitudes**: negocios que se registraron solos (30 días), pruebas que terminan en 2 días / hoy / terminadas sin pagar (60 días), planes que vencen en 5 días o vencidos sin renovar (30 días) y dominios gratis por registrar. Se marcan "en proceso", "atendida" o "descartada" (tabla `tukan_central_atenciones`).
+- **Operaciones** (con las mismas funciones del panel de Tukán y una línea en "Últimos movimientos del panel" con el correo del Central): crear demo (negocio en prueba con datos de ejemplo; la contraseña temporal se muestra una sola vez), alargar la prueba, registrar pago (con la fecha en que pagó), anular pago, suspender, reactivar, cancelar, cambiar plan, nueva clave del dueño, nota interna, atender solicitud y guardar plan/precios.
+- **Finanzas**: cobrado por mes (por plan, tiempo y forma de pago), nuevos pagadores, devengado e ingreso mensual recurrente.
+- Si el Central repite una operación (se cortó la red), TuEvento no la hace dos veces: devuelve el mismo resultado (`tukan_central_operaciones`, 90 días, sin contraseñas).
 
 ## Tareas automáticas y respaldo
 El instalador deja programado:
@@ -83,11 +91,11 @@ Telegram (opcional) en `config/.env`: `TELEGRAM_BOT_TOKEN`, `TELEGRAM_BOT_USERNA
 Solo en bases de prueba (se borran y se vuelven a crear):
 
 ```bash
-# Lógica (1829 pruebas)
+# Lógica (2135 pruebas)
 TUEVENTO_DB_NAME=tuevento_prueba TUEVENTO_DB_USER=tuevento TUEVENTO_DB_PASS=prueba php tests/run_tests.php
-# Pantallas de punta a punta (1717 pruebas; levanta un sitio de prueba solo)
+# Pantallas de punta a punta (1803 pruebas; levanta un sitio de prueba solo)
 PGPASSWORD=prueba bash tests/run_web.sh
-# Solo el conector con el Panel Tukán Central
-TUEVENTO_DB_NAME=tuevento_prueba TUEVENTO_DB_USER=tuevento TUEVENTO_DB_PASS=prueba php tests/run_tests.php logica_95
-PGPASSWORD=prueba bash tests/run_web.sh web_95
+# Solo el conector con el Panel Tukán Central (v1 = logica_95/web_95, v2 = logica_96/web_96)
+TUEVENTO_DB_NAME=tuevento_prueba TUEVENTO_DB_USER=tuevento TUEVENTO_DB_PASS=prueba php tests/run_tests.php logica_9
+PGPASSWORD=prueba bash tests/run_web.sh web_9
 ```
