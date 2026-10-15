@@ -70,6 +70,11 @@ bash tests/run_web.sh
   - `ejecutar`: `operacion_id` en `tukan_central_operaciones` (fila `en_curso` fuera de la transacción; la operación va en una transacción con `SELECT … FOR UPDATE` del negocio; respuesta guardada SIN claves con `sinClaves()`; error de validación = `error` guardado; excepción = se borra la fila). Mismo id con otro cuerpo → 409; repetido → la respuesta guardada con `repetida: true`. Cada operación correcta deja una línea `Panel Tukán Central · … (op xxxxxxxx)` en `registro_admin` con el super usuario del correo del token (`TukanCentral::buscarSuper()`).
   - Cuidado: `PDOException` es `RuntimeException`; en el conector siempre se relanza antes de convertir los `RuntimeException` del negocio en 422 (si no, un error de base saldría como "dato inválido" con el texto técnico).
   - `Planes::suscribir(..., $pagadoEn)` y `PanelTukan::registrarPago(['fecha' => …])` guardan la fecha del pago (`pagado_en`); sin ella, hoy. Anular el único pago de un negocio activo lo vuelve a `prueba` (el panel no lo hacía: quedaba "al día sin vencimiento").
+  - Anexo A (097, `Papelera`): `pausar` = `suspendido` + `negocios.pausa_tipo/pausa_motivo/pausa_en` (`PanelTukan::cambiarEstado()` los borra al salir de suspendido; `suspender` guarda el motivo sin tipo → texto genérico). Papelera = `negocios.eliminado_en/_motivo/_por/_copia` (borrado lógico).
+  - **Toda consulta nueva que liste o cuente negocios debe excluir `eliminado_en IS NOT NULL`** (`PanelTukan::negocios()` ya lo hace; pagos: `PanelTukan::SQL_PAGO_CUENTA` / `SQL_PAGO_VIVO`). `usuario()` y el ingreso no aceptan negocios en la papelera.
+  - Las tablas del negocio salen del esquema (`Papelera::tablas()`: las que tienen `negocio_id` y sus hijas por clave foránea). Una tabla nueva entra sola en la copia y en la purga; si una tabla nueva **no** debe borrarse con el negocio, que su clave sea `ON DELETE SET NULL` (como `registro_admin`).
+  - **Página pública nueva**: agrégala a `Papelera::RUTAS_PUBLICAS` (cómo se encuentra su negocio por el enlace) o a `PUBLICAS_SIN_NEGOCIO`; `public/index.php` contesta 503 (pausado) o 404 (papelera) antes de abrirla. logica_97 falla si una página pública no está en ninguna de las dos.
+  - Copias: `TUEVENTO_BORRADOS` (por defecto `respaldos/borrados/`, carpeta 700 y archivos 600 de `www-data`). La purga (`Papelera::purgar()`, desde `Automaticas::correr()`) borra de hija a madre (respeta los `RESTRICT`), mueve los archivos subidos a `<copia>.archivos/` y borra las copias de más de 365 días. Por eso `bin/tareas.php` corre en el crontab de `www-data`.
 
 ## Archivos de cada módulo
 | Módulo | Pruebas | Migración | Clases |
@@ -86,8 +91,10 @@ bash tests/run_web.sh
 | Plano visual del salón y metas de ventas | logica_80, web_80 | 080 | Planos, PdfPlano, Metas (editor: `public/assets/mod_plano.js` + `mod_plano.css`, prefijo `pl-`; metas: `mod_metas.css`, prefijo `mt-`) |
 | Conector con el Panel Tukán Central (SSO, estado, solo central, `deploy/conectar_central.sh`) | logica_95, web_95 | 095 | TukanCentral, TukanCentralRechazo (entrada `public/tukan_central.php`, fuera del enrutador) |
 | Panel Tukán Central v2 (capacidades, clientes, cliente, cotizar, planes, solicitudes, finanzas, ejecutar; SSO con `ir`) | logica_96, web_96 | 096 | TukanCentralV2, TukanCentralError |
+| Pausar y borrar clientes (Anexo A: pausar, papelera, restaurar, purga a los 30 días) | logica_97, web_97 | 097 | Papelera (+ `public/index.php`, `prueba_terminada`, `admin_negocios` con filtro Papelera) |
 
 ## Servidor
-- Cron cada hora: `php /var/www/tuevento/bin/tareas.php` · respaldo diario 3:25: `deploy/respaldo.sh`
+- Cron cada hora (crontab de `www-data`): `php /var/www/tuevento/bin/tareas.php` (también purga la papelera) · respaldo diario 3:25: `deploy/respaldo.sh`
+- Copias de los negocios borrados: `/var/www/tuevento/respaldos/borrados/<id>_<fecha>.json.gz` (gzip JSON; `TuEvento\Papelera::leerCopia()` la lee)
 - Super usuario: `php bin/crear_admin.php` · Telegram: `TELEGRAM_BOT_TOKEN`, `TELEGRAM_BOT_USERNAME`, `TELEGRAM_WEBHOOK_SECRET`
 - Panel Tukán Central: `sudo bash /var/www/tuevento/deploy/conectar_central.sh {ID} {SECRETO} {URL}` · `TUKAN_SOLO_CENTRAL=1` (solo desde el central; 0 = vuelve el ingreso local)

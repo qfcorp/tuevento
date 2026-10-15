@@ -85,7 +85,14 @@ Se armó juntando lo mejor de los programas existentes y lo que Tukán ya tenía
 - [x] Pruebas: logica_96 (301) y web_96 (86), migración 096. Totales: lógica 2135/2135 y pantallas 1803/1803
 - Falta (no existe en TuEvento): pedidos de demo, comprobantes de pago y soporte. Si se quieren en el central, hay que construirlos aquí primero (subir comprobante desde la pantalla de prueba terminada y un formulario de ayuda)
 
+## Hecho (15 oct 2026) — Pausar y borrar clientes desde el Panel Tukán Central (Anexo A)
+- [x] **Pausar** (con tipo: falta de pago, pedido del cliente, revisión, uso indebido u otro, y motivo obligatorio): el negocio queda suspendido; al entrar ve "Tu cuenta está pausada" con el motivo (en revisión y uso indebido, un texto genérico) y el botón de WhatsApp de Tukán. Su página pública, portales, invitaciones, firmas y enlaces dicen "temporalmente no disponible". **Reactivar** lo quita
+- [x] **Borrar** (escribiendo el nombre exacto y el motivo; solo el dueño del Panel Central): primero se guarda una copia completa del negocio (todas sus filas de todas sus tablas y la lista de sus archivos) en `respaldos/borrados/` (fuera de la web, solo la lee el programa), y queda en la **papelera**: no entra, no sale en listas ni cifras, sus páginas dan 404 y no recibe tareas ni avisos
+- [x] **Restaurar** dentro de 30 días (desde el Panel Central o desde el Panel Tukán del programa, filtro "Papelera"): vuelve tal cual. A los 30 días la tarea de cada hora lo borra de verdad; la copia se guarda 1 año
+- [x] Pruebas: logica_97 (127) y web_97 (56), migración 097. Totales: lógica 2262/2262 y pantallas 1859/1859
+
 ## Pendiente
+00. [ ] DIMI: actualizar en el servidor (volver a correr el instalador del README): crea la carpeta `respaldos/borrados` y pasa las tareas de cada hora al usuario `www-data`
 0. [ ] DIMI: cuando el Panel Tukán Central esté listo, correr `sudo bash /var/www/tuevento/deploy/conectar_central.sh {ID} {SECRETO} {URL}` con los datos que da el panel (después de actualizar TuEvento)
 1. [ ] DIMI: instalar en el servidor (comando en el README) y crear la ruta del túnel `tuevento.tukanec.com`
 2. [ ] DIMI: crear el super usuario del panel Tukán (`php /var/www/tuevento/bin/crear_admin.php`)
