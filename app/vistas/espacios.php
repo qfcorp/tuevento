@@ -17,9 +17,9 @@ $activosLista = array_filter($espacios, fn($e) => $e['activo']);
 
 <?php if ($max !== null): ?>
     <p class="<?= !$puedeAgregar ? 'aviso aviso-alerta' : 'suave' ?>">
-        Tu plan Salón permite <?= $max ?> <?= $max === 1 ? 'espacio activo' : 'espacios activos' ?> (tienes <?= $activos ?>).
-        <?php if (!$puedeAgregar): ?>Para agregar más, desactiva uno o pasa al <strong>plan Quinta</strong>: espacios sin límite.
-            <?php if (es_dueno($u)): ?><a href="<?= e(url('planes')) ?>">Ver el plan Quinta</a><?php endif; ?>
+        Tu plan <?= e($u['plan_nombre'] ?? '') ?> permite <?= $max ?> <?= $max === 1 ? 'espacio activo' : 'espacios activos' ?> (tienes <?= $activos ?>).
+        <?php if (!$puedeAgregar): ?>Para agregar más, desactiva uno o cambia de plan (el plan <strong>Quinta</strong> no tiene límite de espacios).
+            <?php if (es_dueno($u)): ?><a href="<?= e(url('planes')) ?>">Ver Mi plan</a><?php endif; ?>
         <?php endif; ?>
     </p>
 <?php endif; ?>
@@ -115,7 +115,7 @@ $activosLista = array_filter($espacios, fn($e) => $e['activo']);
                     <?= (float) $es['precio_base'] > 0 ? ' · ' . dinero($es['precio_base']) : '' ?></p>
                 <?php if ($es['descripcion']): ?><p class="esp-desc"><?= e($es['descripcion']) ?></p><?php endif; ?>
                 <p class="suave ayuda-chica"><?= (int) $es['eventos_futuros'] ?> <?= (int) $es['eventos_futuros'] === 1 ? 'evento próximo' : 'eventos próximos' ?></p>
-                <?php if ($es['activo']): ?><p class="ayuda-chica"><a href="<?= e(url('plano', ['espacio' => $es['id']])) ?>#esp-<?= (int) $es['id'] ?>">Plano y distribuciones<?= es_quinta($u) ? '' : ' 🔒' ?></a></p><?php endif; ?>
+                <?php if ($es['activo'] && modulo_activo($u, 'plano')): ?><p class="ayuda-chica"><a href="<?= e(url('plano', ['espacio' => $es['id']])) ?>#esp-<?= (int) $es['id'] ?>">Plano y distribuciones</a></p><?php endif; ?>
                 <?php if ($puedeEditar): ?>
                 <div class="acciones">
                     <a class="boton boton-claro boton-chico" href="<?= e(url('espacios', ['editar' => $es['id']])) ?>">Editar</a>

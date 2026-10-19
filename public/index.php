@@ -77,6 +77,22 @@ if (in_array($ruta, $publicas, true) && !in_array($ruta, \TuEvento\Papelera::PUB
         }
         exit;
     }
+    // Anexo B: la página pública de un módulo que el negocio no tiene encendido dice "no disponible" (los datos no se tocan)
+    $moduloPublico = \TuEvento\Modulos::RUTAS[$ruta] ?? '';
+    if ($nidPublico !== null && $moduloPublico !== '' && !in_array($ruta, \TuEvento\Modulos::SIN_CORTE, true) && !modulo_activo($nidPublico, $moduloPublico)) {
+        http_response_code(403);
+        header('Cache-Control: no-store');
+        if (!empty($_GET['json'])) {
+            header('Content-Type: application/json; charset=utf-8');
+            echo json_encode(['error' => 'No disponible.', 'disponible' => false], JSON_UNESCAPED_UNICODE);
+        } elseif ($ruta === 'ical') {
+            header('Content-Type: text/plain; charset=utf-8');
+            echo "No disponible.\n";
+        } elseif (empty($_GET['qr']) && empty($_GET['foto'])) {
+            vista_publica('modulo_no_disponible', [], 'No disponible', null);
+        }
+        exit;
+    }
 }
 
 if (in_array($ruta, $privadas, true)) {
@@ -88,6 +104,13 @@ if (in_array($ruta, $privadas, true)) {
     if (!in_array($ruta, ['prueba_terminada', 'salir', 'planes'], true)
         && !planes()->alDia($u) && !(!empty($_SESSION['admin_viendo']) && superadmin())) {
         redirigir('prueba_terminada');
+    }
+    // Anexo B: cada página es de la base o de un módulo; si el módulo está apagado, se explica cómo agregarlo
+    $moduloRuta = \TuEvento\Modulos::RUTAS[$ruta] ?? '';
+    if ($moduloRuta !== '' && !modulo_activo($u, $moduloRuta)) {
+        http_response_code(403);
+        vista('modulo_apagado', ['modulo' => $moduloRuta], \TuEvento\Modulos::nombre($moduloRuta) . ' · TuEvento');
+        exit;
     }
 }
 

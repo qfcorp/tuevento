@@ -684,7 +684,7 @@ final class Ventas
     {
         $max = $this->maxEspacios($negocioId);
         return "Tu plan permite hasta $max " . ($max === 1 ? 'espacio activo' : 'espacios activos')
-             . '. Desactiva uno o pasa al plan Quinta para tener espacios sin límite.';
+             . '. Desactiva uno o cambia de plan en Mi plan (el plan Quinta no tiene límite de espacios).';
     }
 
     /** Crea o edita un espacio. $d: nombre, descripcion, capacidad_banquete, capacidad_coctel, precio_base, color, orden. */

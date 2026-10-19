@@ -2,7 +2,7 @@
 use TuEvento\{DiaEvento, Eventos, Invitados};
 
 /**
- * Invitados del evento (plan Quinta): lista, pegar lista, mesas, invitaciones por WhatsApp,
+ * Invitados del evento (módulo invitados): lista, pegar lista, mesas, invitaciones por WhatsApp,
  * enlace del modo puerta, PDF y CSV.  /?r=invitados&id=<evento>&ver=lista|mesas|invitacion  ·  &csv=1
  */
 $nid = (int) $u['negocio_id'];
@@ -14,15 +14,6 @@ if (!$ev) {
     return;
 }
 $tab = 'invitados';
-if (!es_quinta($u)) {
-    ob_start();
-    require RAIZ . '/app/vistas/_evento_tabs.php';
-    $cab = ob_get_clean();
-    vista('dia_candado', ['cab' => $cab, 'que' => 'Invitados con QR',
-        'explicacion' => 'Lista de invitados con pases y mesas, invitación digital por WhatsApp donde cada invitado confirma su asistencia, código QR de ingreso y modo puerta para controlar quién entró. Los novios también pueden armar su lista desde su celular.'],
-        'Invitados · TuEvento');
-    return;
-}
 $inv = new Invitados(db());
 $st = db()->prepare('SELECT * FROM negocios WHERE id = ?');
 $st->execute([$nid]);

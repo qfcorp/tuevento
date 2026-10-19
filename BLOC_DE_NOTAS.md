@@ -1,6 +1,6 @@
 # Bloc de notas — TuEvento (salones de eventos, quintas y haciendas · marca Tukán)
 
-Última actualización: 13 de octubre de 2026
+Última actualización: 18 de octubre de 2026
 
 ## Qué es
 Programa para salones de eventos, quintas y haciendas de Ecuador. Nació del estudio de nichos (12 oct 2026): no había ningún programa ecuatoriano para este mercado.
@@ -16,7 +16,7 @@ Se armó juntando lo mejor de los programas existentes y lo que Tukán ya tenía
 
 ## Decisiones tomadas
 - [x] Nombre provisional: **TuEvento** (se puede cambiar)
-- [x] Planes: **Salón $39/mes** (hasta 2 espacios y 3 usuarios) · **Quinta $69/mes** (todo, ilimitado). Semestral paga 5 recibe 6; anual paga 10 recibe 12 + dominio. Prueba gratis 7 días. Precios y lo que incluye cada plan se cambian después (panel Tukán → Planes).
+- [x] Planes: **Salón $39/mes** (hasta 2 espacios y 3 usuarios) · **Quinta $69/mes** (todo, ilimitado). Semestral paga 5 recibe 6; anual paga 10 recibe 12 + dominio. Demo de 7 días que crea Tukán (ya no hay prueba gratis; 18 oct 2026). Desde el 18 oct 2026 cada plan es base + módulos (ver abajo). Precios y lo que incluye cada plan se cambian después (panel Tukán → Planes).
 - [x] Plan Quinta incluye: portal del cliente completo, invitados con QR, día del evento, mobiliario y boda en vivo.
 - [x] **Sin facturación electrónica** por ahora (misma decisión pendiente que la veterinaria: opción B, proveedor registrado en el SRI).
 - [x] Tecnología igual que TuSalón: PHP + PostgreSQL, en el servidor qfcorp, dirección **tuevento.tukanec.com**.
@@ -91,13 +91,26 @@ Se armó juntando lo mejor de los programas existentes y lo que Tukán ya tenía
 - [x] **Restaurar** dentro de 30 días (desde el Panel Central o desde el Panel Tukán del programa, filtro "Papelera"): vuelve tal cual. A los 30 días la tarea de cada hora lo borra de verdad; la copia se guarda 1 año
 - [x] Pruebas: logica_97 (127) y web_97 (56), migración 097. Totales: lógica 2262/2262 y pantallas 1859/1859
 
+## Hecho (18 oct 2026) — Programa modular (Anexo B) y "todo se pide demo"
+Regla de Dimi: "todos los programas deben ser modulares para encender o apagar las funciones que necesita el cliente, para cobrar más o menos" y "nada se da gratis, todo se pide demo".
+- [x] **Base + módulos**: la base la tienen todos (calendario, eventos, clientes, espacios, catálogo, cotizaciones, cuotas y recibos, Mensajes de hoy, página pública, reportes básicos, usuarios). Módulos con su precio al mes: paquetes $3, contratos con firma $6, portal del cliente $6, cobros en línea Payphone $4, formulario/extras/encuesta $5, día del evento $8, invitados con QR $8, plano $6, mobiliario $5, boda en vivo $5, proveedores y compras $7, portal del proveedor $4, incidencias y puntaje $3, metas y reportes avanzados $4, Telegram $3, exportar Excel/Google Calendar $3.
+- [x] **Planes = precio base + módulos**: Esencial $19 (solo la base, nuevo), Salón $39 (lo mismo que tenía antes) y Quinta $69 (todo). Precios, descripciones y qué trae cada plan se cambian en Panel Tukán → Planes y precios → Catálogo de módulos
+- [x] **Por cliente**: módulos extra (se cobran), módulos quitados (se descuentan) y precio acordado. Precio al mes = plan + extras − quitados (o el acordado); es el que se sugiere al registrar el pago
+- [x] **Apagar nunca borra datos**: se esconden menús, pestañas, páginas ("Este módulo no está en tu plan" con su precio y el enlace a Mi plan), botones, portales públicos ("No disponible"), PDF, tareas automáticas, Telegram, Mensajes de hoy y tarjetas del Inicio
+- [x] **Mi plan** (dueño): lo que paga, sus módulos encendidos y los que puede agregar con su precio; "Pedir este módulo" → pedido que Tukán aprueba o rechaza (Panel Tukán o Panel Central)
+- [x] **Panel Tukán**: ficha del negocio → Módulos con interruptores (enciende solo las dependencias), total al mes, precio acordado y pedidos; catálogo de módulos y planes; pedidos de demo en el Resumen con "Crear demo"
+- [x] **Nada gratis**: ya no hay registro con prueba gratis. "Solicitar demo" (nombre, negocio, ciudad, WhatsApp, correo, qué necesita y módulos que le interesan) llega como pedido de demo; Tukán crea la demo (todos los módulos o los que elija, por los días que decida). "Tu demo terminó — contáctanos para contratar"
+- [x] **Panel Tukán Central** (revisión 3): acción `modulos`, `cliente.modulos`, `mensual_estimado` con módulos, `cambiar_modulos` y `guardar_modulos` (solo el rol dueño, idempotentes y auditados), solicitudes `cambio_modulos` y `demo_pedida`, `crear_demo` con plan, módulos y pedido de demo, `finanzas.por_modulo`
+- [x] Pruebas: logica_98 y web_98 (migración 098). Totales: **lógica 2378/2378 y pantallas 1931/1931**, sin avisos de PHP; revisado en celular (390 px) y computadora
+
 ## Pendiente
+000. [ ] DIMI: actualizar en el servidor (volver a correr el instalador del README): aplica la migración 098 (módulos y pedidos de demo). Revisar los precios de los módulos en Panel Tukán → Planes y precios
 00. [ ] DIMI: actualizar en el servidor (volver a correr el instalador del README): crea la carpeta `respaldos/borrados` y pasa las tareas de cada hora al usuario `www-data`
 0. [ ] DIMI: cuando el Panel Tukán Central esté listo, correr `sudo bash /var/www/tuevento/deploy/conectar_central.sh {ID} {SECRETO} {URL}` con los datos que da el panel (después de actualizar TuEvento)
 1. [ ] DIMI: instalar en el servidor (comando en el README) y crear la ruta del túnel `tuevento.tukanec.com`
 2. [ ] DIMI: crear el super usuario del panel Tukán (`php /var/www/tuevento/bin/crear_admin.php`)
 3. [ ] Probar Payphone con claves reales de un local (solo se probó con simulador)
-4. [ ] Lista de 10 salones/quintas conocidos por QF Producciones → entrevistas y piloto gratis con 2-3
+4. [ ] Lista de 10 salones/quintas conocidos por QF Producciones → entrevistas y piloto con demo para 2-3
 5. [ ] Decidir nombre definitivo (TuEvento / TuFecha / TuQuinta), precios y qué va en cada plan después del piloto
 6. [ ] Facturación electrónica (opción B, proveedor registrado en el SRI) cuando se decida
 7. [ ] WhatsApp automático (API oficial, pagada); hoy hay WhatsApp con un toque

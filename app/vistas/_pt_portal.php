@@ -8,15 +8,16 @@ use TuEvento\{Cuestionarios, Encuestas, Extras};
 $ptNid = (int) $ev['negocio_id'];
 $ptEid = (int) $ev['id'];
 $ptHoy = date('Y-m-d');
-$ptForm = $activo && in_array($ev['estado'], Cuestionarios::ESTADOS_CLIENTE, true) ? (new Cuestionarios(db()))->deEvento($ptNid, $ptEid) : null;
+$ptMod = modulo_activo($ptNid, 'cuestionarios');   // Anexo B: formulario, extras y encuesta son un módulo
+$ptForm = $ptMod && $activo && in_array($ev['estado'], Cuestionarios::ESTADOS_CLIENTE, true) ? (new Cuestionarios(db()))->deEvento($ptNid, $ptEid) : null;
 $ptExtras = new Extras(db());
-$ptOfrecidos = $activo ? $ptExtras->ofrecidos($ptNid) : [];
+$ptOfrecidos = $ptMod && $activo ? $ptExtras->ofrecidos($ptNid) : [];
 $ptMotivo = $ptExtras->motivoNoDisponible($ptNid, $ptEid);
-$ptPedidos = $ptExtras->deEvento($ptNid, $ptEid);
+$ptPedidos = $ptMod ? $ptExtras->deEvento($ptNid, $ptEid) : [];
 $ptPend = count(array_filter($ptPedidos, fn($p) => $p['estado'] === 'pendiente'));
-$ptEncuesta = in_array($ev['estado'], Encuestas::ESTADOS, true) && $ev['fecha'] < $ptHoy && Encuestas::motivoCerrada($ev + ['cuenta' => $negocio['estado']]) === null;
+$ptEncuesta = $ptMod && in_array($ev['estado'], Encuestas::ESTADOS, true) && $ev['fecha'] < $ptHoy && Encuestas::motivoCerrada($ev + ['cuenta' => $negocio['estado']]) === null;
 $ptRespondio = $ptEncuesta ? (new Encuestas(db()))->deEvento($ptNid, $ptEid) : null;
-$ptAnexos = (new \TuEvento\Anexos(db()))->deEvento($ptNid, $ptEid);   // anexos por extras aprobados (090)
+$ptAnexos = modulo_activo($ptNid, 'contratos') ? (new \TuEvento\Anexos(db()))->deEvento($ptNid, $ptEid) : [];   // anexos por extras aprobados (090)
 $ptPorFirmar = array_values(array_filter($ptAnexos, fn($a) => $a['firmable']));
 $ptFirmados = array_values(array_filter($ptAnexos, fn($a) => $a['estado'] === 'firmado'));
 ?>

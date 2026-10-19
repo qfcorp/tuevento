@@ -12,10 +12,10 @@ $pestanas = [
     'invitados'    => 'Invitados',
 ];
 if ($u['rol'] === 'coordinador') unset($pestanas['cotizacion'], $pestanas['contrato'], $pestanas['evento_pagos']);
-$soloQuinta = ['evento_dia', 'invitados'];
 $pestanas['evento_formulario'] = $u['rol'] === 'coordinador' ? 'Formulario' : 'Formulario y extras';   // portal del cliente (módulo 070)
 $pestanas['plano'] = 'Plano';      // plano del salón (módulo 080)
-$soloQuinta[] = 'plano';
+// Anexo B: las pestañas de un módulo apagado no salen (sus datos siguen guardados)
+foreach (array_keys($pestanas) as $r) if (!modulo_activo($u, \TuEvento\Modulos::RUTAS[$r] ?? '')) unset($pestanas[$r]);
 ?>
 <div class="evento-cabeza">
     <div>
@@ -29,7 +29,7 @@ $soloQuinta[] = 'plano';
 <nav class="pestanas" aria-label="Secciones del evento">
     <?php foreach ($pestanas as $r => $txt): ?>
         <a href="<?= e(url($r, ['id' => $ev['id']])) ?>" class="<?= $tab === $r ? 'activa' : '' ?>" <?= $tab === $r ? 'aria-current="page"' : '' ?>>
-            <?= e($txt) ?><?= (in_array($r, $soloQuinta, true) && !es_quinta($u)) ? ' <span class="candado-mini" aria-label="plan Quinta">🔒</span>' : '' ?>
+            <?= e($txt) ?>
         </a>
     <?php endforeach; ?>
 </nav>

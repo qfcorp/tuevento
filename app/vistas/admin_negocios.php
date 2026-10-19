@@ -4,7 +4,7 @@ use TuEvento\{PanelTukan, WhatsApp};
 <div class="cabecera">
     <div><h1>Negocios (<?= count($negocios) ?>)</h1>
         <p>Todos los salones, quintas y haciendas que usan TuEvento.</p></div>
-    <a class="boton" href="<?= e(url('admin_nuevo')) ?>">+ Nuevo negocio</a>
+    <a class="boton" href="<?= e(url('admin_nuevo')) ?>">+ Nueva demo</a>
 </div>
 
 <form method="get" class="bloque filtros-admin" style="grid-template-columns:unset">

@@ -2,7 +2,7 @@
 use TuEvento\{Eventos, Planos, Ventas};
 
 /**
- * Plano visual del salón (plan Quinta).
+ * Plano visual del salón (módulo plano).
  *   /?r=plano                    distribuciones (plantillas) de los espacios · &espacio=<id> para elegir el espacio
  *   /?r=plano&p=<plano>          editor de una distribución (el dueño la cambia; los demás miran)
  *   /?r=plano&id=<evento>        plano del evento, pestaña "Plano" (dueño, vendedor y coordinador lo cambian; consulta mira)
@@ -56,20 +56,6 @@ if ($planoId) {
 }
 $tab = 'plano';
 
-if (!es_quinta($u)) {
-    if (es_post()) exigir(false, 'El plano del salón es del plan Quinta.');
-    $explicacion = 'Dibuja tus salones en metros con mesas redondas, imperiales, pista, tarima, barra y más; arrastra todo con el dedo o el mouse. '
-                 . 'Cada evento tiene su plano unido a las mesas de los invitados: ves cuántos están sentados en cada mesa y lo sacas en PDF para el montaje.';
-    if ($ev) {
-        ob_start();
-        require RAIZ . '/app/vistas/_evento_tabs.php';
-        $cab = ob_get_clean();
-        vista('dia_candado', ['cab' => $cab, 'que' => 'Plano del salón', 'explicacion' => $explicacion], 'Plano · TuEvento');
-    } else {
-        vista('candado', ['que' => 'Plano del salón', 'explicacion' => $explicacion], 'Plano · TuEvento');
-    }
-    return;
-}
 
 $puedeEditarPlano = fn(?array $p) => $p && puede_editar($u) && ($p['tipo'] === 'evento' ? $editaEventos : $editaPlantillas);
 
