@@ -5,6 +5,7 @@ Dirección: **tuevento.tukanec.com** (servidor qfcorp). Web de la marca: tukanso
 
 - Plan, avance y pendientes: [BLOC_DE_NOTAS.md](BLOC_DE_NOTAS.md)
 - Cómo está hecho y reglas para programar: [docs/GUIA_DESARROLLO.md](docs/GUIA_DESARROLLO.md)
+- **Manual para el cliente** (con capturas reales): [docs/Manual_TuEvento.pdf](docs/Manual_TuEvento.pdf) · versión por módulo: [docs/MANUAL.md](docs/MANUAL.md) · se regenera con `bash docs/manual/generar/generar.sh`
 
 ## Qué hace
 - Calendario por espacios **sin doble reserva** (la base de datos lo impide), con horas de montaje y desmontaje, fechas cerradas y "próximos sábados".
