@@ -113,7 +113,7 @@ Con la librería compartida del Panel Tukán Central **`src/tukan_ia.php`** (cop
   (`/?r=ia_cotizacion`, botón «✨ Desde un mensaje» en Eventos y Nuevo evento): JSON validado contra los espacios, paquetes y productos del negocio
   (`Ia::validarPropuesta`), se muestra como borrador y al guardar crea el evento (consulta) y la cotización (borrador). Si no se puede usar la IA:
   `tukan_ia_mensaje_neutro('texto', …)` con el enlace a Nuevo evento.
-- **Tope por negocio** (guardián `TukanIaGuardianPdo`, tabla `tukan_ia_gasto`): **4,00 USD al mes con el módulo** (incluido en Quinta o comprado aparte; decisión del dueño) **y 0,50 sin él**;
+- **Tope por negocio** (guardián `TukanIaGuardianPdo`, tabla `tukan_ia_gasto`): **4,00 USD al mes con el módulo** (incluido en Quinta o comprado aparte; decisión del dueño) **y 0,50 sin él**; una **demo** (estado `prueba`) **0,50 en total** aunque tenga todos los módulos (al pagar vuelve sola a lo normal);
   otro tope en `negocios.ia_tope_usd` (lo cambia el Panel Central con la operación `ia_tope`). Al llegar al tope no se llama a la API, en silencio.
 - **Panel Tukán → Preguntas IA** (`/?r=admin_faq`): listar (Por revisar primero), aprobar, editar (queda aprobada y «manual»), borrar y agregar. Todo con CSRF y en registro_admin.
 - **Conector v2** (Anexo C de `PROTOCOLO_V2.md`): acción `ia_uso` (gasto del mes por negocio, totales y FAQ; sin la clave) y operación `ia_tope`
