@@ -26,15 +26,20 @@ Sistema para salones de eventos, quintas y haciendas de Ecuador. Celular, tablet
 | Cargo | Puede | No ve |
 |---|---|---|
 | Dueño | Todo, incluida la ganancia, configuración, usuarios, metas y Mi plan | — |
+| Administrador (hasta 4) | Lo mismo que el dueño: menú, usuarios, configuración, Mi plan, metas y dinero. Crea, cambia y desactiva a otros administradores y usuarios. **No cuentan** en el límite de usuarios del plan | No puede cambiar ni desactivar al dueño, ni a sí mismo |
 | Vendedor | Consultas, cotizaciones, contratos, cobros, clientes, catálogo, proveedores, reportes | Configuración, usuarios, Mi plan, metas, ganancia |
 | Coordinador | El día del evento: cronograma, personal, proveedores, invitados, mobiliario, plano, formulario | Cobros, cotización, contrato y pagos |
 | Solo consulta | Ve todo | No cambia nada |
 
-**Más → Usuarios → Agregar a alguien** (nombre, correo, celular, ¿Qué va a hacer?) → **Crear usuario** → contraseña temporal por WhatsApp. **Cambiar**, **Nueva contraseña**, **Desactivar**. **Mi cuenta**: datos, contraseña y Telegram (módulo).
+**Más → Usuarios** (dueño o administrador) **→ Agregar a alguien** (nombre, correo, celular, ¿Qué va a hacer?: **Administrador (mismos permisos que el dueño)**, Vendedor, Coordinador o Solo consulta) → **Crear usuario** → contraseña temporal por WhatsApp. **Cambiar**, **Nueva contraseña**, **Desactivar**. **Mi cuenta**: datos, contraseña y Telegram (módulo).
+
+- **Administradores:** hasta 4 además del dueño; arriba dice «Administradores: 2 de 4». Un quinto (al crear o activar) muestra «Puede tener hasta 4 administradores además del dueño». No cuentan en el límite de usuarios del plan (el dueño sí cuenta); si un administrador pasa a otro cargo, empieza a contar.
+- **Solo del dueño:** ser la cuenta registrada en Tukán (contacto del negocio en el Panel Tukán Central y «Nueva clave del dueño» desde Tukán). Nadie, ni un administrador, cambia ni desactiva al dueño; nadie se cambia el cargo ni se desactiva a sí mismo.
+- En este manual, «solo el dueño» vale también para los administradores.
 
 ![Usuarios](manual/capturas/32_usuarios.png)
 
-## 4. Configuración (base, solo el dueño)
+## 4. Configuración (base, dueño y administradores)
 Pestañas **Negocio** (datos, WhatsApp, reseña de Google, color, logo), **Reglas** (IVA, validez de la cotización, días de retención, % de reserva, número de pagos, días del saldo, garantía, hora máxima, montaje/desmontaje, invitados por mesero, comisión, condiciones), **Cobros en línea** (transferencia, DeUna y claves de Payphone), **Página pública** (enlace y QR), **Tareas** (lista de cada evento), **Google Calendar** (módulo Exportar) y **Más**.
 
 ## 5. Espacios, fechas cerradas y planos
@@ -65,7 +70,7 @@ Pestañas Resumen, Cotización, Contrato, Pagos, Día del evento, Invitados, For
 
 ## 10. La cotización (base)
 1. Pestaña Cotización → **Desde un paquete** o **En blanco** → **Crear cotización**.
-2. Ajusta líneas, **Agregar del catálogo**, **Agregar un paquete completo**, descuento → **Guardar**. Ganancia solo para el dueño.
+2. Ajusta líneas, **Agregar del catálogo**, **Agregar un paquete completo**, descuento → **Guardar**. Ganancia solo para el dueño y los administradores.
 3. **Enviar por WhatsApp** / **Copiar enlace** → el cliente la ve y toca **Aceptar cotización**; o **El cliente aceptó**.
 4. Aceptada → valor del evento y plan de pagos. Cambios: **Nueva versión**.
 
@@ -116,6 +121,6 @@ Periodos Este mes / Mes pasado / Este año / Otras fechas. Secciones: Ventas, Co
 - **¿El comprobante subido ya cuenta?** Solo después de **Confirmar: el dinero llegó**.
 - **¿Me equivoqué en un pago?** **Anular** con motivo.
 - **¿El coordinador ve dinero?** No.
-- **¿Olvidé mi contraseña?** El dueño te da una **Nueva contraseña**; el dueño escribe a Tukán.
+- **¿Olvidé mi contraseña?** El dueño o un administrador te da una **Nueva contraseña**; el dueño escribe a Tukán.
 - **¿Hace facturas electrónicas?** No; sí lee el XML de las facturas de tus proveedores.
 - **¿Cuánto cuesta?** Depende de los módulos: escríbenos y te mandamos la cotización.

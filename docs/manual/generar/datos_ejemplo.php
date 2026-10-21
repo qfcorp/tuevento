@@ -56,7 +56,7 @@ $usr = new \TuEvento\Usuarios($db);
 $clave = password_hash($CLAVE, PASSWORD_DEFAULT);
 $equipo = [];
 foreach ([['Paola Mena', 'paola@tuevento.tukanec.com', '0991112233', 'vendedor'], ['Carla Ruiz', 'carla@tuevento.tukanec.com', '0992223344', 'coordinador'],
-          ['Jorge Contador', 'contador@tuevento.tukanec.com', '', 'consulta']] as [$n, $m, $t, $r]) {
+          ['Jorge Contador', 'contador@tuevento.tukanec.com', '', 'consulta'], ['Lucía Andrade', 'lucia@tuevento.tukanec.com', '0993334455', 'admin']] as [$n, $m, $t, $r]) {
     $x = $usr->crear($nid, $n, $m, $t, $r);
     $db->prepare('UPDATE usuarios SET password_hash = ?, clave_temporal = false WHERE id = ?')->execute([$clave, $x['id']]);
     $equipo[$r] = $db->query("SELECT * FROM usuarios WHERE id = {$x['id']}")->fetch();

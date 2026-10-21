@@ -94,11 +94,11 @@ table.t tr:nth-child(even) td { background: #FAFBFD; }
 
 <div class="indice">
   <h1>Contenido</h1>
-  <div class="intro-caja"><b>Cómo leer este manual.</b> Cada capítulo es una parte de TuEvento. Arriba de cada uno dice si es de la <b>base</b> (la tienen todos los locales) o de un <b>módulo</b> (se enciende en <i>Mi plan</i>). Si un módulo no está en tu plan, su pantalla dice «Este módulo no está en tu plan» y te deja pedirlo. Lo que ves también depende de tu cargo: dueño, vendedor, coordinador o solo consulta.</div>
+  <div class="intro-caja"><b>Cómo leer este manual.</b> Cada capítulo es una parte de TuEvento. Arriba de cada uno dice si es de la <b>base</b> (la tienen todos los locales) o de un <b>módulo</b> (se enciende en <i>Mi plan</i>). Si un módulo no está en tu plan, su pantalla dice «Este módulo no está en tu plan» y te deja pedirlo. Lo que ves también depende de tu cargo: dueño, administrador, vendedor, coordinador o solo consulta. Cuando el manual dice «solo el dueño», vale también para los administradores (tienen el mismo nivel).</div>
   <ol>
     <li><span class="n">1</span><a href="#c1">Qué es TuEvento y cómo se arma<small>La base, los módulos y los planes</small></a><span class="pag" data-pag="c1"></span></li>
     <li><span class="n">2</span><a href="#c2">Entrar y la pantalla de Inicio<small>El menú, la guía de primeros pasos y las cifras del día</small></a><span class="pag" data-pag="c2"></span></li>
-    <li><span class="n">3</span><a href="#c3">Tu equipo: qué ve cada cargo<small>Dueño, vendedor, coordinador y solo consulta · usuarios</small></a><span class="pag" data-pag="c3"></span></li>
+    <li><span class="n">3</span><a href="#c3">Tu equipo: qué ve cada cargo<small>Dueño, administradores, vendedor, coordinador y solo consulta · usuarios</small></a><span class="pag" data-pag="c3"></span></li>
     <li><span class="n">4</span><a href="#c4">Configuración del negocio y reglas<small>Datos, logo, reglas, cobros, página pública y tareas</small></a><span class="pag" data-pag="c4"></span></li>
     <li><span class="n">5</span><a href="#c5">Espacios, fechas cerradas y planos<small>Salones y jardines que nunca se venden dos veces</small></a><span class="pag" data-pag="c5"></span></li>
     <li><span class="n">6</span><a href="#c6">Catálogo, paquetes y extras<small>Los precios que ve tu cliente</small></a><span class="pag" data-pag="c6"></span></li>
@@ -200,6 +200,7 @@ table.t tr:nth-child(even) td { background: #FAFBFD; }
   <table class="t">
     <tr><th style="width:18%">Cargo</th><th>Qué puede hacer</th><th style="width:30%">Qué no ve</th></tr>
     <tr><td><b>Dueño</b></td><td>Todo: eventos, cotizaciones, contratos, cobros, reportes y metas, configuración, plantillas, formularios del evento, usuarios y Mi plan. Ve la ganancia de cada cotización.</td><td>—</td></tr>
+    <tr><td><b>Administrador</b></td><td>Lo mismo que el dueño, sin excepción: menú completo, usuarios, configuración, Mi plan, metas y dinero (ve la ganancia). Crea, cambia y desactiva a otros administradores y al resto del equipo. Puedes tener hasta <b>4</b> y <b>no cuentan</b> en el límite de usuarios de tu plan.</td><td>No puede cambiar ni desactivar al dueño, ni cambiarse o desactivarse a sí mismo.</td></tr>
     <tr><td><b>Vendedor</b></td><td>Atiende consultas, cotiza, hace contratos y registra cobros. Ve clientes, seguimiento, mensajes, catálogo, paquetes, proveedores, por pagar y reportes.</td><td>Configuración, plantillas, usuarios, Mi plan, metas y la ganancia de las cotizaciones.</td></tr>
     <tr><td><b>Coordinador</b></td><td>Ve los eventos y organiza el día: cronograma, personal, proveedores, invitados, mobiliario, plano y las respuestas del formulario. Le llega un aviso cuando le asignan un evento.</td><td>El dinero: no tiene Cobros, ni las pestañas Cotización, Contrato y Pagos.</td></tr>
     <tr><td><b>Solo consulta</b></td><td>Ve todo (eventos, cobros, reportes). Ideal para el contador o un socio.</td><td>No puede cambiar nada.</td></tr>
@@ -208,25 +209,27 @@ table.t tr:nth-child(even) td { background: #FAFBFD; }
     <div>
       <h2>Agregar a alguien</h2>
       <ol class="pasos">
-        <li>Ve a <b>Más → Usuarios</b> (solo el dueño).</li>
+        <li>Ve a <b>Más → Usuarios</b> (el dueño o un administrador).</li>
         <li>En <b>Agregar a alguien</b> escribe el <b>Nombre</b>, el <b>Correo</b> (con ese entra) y el <b>Celular</b>.</li>
-        <li>Elige <b>¿Qué va a hacer?</b>: Vendedor, Coordinador o Solo consulta, y toca <b>Crear usuario</b>.</li>
+        <li>Elige <b>¿Qué va a hacer?</b>: <b>Administrador (mismos permisos que el dueño)</b>, Vendedor, Coordinador o Solo consulta, y toca <b>Crear usuario</b>.</li>
         <li>El sistema crea una <b>contraseña temporal</b> y te la muestra: mándasela con <b>Enviar por WhatsApp</b>.</li>
       </ol>
       <p>En cada persona puedes <b>Cambiar</b> su cargo, darle una <b>Nueva contraseña</b> o <b>Desactivar</b> su acceso.</p>
-      <div class="nota"><b>Cuántos usuarios</b>Esencial permite 2 y Salón 3 (contándote a ti). Quinta no tiene límite.</div>
+      <div class="nota"><b>Cuántos usuarios</b>Esencial permite 2 y Salón 3 (contándote a ti; los administradores no cuentan). Quinta no tiene límite.</div>
+      <div class="nota"><b>Administradores</b>Arriba de la lista dice cuántos llevas, por ejemplo «Administradores: 2 de 4». Puedes tener hasta 4 además del dueño; si intentas crear o activar un quinto, el sistema avisa «Puede tener hasta 4 administradores además del dueño». Si un administrador pasa a vendedor, coordinador o consulta, empieza a contar en el plan.</div>
+      <div class="nota"><b>Lo que es solo del dueño</b>La cuenta del dueño es la que está registrada en Tukán: es el contacto del negocio en Tukán (a él le escribimos por el plan y los pagos y solo a él le damos una nueva contraseña desde Tukán). Nadie, ni un administrador, puede cambiarla ni desactivarla desde Usuarios.</div>
 
     </div>
     <figure class="cel"><img src="capturas/35_coordinador_celular.png" alt=""><figcaption>La coordinadora ve el día del evento; abajo no tiene Cobros.</figcaption></figure>
   </div>
-  <figure class="pc"><img src="capturas/32_usuarios.png" alt=""><figcaption>Usuarios: el equipo con su cargo y el formulario «Agregar a alguien».</figcaption></figure>
+  <figure class="pc"><img src="capturas/32_usuarios.png" alt=""><figcaption>Usuarios: el equipo con su cargo, el contador «Administradores: 1 de 4» y el formulario «Agregar a alguien».</figcaption></figure>
   <h2>Mi cuenta</h2>
       <p>Cada persona, en <b>Más → Mi cuenta</b>, cambia su nombre y celular (<b>Guardar mis datos</b>) y su contraseña (<b>Cambiar contraseña</b>). Con el módulo <b>Avisos por Telegram</b>, ahí también conecta su Telegram para recibir al instante los pagos, firmas, consultas nuevas y su lista de seguimientos de cada mañana.</p>
 </section>
 
 <section class="cap" id="c4">
   <h1><span class="num">4</span> Configuración del negocio y reglas</h1>
-  <span class="plan">Base · solo el dueño</span>
+  <span class="plan">Base · dueño y administradores</span>
   <p>En <b>Más → Configuración</b> hay varias pestañas. Lo que pongas aquí sale en tus cotizaciones, contratos, recibos y en tu página pública.</p>
   <figure class="pc m70"><img src="capturas/29_configuracion.png" alt=""><figcaption>Configuración → Negocio: datos del negocio y logo.</figcaption></figure>
   <table class="t">
@@ -365,7 +368,7 @@ table.t tr:nth-child(even) td { background: #FAFBFD; }
     <li>Agrega más con <b>Agregar del catálogo</b> o <b>Agregar un paquete completo</b>, pon el <b>Descuento</b> y las notas para el cliente, y toca <b>Guardar</b>.</li>
   </ol>
   <figure class="pc"><img src="capturas/09_cotizacion_armar.png" alt=""><figcaption>La cotización de los quince años, armada desde el Paquete Quince Años.</figcaption></figure>
-  <p>A la derecha ves los totales: subtotal, descuento, IVA, total, <b>por persona</b> y, solo para el dueño, la <b>ganancia</b> y el margen.</p>
+  <p>A la derecha ves los totales: subtotal, descuento, IVA, total, <b>por persona</b> y, solo para el dueño y los administradores, la <b>ganancia</b> y el margen.</p>
   <div class="tarea">
     <div>
       <h2>Enviarla y que la acepte</h2>
@@ -407,7 +410,7 @@ table.t tr:nth-child(even) td { background: #FAFBFD; }
         <li>Si cambió algo importante (fecha, valor) o hubo un error, usa <b>Anular este contrato</b> y prepara uno nuevo.</li>
       </ul>
       <h2>Plantillas de contrato</h2>
-      <p>En <b>Más → Plantillas de contrato</b> (solo el dueño) editas el texto base. Las variables como <b>{{cliente}}</b> se llenan solas. Tienes <b>Vista previa</b> (con datos de ejemplo), <b>Editar</b> y <b>Restaurar la de fábrica</b>. Los contratos ya generados no cambian al editar una plantilla.</p>
+      <p>En <b>Más → Plantillas de contrato</b> (solo el dueño o un administrador) editas el texto base. Las variables como <b>{{cliente}}</b> se llenan solas. Tienes <b>Vista previa</b> (con datos de ejemplo), <b>Editar</b> y <b>Restaurar la de fábrica</b>. Los contratos ya generados no cambian al editar una plantilla.</p>
       <h2>Anexos por extras</h2>
       <p>Si apruebas extras que el cliente pidió desde su portal y el contrato ya estaba firmado, se prepara solo un <b>anexo</b> con los extras, su valor, el nuevo total y la cuota nueva, para que el cliente lo firme también con el dedo.</p>
     </div>
@@ -459,7 +462,7 @@ table.t tr:nth-child(even) td { background: #FAFBFD; }
   <div class="tarea">
     <div>
       <h2>Formulario del evento</h2>
-      <p>Las preguntas que el cliente responde desde su portal: ceremonia, música, momentos especiales, decoración, comida, invitados, proveedores y el día del evento. Hay un formulario por tipo de evento que editas en <b>Más → Formularios del evento</b> (solo el dueño): preguntas de texto, una opción, varias opciones, sí o no, número, fecha u hora, y si son obligatorias.</p>
+      <p>Las preguntas que el cliente responde desde su portal: ceremonia, música, momentos especiales, decoración, comida, invitados, proveedores y el día del evento. Hay un formulario por tipo de evento que editas en <b>Más → Formularios del evento</b> (solo el dueño o un administrador): preguntas de texto, una opción, varias opciones, sí o no, número, fecha u hora, y si son obligatorias.</p>
       <ul class="lista">
         <li>El cliente lo llena <b>hasta X días antes</b> (lo eliges tú) y <b>se guarda solo</b> mientras escribe. Al final toca <b>Listo, enviar al local</b>.</li>
         <li>Tú ves y corriges las respuestas en la pestaña <b>Formulario y extras</b> del evento, con su PDF. Salen también en la hoja del evento.</li>
@@ -592,17 +595,17 @@ table.t tr:nth-child(even) td { background: #FAFBFD; }
     <tr><td>Descargas</td><td>Archivos para Excel: eventos, pagos recibidos, clientes, cuotas por cobrar y gastos.</td></tr>
   </table>
   <h2>Metas de ventas</h2>
-  <p>En <b>Más → Metas de ventas</b> (solo el dueño) pones la <b>meta del local</b> de todos los meses (en dólares con IVA y, si quieres, en eventos), una meta distinta para un mes (por ejemplo diciembre) y la <b>meta de cada vendedor</b>. El avance sale en el Inicio de cada uno.</p>
+  <p>En <b>Más → Metas de ventas</b> (solo el dueño o un administrador) pones la <b>meta del local</b> de todos los meses (en dólares con IVA y, si quieres, en eventos), una meta distinta para un mes (por ejemplo diciembre) y la <b>meta de cada vendedor</b>. El avance sale en el Inicio de cada uno.</p>
 </section>
 
 <section class="cap" id="c18">
   <h1><span class="num">18</span> Mi plan, módulos y demos</h1>
-  <span class="plan">Para el dueño</span>
+  <span class="plan">Para el dueño y los administradores</span>
   <p>En <b>Más → Mi plan</b> ves tu plan, hasta cuándo está pagado y <b>tus módulos</b>, agrupados en Ventas y contratos, Portal del cliente, Día del evento, Proveedores y gestión, y Avisos y conexiones. Cada uno dice si está encendido e incluido en tu plan.</p>
   <figure class="pc m90"><img src="capturas/33_mi_plan_modulos.png" alt=""><figcaption>Mi plan: los módulos de la Quinta Demo Tukanec.</figcaption></figure>
   <ul class="lista">
     <li>Los módulos que no tienes dicen «Precio por cotización». Para sumar uno, toca <b>Pedir cotización</b>: el pedido le llega a Tukán, que te escribe con el valor y para activarlo.</li>
-    <li>Si entras a una pantalla de un módulo apagado, verás «Este módulo no está en tu plan» con los botones <b>Pedir cotización</b> y <b>Ver Mi plan</b>. Si no eres el dueño, la pantalla te pide que se lo digas al dueño.</li>
+    <li>Si entras a una pantalla de un módulo apagado, verás «Este módulo no está en tu plan» con los botones <b>Pedir cotización</b> y <b>Ver Mi plan</b>. Si no eres el dueño ni administrador, la pantalla te pide que se lo digas al dueño.</li>
     <li>Para cambiar de plan, toca <b>Pedir cotización</b> en el plan que quieres; para renovar o cualquier pregunta, <b>Preguntar por WhatsApp</b>: Tukán te manda tu cotización y los datos para pagar.</li>
   </ul>
   <h2>Cómo funcionan las demos</h2>
@@ -628,7 +631,7 @@ table.t tr:nth-child(even) td { background: #FAFBFD; }
   <h3>¿El coordinador ve cuánto paga el cliente?</h3>
   <p>No. El coordinador organiza el día (cronograma, personal, proveedores, invitados, mobiliario y plano) pero no ve Cobros, ni la cotización, el contrato o los pagos.</p>
   <h3>Olvidé mi contraseña.</h3>
-  <p>Pídele al dueño que en <b>Usuarios</b> te dé una <b>Nueva contraseña</b>. Si eres el dueño, escríbenos por WhatsApp.</p>
+  <p>Pídele al dueño o a un administrador que en <b>Usuarios</b> te dé una <b>Nueva contraseña</b>. Si eres el dueño, escríbenos por WhatsApp.</p>
   <h3>¿TuEvento hace facturas electrónicas?</h3>
   <p>No. TuEvento hace cotizaciones, contratos, recibos y estados de cuenta. Sí lee el XML de las facturas que te mandan tus proveedores.</p>
   <h3>¿Se puede usar sin internet?</h3>

@@ -31,7 +31,7 @@ $accion = $nuevo ? url('evento_nuevo') : url('evento_editar', ['id' => $ev['id']
 <?php if (!$espacios): ?>
     <section class="bloque vacio">
         <p><strong>Primero crea al menos un espacio</strong> (salón, jardín, terraza…) para poder ubicar el evento.</p>
-        <?php if (es_dueno($u)): ?><a class="boton" href="<?= e(url('espacios')) ?>">Crear un espacio</a><?php endif; ?>
+        <?php if (es_admin_total($u)): ?><a class="boton" href="<?= e(url('espacios')) ?>">Crear un espacio</a><?php endif; ?>
     </section>
 <?php else: ?>
 <form method="post" action="<?= e($accion) ?>" id="form-evento" class="form-evento" novalidate
@@ -184,7 +184,7 @@ $accion = $nuevo ? url('evento_nuevo') : url('evento_editar', ['id' => $ev['id']
             <div class="campo">
                 <label for="vendedor_id">Vendedor</label>
                 <select id="vendedor_id" name="vendedor_id">
-                    <?php foreach ($vendedores as $v): ?><option value="<?= (int) $v['id'] ?>" <?= (int) $d['vendedor_id'] === (int) $v['id'] ? 'selected' : '' ?>><?= e($v['nombre']) ?><?= $v['rol'] === 'dueno' ? ' (dueño)' : '' ?></option><?php endforeach; ?>
+                    <?php foreach ($vendedores as $v): ?><option value="<?= (int) $v['id'] ?>" <?= (int) $d['vendedor_id'] === (int) $v['id'] ? 'selected' : '' ?>><?= e($v['nombre']) ?><?= ['dueno' => ' (dueño)', 'admin' => ' (administrador)'][$v['rol']] ?? '' ?></option><?php endforeach; ?>
                 </select>
             </div>
             <div class="campo ancho">
