@@ -24,7 +24,7 @@ Dirección: **tuevento.tukanec.com** (servidor qfcorp). Web de la marca: tukanso
 - **Metas de ventas**: meta del mes (y por vendedor), avance en el Inicio y reporte con la comparación con el mismo mes del año anterior.
 - **Boda en vivo** con QF Producciones (pedido por WhatsApp y enlace en portal e invitaciones).
 - Página pública del local con consulta de fechas libres y formulario que entra al sistema.
-- **Ayuda** «¿Qué necesita hacer?» para todos (responde al instante con el manual y guarda las preguntas frecuentes) y módulo extra **Asistente IA**: cotización a partir del mensaje de WhatsApp del cliente.
+- **Ayuda** «¿Qué necesita hacer?» para todos (responde al instante con el manual y guarda las preguntas frecuentes) y módulo **Asistente IA** (incluido en el plan Quinta; extra por cotización en los demás): cotización a partir del mensaje de WhatsApp del cliente.
 - Inicio con el día, cobranza, mensajes por WhatsApp listos para enviar, reportes (ventas, cobrado, ocupación, conversión, rentabilidad, comisiones), exportar a Excel, calendario para Google Calendar, avisos por Telegram.
 - Usuarios: dueño, **administradores** (hasta 4, mismo nivel que el dueño y no cuentan en el límite de usuarios del plan), vendedor, coordinador (solo el día del evento) y consulta (solo mira). Los permisos se preguntan con `es_admin_total()` (dueño o administrador); `es_dueno()` queda solo para la identidad de la cuenta ante Tukán. Panel Tukán para administrar todos los negocios y sus planes.
 
@@ -42,7 +42,7 @@ plan de pagos y recibos, Mensajes de WhatsApp del día, página pública con con
 |---|---|---|
 | Esencial | 1 espacio, 2 usuarios | Solo la base |
 | Salón | 2 espacios, 3 usuarios | Paquetes, contratos, portal del cliente, cobros en línea, formulario/extras/encuesta, proveedores y compras, incidencias, metas, Telegram, exportar |
-| Quinta | sin límite | Todos |
+| Quinta | sin límite | Todos, **incluido el Asistente IA** |
 
 | Módulo | Qué trae | Necesita |
 |---|---|---|
@@ -62,7 +62,7 @@ plan de pagos y recibos, Mensajes de WhatsApp del día, página pública con con
 | Metas y reportes avanzados | Metas de ventas, embudo, ganancia por evento, comisiones | — |
 | Avisos por Telegram | Pagos, firmas, consultas, cuotas y seguimientos al celular | — |
 | Exportar a Excel y Google Calendar | Descargas para Excel y calendario externo | — |
-| **Asistente IA** (extra, por cotización: en ningún plan ni en la demo con todos) | Cotización a partir del mensaje de WhatsApp del cliente (borrador para revisar); tope de gasto mayor | — |
+| **Asistente IA** (**incluido en Quinta**; en Esencial y Salón, extra por cotización) | Cotización a partir del mensaje de WhatsApp del cliente (borrador para revisar); tope de gasto mayor | — |
 
 - **Precio al mes** de cada cliente = plan + módulos extra − módulos quitados (o un **precio acordado** fijo). Es el que sugiere
   "Registrar pago", el `cotizar` y el `mensual_estimado` del Panel Central. Precios, descripciones y qué trae cada plan se cambian en
@@ -107,12 +107,13 @@ Con la librería compartida del Panel Tukán Central **`src/tukan_ia.php`** (cop
   IA (modelo rápido) con las secciones del manual del cliente (`docs/manual/manual.html` convertido a texto y guardado en caché en la carpeta temporal;
   si no está, `docs/MANUAL.md`) y la respuesta queda como FAQ automática → sin poder gastar, el manual tal cual + el WhatsApp. POST con CSRF, 10 preguntas
   por minuto por usuario. Sin el módulo: máximo **30 respuestas nuevas al mes** por negocio. Nunca dice «límite», «cupo» ni «saldo».
-- **Módulo «Asistente IA»** (`asistente_ia`, grupo Extras, precio 0 en el catálogo = **por cotización**: en Mi plan dice «Pídalo y le cotizamos»; lo acordado
-  va en el precio acordado). No entra en «*» ni en la demo con todos los módulos (`Modulos::SOLO_A_PEDIDO`). Trae **Cotización a partir de un mensaje**
+- **Módulo «Asistente IA»** (`asistente_ia`, grupo Extras): **viene incluido en el plan Quinta** (el más caro: `planes.modulos = '*,asistente_ia'`,
+  migración 111 repetible). En Esencial y Salón es un extra **por cotización** (precio 0 en el catálogo: en Mi plan dice «Pídalo y le cotizamos»; lo acordado
+  va en el precio acordado). «*» solo no lo trae (`Modulos::SOLO_A_PEDIDO`): la demo con todos los módulos lo tiene solo si su plan lo incluye. Trae **Cotización a partir de un mensaje**
   (`/?r=ia_cotizacion`, botón «✨ Desde un mensaje» en Eventos y Nuevo evento): JSON validado contra los espacios, paquetes y productos del negocio
   (`Ia::validarPropuesta`), se muestra como borrador y al guardar crea el evento (consulta) y la cotización (borrador). Si no se puede usar la IA:
   `tukan_ia_mensaje_neutro('texto', …)` con el enlace a Nuevo evento.
-- **Tope por negocio** (guardián `TukanIaGuardianPdo`, tabla `tukan_ia_gasto`): **3,00 USD al mes con el módulo y 0,50 sin él** (los que sugiere la guía);
+- **Tope por negocio** (guardián `TukanIaGuardianPdo`, tabla `tukan_ia_gasto`): **4,00 USD al mes con el módulo** (incluido en Quinta o comprado aparte; decisión del dueño) **y 0,50 sin él**;
   otro tope en `negocios.ia_tope_usd` (lo cambia el Panel Central con la operación `ia_tope`). Al llegar al tope no se llama a la API, en silencio.
 - **Panel Tukán → Preguntas IA** (`/?r=admin_faq`): listar (Por revisar primero), aprobar, editar (queda aprobada y «manual»), borrar y agregar. Todo con CSRF y en registro_admin.
 - **Conector v2** (Anexo C de `PROTOCOLO_V2.md`): acción `ia_uso` (gasto del mes por negocio, totales y FAQ; sin la clave) y operación `ia_tope`
@@ -167,7 +168,7 @@ El instalador deja programado:
 ```
 Tareas: vencer cotizaciones, avisar fechas retenidas que se liberan, cuotas por vencer, revisar precios, evento en 7 días, pasar a realizado, devolver garantías, reporte del mes, seguimientos del día, pagos a proveedores que vencen, documentos de proveedores por vencer, proveedores sin confirmar a 3 días del evento y la **papelera** (borra de verdad los negocios con más de 30 días en ella y las copias de más de 1 año). Los negocios pausados o en la papelera no reciben tareas ni avisos, y cada tarea de un módulo (Telegram, proveedores) solo corre si el negocio lo tiene encendido.
 
-**Al actualizar a esta versión** hay que volver a correr el instalador (la línea de arriba): aplica las migraciones 098 (módulos y pedidos de demo), 099 (rol administrador) y 110 (ayuda e IA), crea `respaldos/borrados` y pasa las tareas al usuario `www-data`.
+**Al actualizar a esta versión** hay que volver a correr el instalador (la línea de arriba): aplica las migraciones 098 (módulos y pedidos de demo), 099 (rol administrador), 110 (ayuda e IA) y 111 (Asistente IA incluido en Quinta), crea `respaldos/borrados` y pasa las tareas al usuario `www-data`.
 
 Telegram (opcional) en `config/.env`: `TELEGRAM_BOT_TOKEN`, `TELEGRAM_BOT_USERNAME` y `TELEGRAM_WEBHOOK_SECRET` (obligatorio si se usa el webhook).
 
@@ -175,9 +176,9 @@ Telegram (opcional) en `config/.env`: `TELEGRAM_BOT_TOKEN`, `TELEGRAM_BOT_USERNA
 Solo en bases de prueba (se borran y se vuelven a crear):
 
 ```bash
-# Lógica (2527 pruebas)
+# Lógica (2530 pruebas)
 TUEVENTO_DB_NAME=tuevento_prueba TUEVENTO_DB_USER=tuevento TUEVENTO_DB_PASS=prueba php tests/run_tests.php
-# Pantallas de punta a punta (2111 pruebas; levanta un sitio de prueba solo)
+# Pantallas de punta a punta (2114 pruebas; levanta un sitio de prueba solo)
 PGPASSWORD=prueba bash tests/run_web.sh
 # Solo ayuda, IA y correo de la demo (API de Anthropic y SMTP de mentira: tests/anthropic_falso.py y tests/smtp_falso.py)
 TUEVENTO_DB_NAME=tuevento_prueba TUEVENTO_DB_USER=tuevento TUEVENTO_DB_PASS=prueba php tests/run_tests.php logica_110

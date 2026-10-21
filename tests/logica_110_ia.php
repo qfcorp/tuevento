@@ -45,16 +45,19 @@ check('La migración se puede correr otra vez (tablas e índice)', [1, 1, 1],
        $cuenta("SELECT count(*) FROM pg_indexes WHERE indexname = 'tukan_ia_faq_norm'")]);
 check('negocios.ia_tope_usd con CHECK (0 a 1000)', 1, $cuenta("SELECT count(*) FROM pg_constraint WHERE conname = 'negocios_ia_tope_usd_check'"));
 check('tukan_ia_gasto no es «del negocio» para la papelera (negocio_id de texto)', false, isset((new Papelera($db))->tablas()['tukan_ia_gasto']));
-[$nA, $uA] = negocio_prueba($db, 'quinta', 'Quinta Ayuda');
-[$nB, $uB] = negocio_prueba($db, 'quinta', 'Hacienda Asistente');
-$db->exec("UPDATE negocios SET estado = 'activo', activo_hasta = CURRENT_DATE + 30 WHERE id IN ($nA, $nB)");
+[$nA, $uA] = negocio_prueba($db, 'salon', 'Quinta Ayuda');
+[$nB, $uB] = negocio_prueba($db, 'salon', 'Hacienda Asistente');
+[$nQ] = negocio_prueba($db, 'quinta', 'Quinta Plan Completo');
+$db->exec("UPDATE negocios SET estado = 'activo', activo_hasta = CURRENT_DATE + 30 WHERE id IN ($nA, $nB, $nQ)");
 $mods = new Modulos($db);
 $ia = new Ia($db, $mods);
-check('Plan Quinta ("*"): NO trae el Asistente IA (es por cotización)', false, $ia->tieneModulo($nA));
-check('Demo con todos los módulos: tampoco trae el Asistente IA', false, in_array('asistente_ia', $mods->estado((int) negocio_prueba($db, 'quinta', 'Demo IA')[0])['activos'], true));
+check('Los otros planes NO traen el Asistente IA (extra por cotización)', false, $ia->tieneModulo($nA));
+check('El plan más caro lo trae INCLUIDO (del plan, no extra) con tope de 4,00', [true, true, [], 4.0],
+      [$ia->tieneModulo($nQ), in_array('asistente_ia', $mods->estado($nQ)['del_plan'], true), $mods->estado($nQ)['extra'], $ia->tope($nQ)]);
+check('Demo con todos los módulos de un plan que no lo trae: sin el Asistente IA', false, in_array('asistente_ia', $mods->estado((int) negocio_prueba($db, 'salon', 'Demo IA')[0])['activos'], true));
 $mods->cambiar($nB, ['asistente_ia'], []);
 check('Encendido como extra: lo tiene (y no suma precio: va en el precio acordado)', [true, 0.0], [$ia->tieneModulo($nB), $mods->estado($nB)['precio_extra']]);
-check('Tope sin el módulo = 0,50 · con el módulo = 3,00', [0.5, 3.0], [$ia->tope($nA), $ia->tope($nB)]);
+check('Tope sin el módulo = 0,50 · con el módulo comprado aparte = 4,00', [0.5, 4.0], [$ia->tope($nA), $ia->tope($nB)]);
 $ia->cambiarTope($nA, 1.25);
 check('Tope propio (lo pone Tukán) gana', [1.25, 1.25], [$ia->topePropio($nA), $ia->tope($nA)]);
 $ia->cambiarTope($nA, null);
@@ -153,9 +156,9 @@ check('JSON que no sirve dos veces: mensaje neutro con el enlace a mano (2 llama
 $antes = $nPedidos();
 $r = $ia->proponerCotizacion($nA, 'Boda de 150 personas el 14 de febrero', '/?r=evento_nuevo', $hoy);
 check('Sin el módulo: no llama y da el mensaje neutro', [false, $antes], [$r['ok'], $nPedidos()]);
-$db->exec("UPDATE tukan_ia_gasto SET costo_usd = 3 WHERE negocio_id = '$nB'");
+$db->exec("UPDATE tukan_ia_gasto SET costo_usd = 4 WHERE negocio_id = '$nB'");
 $r = $ia->proponerCotizacion($nB, "Boda de 150 personas RESPONDER:$json", '/?r=evento_nuevo', $hoy);
-check('Con el módulo pero en su tope (3,00): no llama, mensaje neutro', [false, $antes, 'En este momento no pudimos procesar el texto automáticamente; puede hacerlo a mano aquí: /?r=evento_nuevo.'],
+check('Con el módulo pero en su tope (4,00): no llama, mensaje neutro', [false, $antes, 'En este momento no pudimos procesar el texto automáticamente; puede hacerlo a mano aquí: /?r=evento_nuevo.'],
       [$r['ok'], $nPedidos(), $r['aviso'] ?? null]);
 check('…sin «límite», «cupo» ni «saldo»', false, $prohibidas($r['aviso'] ?? ''));
 check_error('Mensaje muy corto', 'Pegue el mensaje', fn() => $ia->proponerCotizacion($nB, 'hola', '/'));
@@ -202,7 +205,7 @@ $db->exec("UPDATE tukan_ia_gasto SET costo_usd = 0.2 WHERE negocio_id = '$nA'");
 $db->exec("UPDATE tukan_ia_gasto SET costo_usd = 0.9 WHERE negocio_id = '$nB'");
 $r = $pedir('ia_uso', ['mes' => date('Y-m')]);
 $ng = $r[1]['negocios'] ?? [];
-check('ia_uso con dos negocios: el que más gastó primero, con nombre, tope y módulo', [200, [(string) $nB, (string) $nA], ['Hacienda Asistente', 3.0, true], [0.5, false]],
+check('ia_uso con dos negocios: el que más gastó primero, con nombre, tope y módulo', [200, [(string) $nB, (string) $nA], ['Hacienda Asistente', 4.0, true], [0.5, false]],
       [$r[0], array_column($ng, 'cliente_id'), [$ng[0]['nombre'] ?? null, $ng[0]['tope'] ?? null, $ng[0]['modulo'] ?? null], [$ng[1]['tope'] ?? null, $ng[1]['modulo'] ?? null]]);
 check('ia_uso: totales, FAQ, configurada, versión de la librería y producto', [round(1.1, 6), true, true, TUKAN_IA_VERSION, 'tuevento', 'ia_uso'],
       [$r[1]['totales']['costo'], $r[1]['faq']['total'] >= 1, $r[1]['configurada'], $r[1]['version_libreria'], $r[1]['producto'], $r[1]['accion']]);

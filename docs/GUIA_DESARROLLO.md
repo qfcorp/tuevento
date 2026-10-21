@@ -117,7 +117,8 @@ bash tests/run_web.sh
   `validarPropuesta()`, `leerBorrador()`, `guardarBorrador()`, `uso()` (conector). Una función nueva con IA: `tukan_ia_llamar([...], ['guardian' => ia()->guardian($nid),
   'programa' => Ia::PROGRAMA, 'funcion' => '…'])` y, si `!$r['ok']`, **siempre** `tukan_ia_mensaje_neutro()` con el enlace para hacerlo a mano.
   Nunca mostrar «límite», «cupo», «saldo», «crédito» ni el motivo. Texto de otras personas: `tukan_ia_datos('etiqueta', $texto)`; JSON: `'json' => true` + `'validar'`.
-- `asistente_ia` está en `Modulos::SOLO_A_PEDIDO`: no entra en `*` ni en la demo con todos (`Modulos::todos()`); precio 0 = por cotización (`Modulos::porCotizacion`).
+- `asistente_ia` está en `Modulos::SOLO_A_PEDIDO`: `*` solo no lo trae (`Modulos::todos()`); un plan lo incluye con `*,asistente_ia` (Quinta, migración 111;
+  `Modulos::parse` / `Modulos::csvPlan`). En los demás planes, precio 0 = por cotización (`Modulos::porCotizacion`). Tope con el módulo: `Ia::TOPE_MODULO` = 4,00.
 - `tukan_ia_gasto.negocio_id` es TEXTO: la Papelera solo toma tablas con `negocio_id` entero (el gasto de IA no se copia ni se borra con el negocio).
 - Pruebas: `tests/base.php` y `tests/run_web.sh` apuntan `TUKAN_IA_ENV` y `TUKAN_CORREO_ENV` a archivos de prueba (nunca `/etc`). La API y el SMTP son de mentira
   (`tests/anthropic_falso.py` con `RESPONDER:{json}` en el texto, `tests/smtp_falso.py --modo plano` con `TUKAN_SMTP_SEGURIDAD=ninguna` en 127.0.0.1).
@@ -125,7 +126,7 @@ bash tests/run_web.sh
 
 | Módulo | Pruebas | Migración | Clases |
 |---|---|---|---|
-| Ayuda, Asistente IA, FAQ del súper, `ia_uso`/`ia_tope`, demo por correo | logica_110, web_110 | 110 | Ia, CorreoDemo (+ `src/tukan_ia.php`, `src/tukan_correo.php`, `mod_ia.css`, prefijo `ia-`) |
+| Ayuda, Asistente IA, FAQ del súper, `ia_uso`/`ia_tope`, demo por correo | logica_110, web_110 | 110, 111 | Ia, CorreoDemo (+ `src/tukan_ia.php`, `src/tukan_correo.php`, `mod_ia.css`, prefijo `ia-`) |
 
 ## Servidor
 - Cron cada hora (crontab de `www-data`): `php /var/www/tuevento/bin/tareas.php` (también purga la papelera) · respaldo diario 3:25: `deploy/respaldo.sh`

@@ -46,7 +46,12 @@ $pl = $mods->planes();
 check('Tres planes: Esencial, Salón, Quinta', ['esencial', 'salon', 'quinta'], array_keys($pl));
 check('Precios base', [19.0, 39.0, 69.0], array_column($pl, 'precio_mensual'));
 check('Esencial: solo la base', [], $pl['esencial']['modulos']);
-check('Quinta: todos ("*")', [true, $todos], [$pl['quinta']['todos'], $pl['quinta']['modulos']]);
+check('Plan más caro: todos ("*") + el Asistente IA incluido (migración 111: "*,asistente_ia")', [true, array_keys(Modulos::CATALOGO), '*,asistente_ia'],
+      [$pl['quinta']['todos'], $pl['quinta']['modulos'], $db->query("SELECT modulos FROM planes WHERE codigo = 'quinta'")->fetchColumn()]);
+$db->exec(file_get_contents(RAIZ . '/db/migraciones/111_asistente_ia_plan.sql'));
+check('La migración 111 se puede correr otra vez (no lo repite)', '*,asistente_ia', $db->query("SELECT modulos FROM planes WHERE codigo = 'quinta'")->fetchColumn());
+check('parse("*,asistente_ia") = todos + el Asistente IA; csvPlan lo vuelve a armar', [array_keys(Modulos::CATALOGO), '*,asistente_ia', '*'],
+      [Modulos::parse('*,asistente_ia'), Modulos::csvPlan(array_keys(Modulos::CATALOGO)), Modulos::csvPlan($todos)]);
 check('Salón = lo que tenía antes (todo menos lo que era solo de Quinta)',
       ['paquetes', 'contratos', 'portal_cliente', 'cobros_linea', 'cuestionarios', 'proveedores', 'incidencias', 'metas', 'telegram', 'exportar'], $pl['salon']['modulos']);
 check('Salón NO tiene lo que era de Quinta', [], array_values(array_intersect($pl['salon']['modulos'], ['dia_evento', 'invitados', 'plano', 'mobiliario', 'boda_vivo', 'portal_proveedor'])));
@@ -113,7 +118,7 @@ titulo('4. Demo con los módulos elegidos; apagar no borra datos');
 $mods->elegirDemo($nD, ['boda_vivo']);
 check('Demo con módulos elegidos (con sus dependencias)', [['dia_evento', 'boda_vivo'], false], [$mods->activos($nD), $mods->estado($nD)['demo_todos']]);
 $mods->elegirDemo($nD, null);
-check('Volver a "todos"', $todos, $mods->activos($nD));
+check('Volver a "todos" (en el plan más caro, también el Asistente IA incluido)', array_keys(Modulos::CATALOGO), $mods->activos($nD));
 $cli = (int) $db->query("INSERT INTO clientes (negocio_id, nombre, telefono) VALUES ($nS, 'Cliente Módulos', '0991234567') RETURNING id")->fetchColumn();
 $ev = (int) $db->query("INSERT INTO eventos (negocio_id, codigo, cliente_id, tipo, nombre, fecha, invitados, estado)
                         VALUES ($nS, 'EV-M-1', $cli, 'boda', 'Boda módulos', CURRENT_DATE + 30, 80, 'consulta') RETURNING id")->fetchColumn();
@@ -307,7 +312,7 @@ check('… el pedido queda "demo creada" y unido al negocio', ['demo_creada', $n
 check('… otra demo con el mismo pedido → 409', 409, $ej('crear_demo', ['nombre' => 'Quinta Ana', 'contacto_nombre' => 'Ana', 'email' => 'ana2@x.ec', 'telefono' => '0991112222',
       'solicitud_id' => "demo_pedida:$pdA"])[0]);
 $r = $ej('crear_demo', ['nombre' => 'Demo Completa', 'contacto_nombre' => 'Pepe', 'email' => 'pepe@x.ec', 'telefono' => '0991113333']);
-check('crear_demo sin módulos: la demo tiene todos', [200, 'todos', $todos], [$r[0], $r[1]['resultado']['modulos'], (new Modulos($db))->activos((int) $r[1]['resultado']['cliente_id'])]);
+check('crear_demo sin módulos: la demo tiene todos (plan más caro: con el Asistente IA)', [200, 'todos', array_keys(Modulos::CATALOGO)], [$r[0], $r[1]['resultado']['modulos'], (new Modulos($db))->activos((int) $r[1]['resultado']['cliente_id'])]);
 check('crear_demo con un módulo que no existe → 422', 422, $ej('crear_demo', ['nombre' => 'Demo Mala', 'contacto_nombre' => 'Pepe', 'email' => 'pepe2@x.ec', 'telefono' => '0991113333', 'modulos' => ['oro']])[0]);
 // finanzas por módulo
 $fz = $pedir('finanzas')[1];

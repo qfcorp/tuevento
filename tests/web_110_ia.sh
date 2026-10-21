@@ -68,8 +68,8 @@ sql "UPDATE usuarios SET rol='coordinador' WHERE negocio_id=$NID" > /dev/null
 check "El coordinador también entra a la Ayuda" "200" "$(get "r=ayuda")"
 sql "UPDATE usuarios SET rol='dueno' WHERE negocio_id=$NID" > /dev/null
 
-echo "2. Asistente IA apagado: no se ve"
-pagar_plan quinta
+echo "2. Asistente IA apagado (plan que no lo trae): no se ve"
+pagar_plan salon
 get "r=eventos" > /dev/null
 no_contiene "Eventos: sin «Desde un mensaje»" "$TMP/pag.html" "Desde un mensaje"
 get "r=evento_nuevo" > /dev/null
@@ -116,10 +116,10 @@ check "Guardar: crea el evento y lleva a su cotización" "$((EVS+1)) 302 $BASE/?
 check "…la cotización en borrador con el espacio y el producto (x2)" "borrador 2 2.00" \
       "$(sql "SELECT estado FROM cotizaciones WHERE id=$COT") $(sql "SELECT count(*) FROM cotizacion_items WHERE cotizacion_id=$COT") $(sql "SELECT cantidad FROM cotizacion_items WHERE cotizacion_id=$COT AND producto_id=$P1")"
 check "…en el historial del evento" "1" "$(sql "SELECT count(*) FROM registro_cambios WHERE evento_id=$EV AND accion LIKE '%desde un mensaje del cliente (Asistente IA)%'")"
-sql "INSERT INTO tukan_ia_gasto (negocio_id, mes, costo_usd) VALUES ('$NID', '$MES', 3) ON CONFLICT (negocio_id, mes) DO UPDATE SET costo_usd = 3" > /dev/null
+sql "INSERT INTO tukan_ia_gasto (negocio_id, mes, costo_usd) VALUES ('$NID', '$MES', 4) ON CONFLICT (negocio_id, mes) DO UPDATE SET costo_usd = 4" > /dev/null
 ANTES=$(ia_llamadas)
 r=$(post "r=ia_cotizacion" --data-urlencode "accion=leer" --data-urlencode "mensaje=Boda de 150 personas RESPONDER:$JSON")
-check "En su tope (3,00 con el módulo): sin llamar" "$ANTES" "$(ia_llamadas)"
+check "En su tope (4,00 con el módulo): sin llamar" "$ANTES" "$(ia_llamadas)"
 contiene "…mensaje neutro con el enlace para hacerlo a mano" "$TMP/post.html" "En este momento no pudimos procesar el texto automáticamente; puede hacerlo a mano aquí: <a href=\"$BASE/?r=evento_nuevo\">"
 no_contiene "…sin «cupo»" "$TMP/post.html" "cupo"
 no_contiene "…sin «límite»" "$TMP/post.html" "límite"
@@ -127,6 +127,14 @@ ia_apagar
 sql "UPDATE tukan_ia_gasto SET costo_usd = 0 WHERE negocio_id='$NID'" > /dev/null
 r=$(post "r=ia_cotizacion" --data-urlencode "accion=leer" --data-urlencode "mensaje=Boda de 150 personas el 14 de febrero")
 contiene "Sin /etc/tukan-ia.env: el mismo mensaje neutro" "$TMP/post.html" "puede hacerlo a mano aquí"
+
+echo "3c. En el plan más caro el Asistente IA viene incluido"
+sql "UPDATE negocios SET modulos_extra='' WHERE id=$NID" > /dev/null
+pagar_plan quinta
+get "r=planes" > /dev/null
+contiene "Mi plan: «Incluido en tu plan» (Asistente IA)" "$TMP/pag.html" 'id="mod-asistente_ia"'
+check "…encendido e incluido" "1" "$(grep -A8 'id="mod-asistente_ia"' "$TMP/pag.html" | grep -c 'Incluido en tu plan')"
+check "La cotización desde un mensaje abre sin comprarlo aparte" "200" "$(get "r=ia_cotizacion")"
 
 echo "4. Súper usuario: Preguntas frecuentes (IA)"
 ADM="adminia$RANDOM@tukan.ec"

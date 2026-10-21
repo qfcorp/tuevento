@@ -301,7 +301,7 @@ check('planes: precios de Salón', [39.0, 195.0, 390.0], array_column($r['planes
 check('planes: meses gratis', [0, 1, 2], array_column($r['planes'][1]['precios'], 'meses_gratis'));
 check('planes: clientes por plan', [0, 6, 6], array_column($r['planes'], 'clientes'));
 check('planes: límites', ['Espacios' => '2', 'Usuarios' => '3'], $r['planes'][1]['limites']);
-check('planes: módulos de cada plan (Esencial = solo la base, Quinta = todos)', [[], 10, count(\TuEvento\Modulos::todos())],
+check('planes: módulos de cada plan (Esencial = solo la base, Quinta = todos)', [[], 10, count(\TuEvento\Modulos::todos()) + 1],
       [$r['planes'][0]['modulos'], count($r['planes'][1]['modulos']), count($r['planes'][2]['modulos'])]);
 check('planes: ajustes (registro cerrado: todo se pide demo)', ['dias_prueba' => 7, 'dias_demo' => 7, 'dias_gracia' => 3, 'dias_gracia_demo' => 0, 'registro_abierto' => false], $r['ajustes']);
 

@@ -2,7 +2,7 @@
 -- Se puede correr muchas veces (IF NOT EXISTS).
 --  - tukan_ia_faq: preguntas frecuentes de la Ayuda (las mismas para todos los negocios del programa)
 --  - tukan_ia_gasto: gasto de IA por negocio y mes (negocio_id es TEXTO: lo pide la librería; Papelera no la toca)
---  - negocios.ia_tope_usd: tope del mes de ese negocio en USD (NULL = el de siempre: 3,00 con «Asistente IA», 0,50 sin él)
+--  - negocios.ia_tope_usd: tope del mes de ese negocio en USD (NULL = el de siempre: 4,00 con «Asistente IA», 0,50 sin él)
 
 CREATE TABLE IF NOT EXISTS tukan_ia_faq (
   id BIGSERIAL PRIMARY KEY,
