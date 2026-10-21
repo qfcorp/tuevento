@@ -1,6 +1,6 @@
 # Bloc de notas — TuEvento (salones de eventos, quintas y haciendas · marca Tukán)
 
-Última actualización: 18 de octubre de 2026
+Última actualización: 20 de octubre de 2026
 
 ## Qué es
 Programa para salones de eventos, quintas y haciendas de Ecuador. Nació del estudio de nichos (12 oct 2026): no había ningún programa ecuatoriano para este mercado.
@@ -102,6 +102,11 @@ Regla de Dimi: "todos los programas deben ser modulares para encender o apagar l
 - [x] **Nada gratis**: ya no hay registro con prueba gratis. "Solicitar demo" (nombre, negocio, ciudad, WhatsApp, correo, qué necesita y módulos que le interesan) llega como pedido de demo; Tukán crea la demo (todos los módulos o los que elija, por los días que decida). "Tu demo terminó — contáctanos para contratar"
 - [x] **Panel Tukán Central** (revisión 3): acción `modulos`, `cliente.modulos`, `mensual_estimado` con módulos, `cambiar_modulos` y `guardar_modulos` (solo el rol dueño, idempotentes y auditados), solicitudes `cambio_modulos` y `demo_pedida`, `crear_demo` con plan, módulos y pedido de demo, `finanzas.por_modulo`
 - [x] Pruebas: logica_98 y web_98 (migración 098). Totales: **lógica 2378/2378 y pantallas 1931/1931**, sin avisos de PHP; revisado en celular (390 px) y computadora
+
+## Hecho (20 oct 2026) — Precios del software solo por cotización
+- [x] Regla del dueño: el precio del software nunca se publica. En **Mi plan** los módulos que el cliente no tiene dicen «Precio por cotización» con **Pedir cotización**; los otros planes ya no muestran su precio y también tienen **Pedir cotización** (crea el mismo pedido `cambio_modulos` con los módulos de ese plan y la nota «Pide cotización del plan …»). La pantalla «Este módulo no está en tu plan» ya no dice «Agrégalo por $X al mes»: trae **Pedir cotización** y **Ver Mi plan**. Lo que el cliente paga por su propio plan (y su renovación) se sigue viendo. El Panel Tukán y el Panel Central siguen viendo los precios.
+- [x] Sin «gratis» en textos visibles (solo demos; en ventas, «meses de regalo»). README sin tabla de precios: «Precios: por cotización (se definen en el Panel Tukán Central)». Manual actualizado y PDF regenerado.
+- [x] Pruebas: logica_98 (texto visible sin «gratis», Mi plan y módulo apagado sin precio) y web_98 (sección nueva: sin precios de módulos ni planes que no tiene, Pedir cotización desde el módulo y desde un plan, sin «gratis» en pantallas del cliente y públicas).
 
 ## Pendiente
 000. [ ] DIMI: actualizar en el servidor (volver a correr el instalador del README): aplica la migración 098 (módulos y pedidos de demo). Revisar los precios de los módulos en Panel Tukán → Planes y precios

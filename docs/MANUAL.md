@@ -108,7 +108,7 @@ Ficha (RUC, banco, crédito, documentos que vencen, bitácora), **Nueva compra o
 Periodos Este mes / Mes pasado / Este año / Otras fechas. Secciones: Ventas, Cobrado, Por cobrar, Ocupación (base); Conversión, Ganancia, Comisiones, Metas (módulo Metas); Satisfacción (módulo Formulario, extras y encuesta); Descargas para Excel (módulo Exportar). **Metas de ventas** del local y por vendedor.
 
 ## 18. Mi plan, módulos y demos
-**Más → Mi plan:** tus módulos encendidos; **Pedir este módulo**; **Preguntar por WhatsApp** para cambiar de plan o renovar (Tukán te cotiza). Demos: **Solicitar demo** → Tukán la prepara con datos de ejemplo y todos los módulos por los días acordados; al terminar, «Tu demo terminó» y los datos quedan guardados.
+**Más → Mi plan:** tus módulos encendidos; los que no tienes dicen «Precio por cotización» y tienen **Pedir cotización** (también en la pantalla del módulo apagado y en cada plan); **Preguntar por WhatsApp** para renovar (Tukán te cotiza). Demos: **Solicitar demo** → Tukán la prepara con datos de ejemplo y todos los módulos por los días acordados; al terminar, «Tu demo terminó» y los datos quedan guardados.
 
 ## 19. Preguntas frecuentes
 - **¿Dos vendedores pueden vender la misma fecha?** No: lo impide la base de datos.
