@@ -110,6 +110,23 @@ bash tests/run_web.sh
 | Panel Tukán Central v2 (capacidades, clientes, cliente, cotizar, planes, solicitudes, finanzas, ejecutar; SSO con `ir`) | logica_96, web_96 | 096 | TukanCentralV2, TukanCentralError |
 | Pausar y borrar clientes (Anexo A: pausar, papelera, restaurar, purga a los 30 días) | logica_97, web_97 | 097 | Papelera (+ `public/index.php`, `prueba_terminada`, `admin_negocios` con filtro Papelera) |
 
+## Ayuda e IA (110) — reglas para programar
+- Librerías compartidas del Panel Tukán Central, copiadas SIN cambios: `src/tukan_ia.php` (`compartido/LEEME_IA.md`) y `src/tukan_correo.php`
+  (`compartido/LEEME_CORREO.md`). Si sale otra versión (`TUKAN_IA_VERSION` / `TUKAN_CORREO_VERSION`), se vuelven a copiar; no se editan aquí.
+- Todo lo de TuEvento pasa por `src/Ia.php` (`ia()` en bootstrap): `tope()`, `guardian()`, `ayuda()`, `manual()`, `proponerCotizacion()`,
+  `validarPropuesta()`, `leerBorrador()`, `guardarBorrador()`, `uso()` (conector). Una función nueva con IA: `tukan_ia_llamar([...], ['guardian' => ia()->guardian($nid),
+  'programa' => Ia::PROGRAMA, 'funcion' => '…'])` y, si `!$r['ok']`, **siempre** `tukan_ia_mensaje_neutro()` con el enlace para hacerlo a mano.
+  Nunca mostrar «límite», «cupo», «saldo», «crédito» ni el motivo. Texto de otras personas: `tukan_ia_datos('etiqueta', $texto)`; JSON: `'json' => true` + `'validar'`.
+- `asistente_ia` está en `Modulos::SOLO_A_PEDIDO`: no entra en `*` ni en la demo con todos (`Modulos::todos()`); precio 0 = por cotización (`Modulos::porCotizacion`).
+- `tukan_ia_gasto.negocio_id` es TEXTO: la Papelera solo toma tablas con `negocio_id` entero (el gasto de IA no se copia ni se borra con el negocio).
+- Pruebas: `tests/base.php` y `tests/run_web.sh` apuntan `TUKAN_IA_ENV` y `TUKAN_CORREO_ENV` a archivos de prueba (nunca `/etc`). La API y el SMTP son de mentira
+  (`tests/anthropic_falso.py` con `RESPONDER:{json}` en el texto, `tests/smtp_falso.py --modo plano` con `TUKAN_SMTP_SEGURIDAD=ninguna` en 127.0.0.1).
+- La contraseña de la demo nunca se guarda: `CorreoDemo::sellar()` (cifrada con la llave de la sesión del súper, 30 min) y `gastar()` al enviar bien.
+
+| Módulo | Pruebas | Migración | Clases |
+|---|---|---|---|
+| Ayuda, Asistente IA, FAQ del súper, `ia_uso`/`ia_tope`, demo por correo | logica_110, web_110 | 110 | Ia, CorreoDemo (+ `src/tukan_ia.php`, `src/tukan_correo.php`, `mod_ia.css`, prefijo `ia-`) |
+
 ## Servidor
 - Cron cada hora (crontab de `www-data`): `php /var/www/tuevento/bin/tareas.php` (también purga la papelera) · respaldo diario 3:25: `deploy/respaldo.sh`
 - Copias de los negocios borrados: `/var/www/tuevento/respaldos/borrados/<id>_<fecha>.json.gz` (gzip JSON; `TuEvento\Papelera::leerCopia()` la lee)

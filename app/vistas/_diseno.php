@@ -15,6 +15,7 @@ $grupoEventos = ['eventos', 'evento', 'evento_nuevo', 'evento_editar', 'cotizaci
 array_push($grupoMas, 'cuestionarios', 'extras'); $grupoEventos[] = 'evento_formulario';   // portal del cliente (070)
 $grupoMas[] = 'metas'; if (!empty($_GET['id'])) $grupoEventos[] = 'plano'; else $grupoMas[] = 'plano';   // plano y metas (080)
 array_push($grupoMas, 'proveedor', 'compras', 'compra', 'por_pagar', 'incidencias', 'puntaje_proveedores');   // proveedores y compras (060, 091)
+$grupoMas[] = 'ayuda'; $grupoEventos[] = 'ia_cotizacion';   // ayuda e IA (110)
 $campana = 0;
 if ($u) {
     $campana = (new \TuEvento\Notificaciones(db()))->sinLeer((int) $u['id']);
@@ -99,6 +100,7 @@ $modulosJs = glob(RAIZ . '/public/assets/mod_*.js') ?: [];
         <a href="<?= e(url('usuarios')) ?>">Usuarios</a>
         <a href="<?= e(url('planes')) ?>">Mi plan</a>
         <?php endif; ?>
+        <a href="<?= e(url('ayuda')) ?>">Ayuda</a>
         <a href="<?= e(url('mi_cuenta')) ?>">Mi cuenta</a>
         <a href="<?= e(url('salir')) ?>">Cerrar sesión</a>
     </div>

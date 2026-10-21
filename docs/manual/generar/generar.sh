@@ -2,7 +2,8 @@
 # Regenera el manual de TuEvento: base de ejemplo nueva (datos_ejemplo.php), capturas reales y el PDF.
 #   bash docs/manual/generar/generar.sh
 # Variables opcionales: PUERTO (8241), DB (tuevento_manual_prueba), DB_USER (tuevento), DB_PASS (prueba),
-#                       SOLO_PDF=1 (no toma capturas, solo vuelve a armar el PDF con las que ya hay).
+#                       SOLO_PDF=1 (no toma capturas, solo vuelve a armar el PDF con las que ya hay),
+#                       SOLO=36_ayuda,37_cotizacion_mensaje (toma solo esas capturas y deja las demás).
 # Necesita: PostgreSQL (el usuario debe poder crear bases), PHP con pdo_pgsql y gd, composer (TCPDF para los QR),
 #           Python 3 con playwright y pypdf, y Chromium de Playwright (PLAYWRIGHT_BROWSERS_PATH).
 set -euo pipefail
@@ -13,6 +14,8 @@ PUERTO=${PUERTO:-8241}
 export TUEVENTO_DB_NAME=${DB:-tuevento_manual_prueba} TUEVENTO_DB_USER=${DB_USER:-tuevento} TUEVENTO_DB_PASS=${DB_PASS:-prueba}
 export TUEVENTO_URL="http://127.0.0.1:$PUERTO" TZ=America/Guayaquil PGTZ=America/Guayaquil
 export PLAYWRIGHT_BROWSERS_PATH=${PLAYWRIGHT_BROWSERS_PATH:-/opt/pw-browsers}
+# Sin IA ni correo de verdad: nunca /etc/tukan-ia.env ni /etc/tukan-correo.env (la Ayuda responde con las preguntas guardadas)
+export TUKAN_IA_ENV=${TUKAN_IA_ENV:-/nonexistent/tukan-ia.env} TUKAN_CORREO_ENV=${TUKAN_CORREO_ENV:-/nonexistent/tukan-correo.env}
 cd "$RAIZ"
 if [ "${SOLO_PDF:-0}" != "1" ]; then
   case "$TUEVENTO_DB_NAME" in *prueba*|*manual*) ;; *) echo "Por seguridad la base debe llamarse *manual* o *prueba*"; exit 1;; esac
@@ -33,8 +36,8 @@ if [ "${SOLO_PDF:-0}" != "1" ]; then
   trap 'kill $SERVIDOR 2>/dev/null || true; rm -rf "$TMPD"' EXIT
   for _ in $(seq 1 30); do curl -s -o /dev/null "http://127.0.0.1:$PUERTO/?r=login" && break; sleep 0.3; done
   echo "== 3. Capturas"
-  rm -f "$MANUAL"/capturas/*.png
-  python3 "$AQUI/capturas.py" --base "http://127.0.0.1:$PUERTO" --salida "$MANUAL/capturas"
+  [ -z "${SOLO:-}" ] && rm -f "$MANUAL"/capturas/*.png
+  python3 "$AQUI/capturas.py" --base "http://127.0.0.1:$PUERTO" --salida "$MANUAL/capturas" ${SOLO:+--solo "$SOLO"}
   if grep -aq "PHP Fatal\|PHP Warning\|TuEvento: " "$TMPD/servidor.log"; then echo "Errores de PHP durante las capturas:"; grep -a "PHP Fatal\|PHP Warning\|TuEvento: " "$TMPD/servidor.log" | cut -c1-300; fi
 fi
 echo "== 4. PDF del manual"

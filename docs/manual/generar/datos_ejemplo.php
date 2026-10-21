@@ -305,4 +305,10 @@ $db->exec("UPDATE eventos e SET confirmado_en = x.f + interval '1 day' FROM (SEL
            WHERE x.evento_id = e.id AND e.confirmado_en IS NOT NULL AND e.negocio_id = $nid");
 $db->exec("UPDATE eventos e SET creado_en = LEAST(e.creado_en, (SELECT min(c.fecha) FROM cotizaciones c WHERE c.evento_id = e.id), e.fecha - 60) WHERE e.negocio_id = $nid AND e.estado <> 'consulta'");
 $ve->agregarFechaCerrada($nid, $d(30), null, 'Mantenimiento general de la quinta', $hoy);
+// ------------------------------------------------------------------ 8. Ayuda e IA (110): Asistente IA encendido (extra por cotización) y preguntas frecuentes
+require_once RAIZ . '/src/tukan_ia.php';
+(new \TuEvento\Modulos($db))->cambiar($nid, ['asistente_ia'], []);
+$faqs = new \TukanIaFaqPdo($db);
+$faqs->agregar('¿Cómo registro un pago?', "1. Abra el evento y toque la pestaña **Pagos**.\n2. En **Registrar un pago recibido** escriba el valor, la forma de pago y la fecha.\n3. Toque **Guardar pago y generar recibo**.\nCuando lo pagado completa la reserva, la fecha queda **separada** para ese espacio.");
+$faqs->agregar('¿Cómo envío la cotización por WhatsApp?', "1. Abra el evento y toque la pestaña **Cotización**.\n2. En **Enlace para el cliente** toque **Enviar por WhatsApp**.\n3. El cliente la ve en su celular y la acepta con **Aceptar cotización**.");
 echo "Listo: negocio $nid · boda $boda · quince $quince · corporativo $corp · bautizo $baut · cumpleaños $cum · graduación $grad\n";

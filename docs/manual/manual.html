@@ -37,7 +37,7 @@ p { margin: 0 0 7px; }
 .indice h1 { font-size: 22pt; margin: 0 0 4mm; }
 .intro-caja { background: var(--fondo); border-radius: 10px; padding: 10px 14px; margin-bottom: 5mm; font-size: 10pt; }
 .indice ol { list-style: none; padding: 0; margin: 0; }
-.indice li { display: flex; align-items: baseline; gap: 10px; padding: 2.6px 0; border-bottom: 1px solid var(--linea); }
+.indice li { display: flex; align-items: baseline; gap: 10px; padding: 1.5px 0; border-bottom: 1px solid var(--linea); }
 .indice li .n { font-family: "Space Grotesk"; font-weight: 700; color: #fff; background: var(--marino); border-radius: 6px; padding: 1px 7px; font-size: 9pt; min-width: 26px; text-align: center; }
 .indice li a { text-decoration: none; color: var(--tinta); font-weight: 700; flex: 1; }
 .indice li small { display: block; font-weight: 400; color: var(--suave); font-size: 8.4pt; line-height: 1.3; }
@@ -114,7 +114,8 @@ table.t tr:nth-child(even) td { background: #FAFBFD; }
     <li><span class="n">16</span><a href="#c16">Proveedores y compras<small>Módulos · órdenes, facturas, por pagar y puntaje</small></a><span class="pag" data-pag="c16"></span></li>
     <li><span class="n">17</span><a href="#c17">Reportes y metas<small>Ventas, cobros, ocupación, ganancia y satisfacción</small></a><span class="pag" data-pag="c17"></span></li>
     <li><span class="n">18</span><a href="#c18">Mi plan, módulos y demos<small>Lo que tienes y cómo pedir más</small></a><span class="pag" data-pag="c18"></span></li>
-    <li><span class="n">19</span><a href="#c19">Preguntas frecuentes<small>Y cómo pedir ayuda</small></a><span class="pag" data-pag="c19"></span></li>
+    <li><span class="n">19</span><a href="#c19">Ayuda e inteligencia artificial<small>«¿Qué necesita hacer?» · módulo Asistente IA: cotización desde un mensaje</small></a><span class="pag" data-pag="c19"></span></li>
+    <li><span class="n">20</span><a href="#c20">Preguntas frecuentes<small>Y cómo pedir ayuda</small></a><span class="pag" data-pag="c20"></span></li>
   </ol>
 </div>
 
@@ -150,6 +151,7 @@ table.t tr:nth-child(even) td { background: #FAFBFD; }
     <tr><td>🎯 Metas y reportes avanzados</td><td>Metas de ventas del local y por vendedor, embudo, ganancia por evento y comisiones</td></tr>
     <tr><td>📲 Avisos por Telegram</td><td>Pagos, firmas, consultas nuevas, cuotas y seguimientos llegan solos al celular del equipo</td></tr>
     <tr><td>📤 Exportar a Excel y Google Calendar</td><td>Descargas para Excel y tus eventos en Google Calendar</td></tr>
+    <tr><td>✨ Asistente IA <small>(extra, por cotización)</small></td><td>Pegas el mensaje de WhatsApp del cliente y te propone el evento y la cotización con tu catálogo (capítulo 19)</td></tr>
   </table>
   <div class="nota"><b>Planes</b><b>Esencial</b> = la base (1 espacio y 2 usuarios). <b>Salón</b> = la base + paquetes, contratos, portal del cliente con cobros en línea, formulario y encuesta, proveedores y compras, incidencias, metas, Telegram y Excel (hasta 2 espacios y 3 usuarios). <b>Quinta</b> = todos los módulos, sin límite de espacios ni de usuarios. A cualquier plan se le puede sumar o quitar un módulo. Tukán te hace la cotización por WhatsApp según lo que necesita tu local.</div>
   <div class="consejo"><b>Apagar no borra</b>Si un módulo se apaga, sus datos quedan guardados. Al encenderlo otra vez, todo vuelve como estaba.</div>
@@ -601,7 +603,7 @@ table.t tr:nth-child(even) td { background: #FAFBFD; }
 <section class="cap" id="c18">
   <h1><span class="num">18</span> Mi plan, módulos y demos</h1>
   <span class="plan">Para el dueño y los administradores</span>
-  <p>En <b>Más → Mi plan</b> ves tu plan, hasta cuándo está pagado y <b>tus módulos</b>, agrupados en Ventas y contratos, Portal del cliente, Día del evento, Proveedores y gestión, y Avisos y conexiones. Cada uno dice si está encendido e incluido en tu plan.</p>
+  <p>En <b>Más → Mi plan</b> ves tu plan, hasta cuándo está pagado y <b>tus módulos</b>, agrupados en Ventas y contratos, Portal del cliente, Día del evento, Proveedores y gestión, Avisos y conexiones, y Extras (el <b>Asistente IA</b>, que no viene en ningún plan: dice «Pídalo y le cotizamos»). Cada uno dice si está encendido e incluido en tu plan.</p>
   <figure class="pc m90"><img src="capturas/33_mi_plan_modulos.png" alt=""><figcaption>Mi plan: los módulos de la Quinta Demo Tukanec.</figcaption></figure>
   <ul class="lista">
     <li>Los módulos que no tienes dicen «Precio por cotización». Para sumar uno, toca <b>Pedir cotización</b>: el pedido le llega a Tukán, que te escribe con el valor y para activarlo.</li>
@@ -616,8 +618,35 @@ table.t tr:nth-child(even) td { background: #FAFBFD; }
   </ul>
 </section>
 
-<section class="cap faq" id="c19">
-  <h1><span class="num">19</span> Preguntas frecuentes</h1>
+<section class="cap" id="c19">
+  <h1><span class="num">19</span> Ayuda e inteligencia artificial</h1>
+  <span class="plan">Ayuda: base (todos los planes y todos los cargos) · Asistente IA: módulo extra</span>
+  <h2>La Ayuda: «¿Qué necesita hacer?»</h2>
+  <p>En <b>Más → Ayuda</b> (en la computadora, abajo del menú de la izquierda) escribe lo que quieres hacer, como lo dirías por WhatsApp, y toca <b>Preguntar</b>. La respuesta sale al instante, paso a paso, con lo que dice este manual.</p>
+  <ol class="pasos">
+    <li>Escribe tu pregunta en el cuadro <b>¿Qué necesita hacer?</b> (hasta 500 letras). Por ejemplo: «¿Cómo registro un pago?» o «¿Cómo envío la cotización por WhatsApp?».</li>
+    <li>Toca <b>Preguntar</b> y lee la respuesta. Una pregunta a la vez funciona mejor.</li>
+    <li>Si no te sirvió, toca <b>escríbanos por WhatsApp 099 640 8397</b>: te ayudamos nosotros.</li>
+  </ol>
+  <figure class="pc m90"><img src="capturas/36_ayuda.png" alt=""><figcaption>Ayuda: la pregunta y su respuesta.</figcaption></figure>
+  <div class="consejo"><b>Respuestas para todos</b>Las preguntas que ya se hicieron quedan guardadas y Tukán las revisa: si alguien pregunta lo mismo, la respuesta sale de inmediato. Puedes hacer hasta 10 preguntas por minuto.</div>
+  <h2>Módulo Asistente IA: cotización a partir de un mensaje</h2>
+  <p>Con el módulo <b>Asistente IA</b> (se pide en <b>Mi plan</b>; Tukán te lo cotiza) ya no copias a mano lo que el cliente te escribió. En <b>Eventos</b> o en <b>Nuevo evento</b> toca <b>✨ Desde un mensaje de WhatsApp</b>:</p>
+  <ol class="pasos">
+    <li>Copia el mensaje del cliente desde WhatsApp y pégalo en <b>Mensaje del cliente</b>. Por ejemplo: «Hola, quisiera cotizar una boda de 150 personas el 14 de febrero, con DJ y fotógrafo».</li>
+    <li>Toca <b>Proponer la cotización</b>. TuEvento lee el mensaje y te arma un <b>borrador</b>: el cliente (nombre, celular, correo), el tipo de evento, la fecha, las horas, los invitados, el espacio, el paquete y los productos de <b>tu propio catálogo</b> con tus precios. Lo que pidió y no tienes en el catálogo va en las notas, y lo que falta preguntarle sale en <b>Falta preguntarle al cliente</b>.</li>
+    <li>Revisa y corrige lo que haga falta (puedes quitar productos con la casilla <b>Usar</b> o cambiar la cantidad) y toca <b>Guardar evento y cotización</b>. Se crea el evento como <b>Consulta</b> y su cotización en borrador; ahí la terminas y la envías como siempre (capítulo 10). Nada se le manda al cliente hasta que tú lo envías.</li>
+  </ol>
+  <figure class="pc m90"><img src="capturas/37_cotizacion_mensaje.png" alt=""><figcaption>Cotización desde un mensaje: pega el texto del cliente.</figcaption></figure>
+  <ul class="lista">
+    <li>Si la fecha y el espacio ya están separados por otro evento, TuEvento te avisa igual que en un evento nuevo (puedes guardarlo como consulta en lista de espera).</li>
+    <li>Si en algún momento no se puede leer el mensaje automáticamente, verás: «En este momento no pudimos procesar el texto automáticamente; puede hacerlo a mano aquí» con el enlace a <b>Nuevo evento</b>.</li>
+    <li>Sin el módulo, el botón no aparece y la Ayuda sigue funcionando igual.</li>
+  </ul>
+</section>
+
+<section class="cap faq" id="c20">
+  <h1><span class="num">20</span> Preguntas frecuentes</h1>
   <h3>¿Dos vendedores pueden vender la misma fecha?</h3>
   <p>No. Un espacio separado o confirmado no se puede volver a separar en el mismo horario (con montaje y desmontaje): lo impide la base de datos. Lo que sí puede haber son varias consultas o cotizaciones para la misma fecha; la primera que paga la reserva se queda con ella.</p>
   <h3>¿Cuándo queda separada la fecha?</h3>
@@ -636,6 +665,8 @@ table.t tr:nth-child(even) td { background: #FAFBFD; }
   <p>No. TuEvento hace cotizaciones, contratos, recibos y estados de cuenta. Sí lee el XML de las facturas que te mandan tus proveedores.</p>
   <h3>¿Se puede usar sin internet?</h3>
   <p>Necesita internet, pero funciona con los datos del celular. Instálalo como app para abrirlo más rápido.</p>
+  <h3>¿Dónde pregunto cómo se hace algo?</h3>
+  <p>En <b>Más → Ayuda</b>: escribe tu pregunta y toca <b>Preguntar</b> (capítulo 19). Si no te sirve, escríbenos por WhatsApp.</p>
   <h3>Si apagamos un módulo, ¿pierdo la información?</h3>
   <p>No. Se esconden sus pantallas, botones y enlaces, pero los datos quedan guardados y vuelven al encenderlo.</p>
   <h3>¿Cuánto cuesta?</h3>

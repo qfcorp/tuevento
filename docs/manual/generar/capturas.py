@@ -55,6 +55,8 @@ PANTALLAS = [
     ('33_mi_plan_modulos', 'dueno', '/?r=planes', 1280, 'modulos'),
     ('34_pagina_publica_celular', 'nadie', '/?r=sitio&s=quinta-demo-tukanec', 390, None),
     ('35_coordinador_celular', 'coordinador', '/?r=evento_dia&id={baut}', 390, None),
+    ('36_ayuda', 'dueno', '/?r=ayuda', 1280, 'preguntar'),
+    ('37_cotizacion_mensaje', 'dueno', '/?r=ia_cotizacion', 1280, 'mensaje'),
 ]
 
 
@@ -142,6 +144,12 @@ with sync_playwright() as p:
             b = pg.locator('button', has_text='Empezar')
             if b.count():
                 b.first.click(); pg.wait_for_load_state('networkidle')
+        elif accion == 'preguntar':
+            pg.fill('textarea[name=pregunta]', '¿Cómo registro un pago?')
+            pg.click('#form-ayuda button[type=submit]'); pg.wait_for_load_state('networkidle')
+        elif accion == 'mensaje':
+            pg.fill('textarea[name=mensaje]', 'Hola, buenas tardes. Quisiera cotizar una boda para 150 personas el sábado 14 de febrero, '
+                    'en el salón, con DJ y fotógrafo. Soy Daniela Ortega, mi número es 0998887766. ¡Gracias!')
         elif accion == 'esperar_plano':
             pg.wait_for_timeout(1200)
         elif accion == 'modulos':

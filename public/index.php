@@ -44,6 +44,10 @@ array_push($privadas, 'proveedor', 'compras', 'compra', 'por_pagar', 'incidencia
 array_push($deCoordinador, 'proveedor', 'incidencias', 'proveedor_archivo');   // ficha sin dinero, incidencias y documentos
 // Cómo se calcula el puntaje de proveedores (091): el dueño lo cambia; los demás ven la explicación
 $privadas[] = 'puntaje_proveedores'; $deCoordinador[] = 'puntaje_proveedores';
+// Ayuda e inteligencia artificial (110): la Ayuda es para todos (también el coordinador); la cotización desde un mensaje es
+// del módulo «Asistente IA»; el súper usuario revisa las preguntas frecuentes y manda la demo por correo
+array_push($privadas, 'ayuda', 'ia_cotizacion'); $deCoordinador[] = 'ayuda';
+array_push($deAdmin, 'admin_faq', 'admin_demo_correo');
 
 $ruta = (string) ($_GET['r'] ?? 'inicio');
 if (in_array($ruta, $deAdmin, true) && !superadmin()) {

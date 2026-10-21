@@ -24,6 +24,7 @@ Dirección: **tuevento.tukanec.com** (servidor qfcorp). Web de la marca: tukanso
 - **Metas de ventas**: meta del mes (y por vendedor), avance en el Inicio y reporte con la comparación con el mismo mes del año anterior.
 - **Boda en vivo** con QF Producciones (pedido por WhatsApp y enlace en portal e invitaciones).
 - Página pública del local con consulta de fechas libres y formulario que entra al sistema.
+- **Ayuda** «¿Qué necesita hacer?» para todos (responde al instante con el manual y guarda las preguntas frecuentes) y módulo extra **Asistente IA**: cotización a partir del mensaje de WhatsApp del cliente.
 - Inicio con el día, cobranza, mensajes por WhatsApp listos para enviar, reportes (ventas, cobrado, ocupación, conversión, rentabilidad, comisiones), exportar a Excel, calendario para Google Calendar, avisos por Telegram.
 - Usuarios: dueño, **administradores** (hasta 4, mismo nivel que el dueño y no cuentan en el límite de usuarios del plan), vendedor, coordinador (solo el día del evento) y consulta (solo mira). Los permisos se preguntan con `es_admin_total()` (dueño o administrador); `es_dueno()` queda solo para la identidad de la cuenta ante Tukán. Panel Tukán para administrar todos los negocios y sus planes.
 
@@ -61,6 +62,7 @@ plan de pagos y recibos, Mensajes de WhatsApp del día, página pública con con
 | Metas y reportes avanzados | Metas de ventas, embudo, ganancia por evento, comisiones | — |
 | Avisos por Telegram | Pagos, firmas, consultas, cuotas y seguimientos al celular | — |
 | Exportar a Excel y Google Calendar | Descargas para Excel y calendario externo | — |
+| **Asistente IA** (extra, por cotización: en ningún plan ni en la demo con todos) | Cotización a partir del mensaje de WhatsApp del cliente (borrador para revisar); tope de gasto mayor | — |
 
 - **Precio al mes** de cada cliente = plan + módulos extra − módulos quitados (o un **precio acordado** fijo). Es el que sugiere
   "Registrar pago", el `cotizar` y el `mensual_estimado` del Panel Central. Precios, descripciones y qué trae cada plan se cambian en
@@ -99,6 +101,33 @@ Después, en Cloudflare (Zero Trust → Networks → Tunnels → tu túnel → P
 
 Super usuario del panel Tukán: `php /var/www/tuevento/bin/crear_admin.php`
 
+## Ayuda e inteligencia artificial (migración 110)
+Con la librería compartida del Panel Tukán Central **`src/tukan_ia.php`** (copiada SIN cambios de `compartido/`, guía `compartido/LEEME_IA.md`).
+- **Ayuda** (todos los planes y cargos): **Más → Ayuda**, cuadro «¿Qué necesita hacer?» → `tukan_ia_ayuda()`: pregunta frecuente guardada (costo 0) →
+  IA (modelo rápido) con las secciones del manual del cliente (`docs/manual/manual.html` convertido a texto y guardado en caché en la carpeta temporal;
+  si no está, `docs/MANUAL.md`) y la respuesta queda como FAQ automática → sin poder gastar, el manual tal cual + el WhatsApp. POST con CSRF, 10 preguntas
+  por minuto por usuario. Sin el módulo: máximo **30 respuestas nuevas al mes** por negocio. Nunca dice «límite», «cupo» ni «saldo».
+- **Módulo «Asistente IA»** (`asistente_ia`, grupo Extras, precio 0 en el catálogo = **por cotización**: en Mi plan dice «Pídalo y le cotizamos»; lo acordado
+  va en el precio acordado). No entra en «*» ni en la demo con todos los módulos (`Modulos::SOLO_A_PEDIDO`). Trae **Cotización a partir de un mensaje**
+  (`/?r=ia_cotizacion`, botón «✨ Desde un mensaje» en Eventos y Nuevo evento): JSON validado contra los espacios, paquetes y productos del negocio
+  (`Ia::validarPropuesta`), se muestra como borrador y al guardar crea el evento (consulta) y la cotización (borrador). Si no se puede usar la IA:
+  `tukan_ia_mensaje_neutro('texto', …)` con el enlace a Nuevo evento.
+- **Tope por negocio** (guardián `TukanIaGuardianPdo`, tabla `tukan_ia_gasto`): **3,00 USD al mes con el módulo y 0,50 sin él** (los que sugiere la guía);
+  otro tope en `negocios.ia_tope_usd` (lo cambia el Panel Central con la operación `ia_tope`). Al llegar al tope no se llama a la API, en silencio.
+- **Panel Tukán → Preguntas IA** (`/?r=admin_faq`): listar (Por revisar primero), aprobar, editar (queda aprobada y «manual»), borrar y agregar. Todo con CSRF y en registro_admin.
+- **Conector v2** (Anexo C de `PROTOCOLO_V2.md`): acción `ia_uso` (gasto del mes por negocio, totales y FAQ; sin la clave) y operación `ia_tope`
+  (`{"tope_usd": número | null}`, solo el dueño del Central, botón «Tope de IA» en la ficha del cliente).
+- **Configuración**: `/etc/tukan-ia.env` (la escribe `bash deploy/configurar_ia.sh` del Panel Tukán Central; **no** se copia la clave aquí). El usuario de PHP
+  (`www-data`) debe poder leerlo. **Sin ese archivo la IA queda apagada** y la Ayuda funciona solo con las FAQ y el manual. Pruebas: `TUKAN_IA_ENV=/otro/archivo`.
+
+## Enviar la demo por correo
+Con **`src/tukan_correo.php`** (copiada SIN cambios del Panel Tukán Central, guía `compartido/LEEME_CORREO.md`). En la ficha de una demo recién creada
+(Panel Tukán → Nueva demo, o «Nueva contraseña del dueño» de una demo) aparece **Enviar por correo** debajo del WhatsApp: llega «Su demo de TuEvento está lista»
+desde info@tukansoftware.com. La contraseña se ve una sola vez y no se guarda: viaja en un **sello cifrado** (XChaCha20-Poly1305 con una llave al azar de la
+sesión del súper usuario, atado a él, 30 minutos, un solo envío). En la auditoría queda «Envió la demo por correo a …» sin la contraseña. Si
+`/etc/tukan-correo.env` no existe: botón desactivado **Configure el correo de Tukán** con el comando
+`cd /var/www/tukan-central && git pull && bash deploy/configurar_correo.sh`.
+
 ## Conectar con el Panel Tukán Central (panel.tukanec.com)
 El panel central muestra las cifras de todos los programas Tukán y deja entrar a cada panel con un clic.
 1. En el panel central, agrega la instalación de TuEvento: te da un **ID** (ej. `tuevento`) y un **SECRETO** (64 letras y números).
@@ -122,6 +151,7 @@ Con el mismo ID y el mismo secreto, el panel central ve y maneja a los clientes 
 - **Solicitudes**: **pedidos de demo** (`demo_pedida`, con Crear demo prellenado), **pedidos de módulos** desde Mi plan (`cambio_modulos`, con Aprobar = `cambiar_modulos` y Rechazar), demos que terminan en 2 días / hoy / terminadas sin pagar (60 días), planes que vencen en 5 días o vencidos sin renovar (30 días) y dominios incluidos por registrar. Se marcan "en proceso", "atendida" o "descartada" (tabla `tukan_central_atenciones`).
 - **Operaciones** (con las mismas funciones del panel de Tukán y una línea en "Últimos movimientos del panel" con el correo del Central): crear demo (con datos de ejemplo, plan y módulos opcionales, desde un pedido de demo; la contraseña temporal se muestra una sola vez), alargar la demo, registrar pago (con la fecha en que pagó), anular pago, suspender, reactivar, cancelar, cambiar plan, nueva clave del dueño, nota interna, atender solicitud, guardar plan/precios, **cambiar_modulos** (encender/apagar con dependencias, precio acordado; solo el rol dueño) y **guardar_modulos** (catálogo y módulos de cada plan).
 - **Finanzas**: cobrado por mes (por plan, tiempo y forma de pago), nuevos pagadores, devengado, ingreso mensual recurrente (lo que pagan al mes con sus módulos) y `por_modulo` (cuántos lo tienen y cuánto suman los extras).
+- **IA** (Anexo C): `ia_uso` (gasto de IA del mes por negocio, para **Más → IA** del Central) y `ia_tope` (tope del mes de un negocio; solo el rol dueño).
 - Si el Central repite una operación (se cortó la red), TuEvento no la hace dos veces: devuelve el mismo resultado (`tukan_central_operaciones`, 90 días, sin contraseñas).
 - **Pausar y borrar clientes** (Anexo A del protocolo):
   - `pausar` (tipo: falta de pago, pedido del cliente, revisión, uso indebido u otro + motivo): el negocio no puede trabajar y ve "Tu cuenta está pausada" con el motivo (en revisión y uso indebido, un texto genérico) y el WhatsApp de Tukán; su página pública y todos sus portales y enlaces dicen "temporalmente no disponible". `reactivar` la quita.
@@ -137,7 +167,7 @@ El instalador deja programado:
 ```
 Tareas: vencer cotizaciones, avisar fechas retenidas que se liberan, cuotas por vencer, revisar precios, evento en 7 días, pasar a realizado, devolver garantías, reporte del mes, seguimientos del día, pagos a proveedores que vencen, documentos de proveedores por vencer, proveedores sin confirmar a 3 días del evento y la **papelera** (borra de verdad los negocios con más de 30 días en ella y las copias de más de 1 año). Los negocios pausados o en la papelera no reciben tareas ni avisos, y cada tarea de un módulo (Telegram, proveedores) solo corre si el negocio lo tiene encendido.
 
-**Al actualizar a esta versión** hay que volver a correr el instalador (la línea de arriba): aplica las migraciones 098 (módulos y pedidos de demo) y 099 (rol administrador), crea `respaldos/borrados` y pasa las tareas al usuario `www-data`.
+**Al actualizar a esta versión** hay que volver a correr el instalador (la línea de arriba): aplica las migraciones 098 (módulos y pedidos de demo), 099 (rol administrador) y 110 (ayuda e IA), crea `respaldos/borrados` y pasa las tareas al usuario `www-data`.
 
 Telegram (opcional) en `config/.env`: `TELEGRAM_BOT_TOKEN`, `TELEGRAM_BOT_USERNAME` y `TELEGRAM_WEBHOOK_SECRET` (obligatorio si se usa el webhook).
 
@@ -145,10 +175,13 @@ Telegram (opcional) en `config/.env`: `TELEGRAM_BOT_TOKEN`, `TELEGRAM_BOT_USERNA
 Solo en bases de prueba (se borran y se vuelven a crear):
 
 ```bash
-# Lógica (2445 pruebas)
+# Lógica (2527 pruebas)
 TUEVENTO_DB_NAME=tuevento_prueba TUEVENTO_DB_USER=tuevento TUEVENTO_DB_PASS=prueba php tests/run_tests.php
-# Pantallas de punta a punta (2027 pruebas; levanta un sitio de prueba solo)
+# Pantallas de punta a punta (2111 pruebas; levanta un sitio de prueba solo)
 PGPASSWORD=prueba bash tests/run_web.sh
+# Solo ayuda, IA y correo de la demo (API de Anthropic y SMTP de mentira: tests/anthropic_falso.py y tests/smtp_falso.py)
+TUEVENTO_DB_NAME=tuevento_prueba TUEVENTO_DB_USER=tuevento TUEVENTO_DB_PASS=prueba php tests/run_tests.php logica_110
+PGPASSWORD=prueba bash tests/run_web.sh web_110
 # Solo el conector con el Panel Tukán Central (v1 = logica_95/web_95, v2 = logica_96/web_96, pausar y papelera = logica_97/web_97, módulos y pedidos de demo = logica_98/web_98, administradores = logica_99/web_99)
 TUEVENTO_DB_NAME=tuevento_prueba TUEVENTO_DB_USER=tuevento TUEVENTO_DB_PASS=prueba php tests/run_tests.php logica_9
 PGPASSWORD=prueba bash tests/run_web.sh web_9

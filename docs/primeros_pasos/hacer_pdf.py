@@ -71,7 +71,8 @@ h.append('<h2>Parte 2 · El día a día</h2>')
 h.append(paso(6, 'Anote cada consulta como un evento', 'Botón Nuevo evento (en el Inicio o en el Calendario)', [
     'Elija <b>Cliente nuevo</b> o <b>Ya está registrado</b>. Con nombre, celular y fecha basta para empezar.',
     'Ponga <b>¿Qué celebran?</b>, la fecha, la hora de inicio y fin, los invitados y el espacio. Toque <b>Crear evento</b>.',
-    'El evento nace como <b>Consulta</b>. En el <b>Calendario</b>, el botón <b>Próximos sábados</b> le dice al instante qué sábados tiene libres.']))
+    'El evento nace como <b>Consulta</b>. En el <b>Calendario</b>, el botón <b>Próximos sábados</b> le dice al instante qué sábados tiene libres.'],
+    'Con el módulo <b>Asistente IA</b>: toque <b>✨ Desde un mensaje de WhatsApp</b>, pegue lo que le escribió el cliente y revise el borrador del evento y la cotización antes de guardarlo.'))
 h.append(paso(7, 'Arme la cotización y envíela', 'En el evento → pestaña Cotización', [
     'Elija <b>Desde un paquete</b> (si contrató Paquetes) o <b>En blanco</b>, y toque <b>Crear cotización</b>.',
     'Agregue líneas con <b>Agregar del catálogo</b>, ponga un descuento si lo hay y revise los totales.',
@@ -93,7 +94,7 @@ h.append(paso(10, 'Cobre y dé seguimiento cada mañana', 'Botón Cobros · Men�
     'En el <b>Inicio</b> revise los <b>Seguimientos de hoy</b> (llamadas y visitas) y márquelos como <b>Hecho</b>.']))
 
 h.append('''<div class="fin"><b>¿Listo? Ya puede trabajar.</b> Para paquetes, portal del cliente, día del evento, invitados con QR, proveedores, reportes y todo lo demás,
-vea el <b>Manual de TuEvento</b>.<br><br>¿Dudas? Escríbanos por <b>WhatsApp 099 640 8397</b> · info@tukansoftware.com · tukansoftware.com</div>''')
+vea el <b>Manual de TuEvento</b>.<br><br>¿Cómo se hace algo? En <b>Más → Ayuda</b> escriba su pregunta y toque <b>Preguntar</b>: le respondemos al instante con el manual.<br>¿Dudas? Escríbanos por <b>WhatsApp 099 640 8397</b> · info@tukansoftware.com · tukansoftware.com</div>''')
 
 html = f'<!doctype html><html lang="es"><head><meta charset="utf-8"><style>{css}</style></head><body>{"".join(h)}</body></html>'
 open(f'{D}/primeros_pasos.html', 'w').write(html)

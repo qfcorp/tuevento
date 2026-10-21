@@ -317,6 +317,13 @@ function registrar_admin(string $accion, ?int $negocioId = null): void
         ->execute([$a['id'] ?? null, $negocioId, mb_substr($accion, 0, 300)]);
 }
 
+/** Ayuda e IA del programa (src/Ia.php con la librería compartida src/tukan_ia.php). */
+function ia(): \TuEvento\Ia
+{
+    static $i = null;
+    return $i ??= new \TuEvento\Ia(db(), modulos());
+}
+
 function modulos(): \TuEvento\Modulos
 {
     static $m = null;

@@ -14,7 +14,7 @@ $hoy = new DateTimeImmutable('today');
 $d = fn(string $m) => $hoy->modify($m)->format('Y-m-d');
 $cuenta = fn(string $sql) => (int) $db->query($sql)->fetchColumn();
 $mods = new Modulos($db);
-$todos = array_keys(Modulos::CATALOGO);
+$todos = Modulos::todos();   // "*" = todos menos los que son solo a pedido (Asistente IA)
 /** Pasa un negocio de demo a pagado (activo un mes). */
 $pagado = function (int $nid, string $plan) use ($db, $d): void {
     $db->prepare("UPDATE negocios SET estado = 'activo', plan_codigo = ?, activo_hasta = ? WHERE id = ?")->execute([$plan, $d('+1 month'), $nid]);
@@ -22,8 +22,11 @@ $pagado = function (int $nid, string $plan) use ($db, $d): void {
 
 // ---------------------------------------------------------------------------------------------
 titulo('1. Catálogo y dependencias');
-check('16 módulos, cada uno con nombre, ícono, descripción, precio, dependencias y grupo', 16, count(array_filter(Modulos::CATALOGO,
-    fn($m) => count($m) === 6 && $m[0] !== '' && $m[1] !== '' && mb_strlen($m[2]) > 30 && $m[3] > 0 && is_array($m[4]) && isset(Modulos::GRUPOS[$m[5]]))));
+check('17 módulos (16 con precio + Asistente IA por cotización), cada uno con nombre, ícono, descripción, precio, dependencias y grupo', 17, count(array_filter(Modulos::CATALOGO,
+    fn($m, $id) => count($m) === 6 && $m[0] !== '' && $m[1] !== '' && mb_strlen($m[2]) > 30 && ($m[3] > 0 || (in_array($id, Modulos::SOLO_A_PEDIDO, true) && $m[3] == 0))
+                   && is_array($m[4]) && isset(Modulos::GRUPOS[$m[5]]), ARRAY_FILTER_USE_BOTH)));
+check('Asistente IA: solo a pedido, fuera de "*", precio 0 (por cotización)', [['asistente_ia'], false, 0.0],
+      [Modulos::SOLO_A_PEDIDO, in_array('asistente_ia', Modulos::parse('*'), true), Modulos::CATALOGO['asistente_ia'][3]]);
 check('ids en minúsculas y _', [], array_values(array_filter($todos, fn($id) => !preg_match('/^[a-z_]+$/', $id))));
 check('Toda dependencia existe y no hay ciclos', true, (function () use ($todos) {
     foreach (Modulos::CATALOGO as $id => $m) foreach ($m[4] as $dep) if (!isset(Modulos::CATALOGO[$dep]) || in_array($id, Modulos::conDependencias([$dep]), true)) return false;
@@ -132,7 +135,7 @@ check('Toda ruta de public/index.php está en Modulos::RUTAS (módulo o base)', 
 check('Toda ruta de Modulos::RUTAS existe en public/index.php', [], array_values(array_diff(array_keys(Modulos::RUTAS), $rutas)));
 $archivos = array_map(fn($f) => basename($f, '.php'), glob(RAIZ . '/app/paginas/*.php'));
 check('Cada página de app/paginas está mapeada', [], array_values(array_diff($archivos, array_keys(Modulos::RUTAS))));
-check('Cada módulo de RUTAS existe en el catálogo', [], array_values(array_diff(array_filter(array_unique(Modulos::RUTAS)), $todos)));
+check('Cada módulo de RUTAS existe en el catálogo', [], array_values(array_diff(array_filter(array_unique(Modulos::RUTAS)), array_keys(Modulos::CATALOGO))));
 $pdfs = array_map(fn($f) => basename($f, '.php'), glob(RAIZ . '/app/pdf/*.php'));
 check('Cada PDF de app/pdf está mapeado (PDFS)', [[], []], [array_values(array_diff($pdfs, array_keys(Modulos::PDFS))), array_values(array_diff(array_keys(Modulos::PDFS), $pdfs))]);
 check('Cada grupo de Mensajes de hoy está mapeado', array_keys(Cobranza::MENSAJES), array_keys(Modulos::MENSAJES));
@@ -226,7 +229,7 @@ check('capacidades: acción modulos, operaciones nuevas, tipos nuevos, revisión
       [in_array('modulos', $cap['acciones'], true), in_array('cambiar_modulos', $cap['ejecutar'], true), in_array('guardar_modulos', $cap['ejecutar'], true),
        in_array('cambio_modulos', $cap['tipos_solicitud'], true), in_array('demo_pedida', $cap['tipos_solicitud'], true), $cap['revision'], $cap['registro_abierto']]);
 $m = $pedir('modulos')[1];
-check('modulos: base, 16 módulos con sus campos y 3 planes', [true, 16, ['id', 'nombre', 'icono', 'descripcion', 'precio_mensual', 'depende_de', 'grupo', 'grupo_nombre', 'orden'], 3],
+check('modulos: base, 17 módulos con sus campos y 3 planes', [true, 17, ['id', 'nombre', 'icono', 'descripcion', 'precio_mensual', 'depende_de', 'grupo', 'grupo_nombre', 'orden'], 3],
       [count($m['base']) > 5, count($m['modulos']), array_keys($m['modulos'][0]), count($m['planes'])]);
 check('modulos: el plan Salón trae sus 10 módulos', 10, count(array_column($m['planes'], null, 'codigo')['salon']['modulos']));
 $c = $pedir('cliente', ['id' => (string) $nS])[1]['cliente'];
@@ -333,8 +336,8 @@ foreach (glob(RAIZ . '/public/assets/*.js') ?: [] as $a) {
 check('Ningún texto visible dice «gratis» o «free»', [], $conGratis);
 $vMiPlan = (string) file_get_contents(RAIZ . '/app/vistas/planes.php');
 $vApagado = (string) file_get_contents(RAIZ . '/app/vistas/modulo_apagado.php');
-check('Mi plan: un módulo que no tiene dice «Precio por cotización» y «Pedir cotización»', [true, true],
-      [str_contains($vMiPlan, "!\$on ? 'Precio por cotización'"), str_contains($vMiPlan, 'Pedir cotización')]);
+check('Mi plan: un módulo que no tiene dice «Precio por cotización» (Asistente IA: «Pídalo y le cotizamos») y «Pedir cotización»', [true, true, true],
+      [str_contains($vMiPlan, "'Precio por cotización'"), str_contains($vMiPlan, "'Pídalo y le cotizamos'"), str_contains($vMiPlan, 'Pedir cotización')]);
 check('Mi plan: los otros planes no muestran su precio', false, (bool) preg_match('/dinero\(\$pl\[.precio_mensual.\]\)/', $vMiPlan));
 check('Módulo apagado: sin precio, con «Pedir cotización»', [false, false, true],
       [str_contains($vApagado, 'precio_mensual'), str_contains($vApagado, 'Agrégalo por'), str_contains($vApagado, 'Pedir cotización')]);
