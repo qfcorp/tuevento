@@ -127,6 +127,13 @@ bash tests/run_web.sh
 | Módulo | Pruebas | Migración | Clases |
 |---|---|---|---|
 | Ayuda, Asistente IA, FAQ del súper, `ia_uso`/`ia_tope`, demo por correo | logica_110, web_110 | 110, 111 | Ia, CorreoDemo (+ `src/tukan_ia.php`, `src/tukan_correo.php`, `mod_ia.css`, prefijo `ia-`) |
+| App de Android (Google Play): assetlinks, modo app, cuenta del revisor | logica_120, web_120 | — | AppAndroid, DemoGoogle (+ `deploy/app_android.sh`, `deploy/demo_google.php`, docs/GOOGLE_PLAY.md) |
+
+## App de Android (Google Play) — reglas para programar
+- Dentro de la app (`en_app_android()`, cookie `te_app` que deja `?app=play`) **nunca** se muestran precios del software, planes para comprar,
+  «Pedir cotización», «Pagar», «Renovar» ni enlaces (WhatsApp, transferencia, Payphone) para pagar el software por fuera. Toda pantalla nueva que
+  muestre algo de eso lo envuelve en `if (!en_app_android())` y se agrega su caso a `tests/web_120_app_android.sh`.
+- Lo que el local cobra a **sus** clientes (servicios reales) no se esconde.
 
 ## Servidor
 - Cron cada hora (crontab de `www-data`): `php /var/www/tuevento/bin/tareas.php` (también purga la papelera) · respaldo diario 3:25: `deploy/respaldo.sh`

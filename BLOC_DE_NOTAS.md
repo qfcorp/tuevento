@@ -1,6 +1,6 @@
 # Bloc de notas — TuEvento (salones de eventos, quintas y haciendas · marca Tukán)
 
-Última actualización: 21 de octubre de 2026
+Última actualización: 28 de octubre de 2026
 
 ## Qué es
 Programa para salones de eventos, quintas y haciendas de Ecuador. Nació del estudio de nichos (12 oct 2026): no había ningún programa ecuatoriano para este mercado.
@@ -142,7 +142,17 @@ Regla de Dimi: "todos los programas deben ser modulares para encender o apagar l
   **Planes y precios** (súper usuario) y ficha del negocio con los módulos a elegir. **Conector v2**: `planes` y `modulos` con `modulos_elegir` y `precio_modulo_extra`, `modulos.fuera_del_cupo`, `cliente.modulos` con elegidos, `guardar_plan` con los campos nuevos, `finanzas.por_modulo` y el monto de cada pedido con el precio real.
 - [x] Pruebas: logica_112 y web_112 (las pruebas viejas emulan los planes de antes con `planes_de_antes`). Puertos de las pruebas de IA por variable (`IA_PUERTO_LOGICA`, `SMTP_PUERTO_LOGICA`). Totales: **lógica 2587/2587 y pantallas 2156/2156**, sin avisos de PHP. Manual, MANUAL.md, guía y Primeros pasos actualizados y PDF regenerados.
 
+## Hecho (28 oct 2026) — App de Android para Google Play (1.0.0, sin cobro dentro de la app)
+- [x] App `com.tukansoftware.tuevento` en qfcorp/tukan-apps (ícono: calendario con corazón dorado sobre vino), ficha en español e inglés con 8 capturas y guía `tienda/tuevento/PUBLICAR_TUEVENTO_CON_CLAUDE.md`.
+- [x] `/.well-known/assetlinks.json` desde `src/AppAndroid.php` (huella de la llave de subida + la de Google en `config/.env` con `deploy/app_android.sh HUELLA`; el instalador la conserva).
+- [x] **Modo app** (`?app=play`, cookie `te_app`, `en_app_android()`): Mi plan sin montos, sin «Pedir cotización», sin «Pagar», sin otros planes ni pagos hechos (solo elegir los módulos incluidos); módulo apagado, franja «Renovar», demo terminada / vencido / pausada y límites de espacios y usuarios sin enlaces para pagar afuera. El servidor rechaza cotizaciones desde la app. Lo que el local cobra a sus clientes (cuotas, Payphone del portal) se queda: son servicios reales.
+- [x] Privacidad: app de Google Play, Anthropic (IA), sección `#borrar-cuenta`; `/privacidad.php`; **Mi cuenta → Borrar mi cuenta**.
+- [x] Cuenta del revisor de Google: `deploy/demo_google.php crear | borrar` (negocio «Quinta Ejemplo Google Play» aparte, demo 1 año sin pagos, 6 eventos; el revisor no cambia su contraseña).
+- [x] Cobro con Google Play preparado y **apagado**: `TUEVENTO_GOOGLE_PLAY_COBRO=1` (`cobro_google_play()`), sin pantalla de compra todavía (docs/GOOGLE_PLAY.md).
+- [x] Pruebas: logica_120 (40) y web_120 (99). Totales: **lógica 2627/2627 y pantallas 2255/2255** (web_96 «El 121: 429» falla a veces en la corrida completa si cruza el cambio de minuto; sola pasa). Manual (capítulo 3: borrar la cuenta y la app) y MANUAL.md actualizados, PDF regenerado.
+
 ## Pendiente
+0000c. [ ] DIMI: Google Play (ver docs/GOOGLE_PLAY.md): actualizar con el instalador, `sudo bash /var/www/tuevento/deploy/app_android.sh` (OK), `php /var/www/tuevento/deploy/demo_google.php crear` (copiar la contraseña) y publicar con tukan-apps/tienda/tuevento/PUBLICAR_TUEVENTO_CON_CLAUDE.md; después de la primera subida, `app_android.sh HUELLA_DE_GOOGLE`
 0000b. [ ] DIMI: actualizar en el servidor (volver a correr el instalador del README): aplica la migración 112 (planes de $20 y $45). Revisar en Panel Tukán → Planes y precios los dos planes y avisar a los clientes que tenían el plan Salón (pasan a Completo)
 0000a. [ ] DIMI: actualizar en el servidor (volver a correr el instalador del README): aplica las migraciones 110 (ayuda e IA) y 111 (Asistente IA incluido en Quinta). La IA usa `/etc/tukan-ia.env` y el correo `/etc/tukan-correo.env` del Panel Tukán Central (`deploy/configurar_ia.sh` y `deploy/configurar_correo.sh`); `www-data` debe poder leerlos. Revisar Panel Tukán → Preguntas IA cada semana
 0000. [ ] DIMI: actualizar en el servidor (volver a correr el instalador del README): aplica la migración 099 (rol administrador)
