@@ -6,6 +6,7 @@
 use TuEvento\{Metas, Notificaciones, Planes, Usuarios, Ventas};
 
 $db = base_limpia();
+planes_de_antes($db);   // estas pruebas usan los planes de antes (Esencial $19, Salón $39, Quinta $69); los de $20 y $45: logica_112
 $usu = new Usuarios($db);
 $planes = new Planes($db);
 

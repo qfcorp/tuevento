@@ -90,6 +90,22 @@ function base_limpia(): PDO
     return $db;
 }
 
+/**
+ * Emula los planes de ANTES de la migración 112 (para las pruebas escritas con ese modelo): Esencial $19 (solo la base, sin
+ * módulos a elegir), Salón $39 (2 espacios, 3 usuarios, con sus módulos) y Quinta $69 (todo + el Asistente IA).
+ * Los planes de $20 y $45 de verdad (Básico y Completo) se prueban en tests/logica_112_planes_20_45.php.
+ */
+function planes_de_antes(PDO $db): void
+{
+    $db->exec("UPDATE planes SET nombre = 'Esencial', precio_mensual = 19, modulos = '', modulos_elegir = 0, precio_modulo_extra = NULL,
+                                 max_espacios = 1, max_usuarios = 2 WHERE codigo = 'esencial';
+               INSERT INTO planes (codigo, nombre, precio_mensual, max_espacios, max_usuarios, descripcion, modulos)
+               VALUES ('salon', 'Salón', 39.00, 2, 3, 'Para salones de recepciones (plan de antes de la migración 112).',
+                       'paquetes,contratos,portal_cliente,cobros_linea,cuestionarios,proveedores,incidencias,metas,telegram,exportar')
+               ON CONFLICT (codigo) DO NOTHING;
+               UPDATE planes SET nombre = 'Quinta', precio_mensual = 69 WHERE codigo = 'quinta';");
+}
+
 /** Crea un negocio de prueba (plan quinta por defecto) con sus datos de ejemplo. Devuelve [negocio_id, usuario (array)]. */
 function negocio_prueba(PDO $db, string $plan = 'quinta', string $nombre = 'Quinta Los Arrayanes'): array
 {

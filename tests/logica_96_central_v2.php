@@ -8,6 +8,7 @@
 use TuEvento\{Altas, PanelTukan, Planes, TukanCentral, TukanCentralError, TukanCentralV2};
 
 $db = base_limpia();
+planes_de_antes($db);   // estas pruebas usan los planes de antes (Esencial $19, Salón $39, Quinta $69); los de $20 y $45: logica_112
 $hoy = new DateTimeImmutable('today');
 $d = fn(string $m) => $hoy->modify($m)->format('Y-m-d');
 $SECRETO = str_repeat('ab12', 16);

@@ -24,7 +24,7 @@ Misma forma de trabajar que TuSalón (qfcorp/tusalon): PHP 8.3+ sin framework, P
 - Mostrar con `e()` todo lo que venga de la base o del usuario.
 - Dinero con `dinero()`, fechas con `fecha_corta()` / `fecha_larga()`.
 - Permisos: `consulta` solo mira (`puede_editar`), `coordinador` solo el día del evento (lista `$deCoordinador`), ventas y cobros solo `es_comercial` (dueño, administrador o vendedor), configuración, usuarios, Mi plan y todo lo «del dueño» con `es_admin_total` (dueño o administrador: hasta 4 administradores con el mismo nivel). `es_dueno` no es un permiso: solo para la identidad de la cuenta ante Tukán.
-- Plan Quinta: portal del cliente, invitados, día del evento, mobiliario, boda en vivo y plano del salón (`requiere_quinta`).
+- Planes (migración 112, 28 oct 2026): solo **Básico** (`esencial`, $20: la base + 3 módulos que elige el cliente, cada uno más $5) y **Completo** (`quinta`, $45: todo con el Asistente IA). Lo que hace cada pantalla lo decide su **módulo** (`Modulos::RUTAS`, `modulo_activo()`), nunca el código del plan. `planes.modulos_elegir` / `planes.precio_modulo_extra` y `Modulos::FUERA_DEL_CUPO` (Asistente IA, no cuenta entre los elegidos). Precios: internos, nunca en pantallas del cliente para lo que no tiene.
 - Diseño: celular primero. Usar las clases de `app.css`: `cabecera`, `bloque`, `campo`, `fila-campos`, `rejilla-form`, `boton`, `boton-claro`, `boton-chico`, `boton-peligro`, `boton-wa`, `tabla`, `tabla-scroll`, `num`, `cifras`/`cifra-tarjeta`, `ev-estado ev-<estado>`, `pestanas`, `filas`, `aviso aviso-ok|aviso-error`, `vacio`, `barra`.
 - WhatsApp con un toque: `\TuEvento\WhatsApp::enlace($telefono, $mensaje)`.
 

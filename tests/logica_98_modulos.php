@@ -10,6 +10,7 @@
 use TuEvento\{Automaticas, Cobranza, Modulos, PanelTukan, PedidosDemo, Planes, Telegram, TukanCentral, TukanCentralV2};
 
 $db = base_limpia();
+planes_de_antes($db);   // estas pruebas usan los planes de antes (Esencial $19, Salón $39, Quinta $69); los de $20 y $45: logica_112
 $hoy = new DateTimeImmutable('today');
 $d = fn(string $m) => $hoy->modify($m)->format('Y-m-d');
 $cuenta = fn(string $sql) => (int) $db->query($sql)->fetchColumn();
@@ -22,10 +23,10 @@ $pagado = function (int $nid, string $plan) use ($db, $d): void {
 
 // ---------------------------------------------------------------------------------------------
 titulo('1. Catálogo y dependencias');
-check('17 módulos (16 con precio + Asistente IA por cotización), cada uno con nombre, ícono, descripción, precio, dependencias y grupo', 17, count(array_filter(Modulos::CATALOGO,
-    fn($m, $id) => count($m) === 6 && $m[0] !== '' && $m[1] !== '' && mb_strlen($m[2]) > 30 && ($m[3] > 0 || (in_array($id, Modulos::SOLO_A_PEDIDO, true) && $m[3] == 0))
+check('17 módulos (con el Asistente IA de $5, migración 112), cada uno con nombre, ícono, descripción, precio, dependencias y grupo', 17, count(array_filter(Modulos::CATALOGO,
+    fn($m, $id) => count($m) === 6 && $m[0] !== '' && $m[1] !== '' && mb_strlen($m[2]) > 30 && $m[3] > 0
                    && is_array($m[4]) && isset(Modulos::GRUPOS[$m[5]]), ARRAY_FILTER_USE_BOTH)));
-check('Asistente IA: solo a pedido, fuera de "*", precio 0 (por cotización)', [['asistente_ia'], false, 0.0],
+check('Asistente IA: solo a pedido, fuera de "*", $5 al mes (migración 112)', [['asistente_ia'], false, 5.0],
       [Modulos::SOLO_A_PEDIDO, in_array('asistente_ia', Modulos::parse('*'), true), Modulos::CATALOGO['asistente_ia'][3]]);
 check('ids en minúsculas y _', [], array_values(array_filter($todos, fn($id) => !preg_match('/^[a-z_]+$/', $id))));
 check('Toda dependencia existe y no hay ciclos', true, (function () use ($todos) {
@@ -57,7 +58,7 @@ check('Salón = lo que tenía antes (todo menos lo que era solo de Quinta)',
 check('Salón NO tiene lo que era de Quinta', [], array_values(array_intersect($pl['salon']['modulos'], ['dia_evento', 'invitados', 'plano', 'mobiliario', 'boda_vivo', 'portal_proveedor'])));
 $sql = file_get_contents(RAIZ . '/db/migraciones/098_modulos.sql');
 $db->exec($sql);
-check('La migración se puede correr otra vez sin cambiar nada', [$pl, 16], [(new Modulos($db))->planes(), $cuenta('SELECT count(*) FROM modulos')]);
+check('La migración se puede correr otra vez sin cambiar nada (17 filas: la 112 agrega el Asistente IA a $5)', [$pl, 17], [(new Modulos($db))->planes(), $cuenta('SELECT count(*) FROM modulos')]);
 check('Los negocios empiezan sin extras ni quitados', 0, $cuenta("SELECT count(*) FROM negocios WHERE modulos_extra <> '' OR modulos_quitados <> ''"));
 
 // ---------------------------------------------------------------------------------------------
@@ -238,7 +239,8 @@ check('modulos: base, 17 módulos con sus campos y 3 planes', [true, 17, ['id', 
       [count($m['base']) > 5, count($m['modulos']), array_keys($m['modulos'][0]), count($m['planes'])]);
 check('modulos: el plan Salón trae sus 10 módulos', 10, count(array_column($m['planes'], null, 'codigo')['salon']['modulos']));
 $c = $pedir('cliente', ['id' => (string) $nS])[1]['cliente'];
-check('cliente.modulos con la forma de B.2', ['del_plan', 'extra', 'quitados', 'activos', 'pagados', 'precio_plan', 'precio_extra', 'descuento', 'precio_acordado', 'mensual', 'demo', 'demo_todos'],
+check('cliente.modulos con la forma de B.2 (+ módulos a elegir de la migración 112)', ['del_plan', 'extra', 'quitados', 'activos', 'pagados', 'precio_plan', 'precio_extra', 'descuento', 'precio_acordado', 'mensual', 'demo', 'demo_todos',
+                                                     'modulos_elegir', 'elegidos', 'por_elegir', 'precio_por_extra'],
       array_keys($c['modulos']));
 check('cliente: mensual_estimado = lo que paga con sus módulos (39 + invitados 8 − metas 4)', [43.0, 43.0], [$c['modulos']['mensual'], $c['mensual_estimado']]);
 check('cliente: botón "Módulos" (cambiar_modulos)', true, in_array('cambiar_modulos', array_column($c['acciones_posibles'], 'accion'), true));

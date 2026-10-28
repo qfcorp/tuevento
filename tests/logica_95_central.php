@@ -7,6 +7,7 @@
 use TuEvento\{PanelTukan, Planes, TukanCentral, TukanCentralRechazo};
 
 $db = base_limpia();
+planes_de_antes($db);   // estas pruebas usan los planes de antes (Esencial $19, Salón $39, Quinta $69); los de $20 y $45: logica_112
 $hoy = new DateTimeImmutable('today');
 $SECRETO = str_repeat('ab12', 16);   // 64 caracteres, como los que da el panel central
 $cuenta = fn(string $sql) => (int) $db->query($sql)->fetchColumn();

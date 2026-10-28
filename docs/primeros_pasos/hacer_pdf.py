@@ -72,7 +72,7 @@ h.append(paso(6, 'Anote cada consulta como un evento', 'Botón Nuevo evento (en 
     'Elija <b>Cliente nuevo</b> o <b>Ya está registrado</b>. Con nombre, celular y fecha basta para empezar.',
     'Ponga <b>¿Qué celebran?</b>, la fecha, la hora de inicio y fin, los invitados y el espacio. Toque <b>Crear evento</b>.',
     'El evento nace como <b>Consulta</b>. En el <b>Calendario</b>, el botón <b>Próximos sábados</b> le dice al instante qué sábados tiene libres.'],
-    'Con el <b>Asistente IA</b> (incluido en el plan Quinta): toque <b>✨ Desde un mensaje de WhatsApp</b>, pegue lo que le escribió el cliente y revise el borrador del evento y la cotización antes de guardarlo.'))
+    'Con el <b>Asistente IA</b> (incluido en el plan Completo): toque <b>✨ Desde un mensaje de WhatsApp</b>, pegue lo que le escribió el cliente y revise el borrador del evento y la cotización antes de guardarlo.'))
 h.append(paso(7, 'Arme la cotización y envíela', 'En el evento → pestaña Cotización', [
     'Elija <b>Desde un paquete</b> (si contrató Paquetes) o <b>En blanco</b>, y toque <b>Crear cotización</b>.',
     'Agregue líneas con <b>Agregar del catálogo</b>, ponga un descuento si lo hay y revise los totales.',

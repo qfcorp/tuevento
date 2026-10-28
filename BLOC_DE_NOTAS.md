@@ -131,7 +131,19 @@ Regla de Dimi: "todos los programas deben ser modulares para encender o apagar l
 - [x] **Enviar por correo** en la demo lista (ficha del negocio recién creado): `tukan_correo_demo()` desde info@tukansoftware.com, POST con CSRF, contraseña en un sello cifrado de un solo uso (no se guarda), auditoría «Envió la demo por correo a …» sin la contraseña; sin `/etc/tukan-correo.env`: «Configure el correo de Tukán».
 - [x] Pruebas con la API de Anthropic y el SMTP de mentira (`tests/anthropic_falso.py`, `tests/smtp_falso.py`): logica_110 (83) y web_110 (87). Totales: **lógica 2530/2530 y pantallas 2114/2114**, sin avisos de PHP. Manual (capítulo 19 «Ayuda e inteligencia artificial», capturas 36 y 37), MANUAL.md y Primeros pasos actualizados y PDF regenerados.
 
+## Hecho (28 oct 2026) — Planes de $20 y $45 (decisión de Dimitry, igual en todos los programas Tukán)
+- [x] Solo **dos planes** (antes Esencial $19 / Salón $39 / Quinta $69). Precios internos, nunca publicados al cliente:
+  **Básico $20** (código `esencial`): la base + **3 módulos que el cliente elige** (ej. contratos, invitados y día del evento); cada módulo más **$5**; límites de Esencial (1 espacio, 2 usuarios).
+  **Completo $45** (código `quinta`): todos los módulos con el **Asistente IA** incluido (mismo tope de uso), sin límites. `PLAN_DEFECTO` sigue en `quinta`.
+- [x] Migración **112** repetible: `planes.modulos_elegir` y `planes.precio_modulo_extra`; el plan del medio (Salón, `salon`) desaparece: sus negocios y pagos pasan a Completo;
+  quien pagaba Esencial conserva lo que traía su plan como módulos elegidos; Asistente IA $5 en el catálogo. Nombres y precios se ponen una sola vez (marca `planes_20_45`).
+- [x] `Modulos::estado()`: los primeros N extra (orden del catálogo) van incluidos, los demás a `precio_modulo_extra`; `FUERA_DEL_CUPO` = Asistente IA ($5 aparte). Devuelve `elegidos`, `por_elegir` y `precio_por_extra`.
+- [x] **Mi plan**: «Tu plan trae 3 módulos a tu elección: te quedan X», los elegidos «Incluido · lo elegiste», los demás «Extra · $5», y «Puedes elegirlo en tu plan» con **Elegir este módulo** (sin precios de lo que no tiene).
+  **Planes y precios** (súper usuario) y ficha del negocio con los módulos a elegir. **Conector v2**: `planes` y `modulos` con `modulos_elegir` y `precio_modulo_extra`, `modulos.fuera_del_cupo`, `cliente.modulos` con elegidos, `guardar_plan` con los campos nuevos, `finanzas.por_modulo` y el monto de cada pedido con el precio real.
+- [x] Pruebas: logica_112 y web_112 (las pruebas viejas emulan los planes de antes con `planes_de_antes`). Puertos de las pruebas de IA por variable (`IA_PUERTO_LOGICA`, `SMTP_PUERTO_LOGICA`). Totales: **lógica 2587/2587 y pantallas 2156/2156**, sin avisos de PHP. Manual, MANUAL.md, guía y Primeros pasos actualizados y PDF regenerados.
+
 ## Pendiente
+0000b. [ ] DIMI: actualizar en el servidor (volver a correr el instalador del README): aplica la migración 112 (planes de $20 y $45). Revisar en Panel Tukán → Planes y precios los dos planes y avisar a los clientes que tenían el plan Salón (pasan a Completo)
 0000a. [ ] DIMI: actualizar en el servidor (volver a correr el instalador del README): aplica las migraciones 110 (ayuda e IA) y 111 (Asistente IA incluido en Quinta). La IA usa `/etc/tukan-ia.env` y el correo `/etc/tukan-correo.env` del Panel Tukán Central (`deploy/configurar_ia.sh` y `deploy/configurar_correo.sh`); `www-data` debe poder leerlos. Revisar Panel Tukán → Preguntas IA cada semana
 0000. [ ] DIMI: actualizar en el servidor (volver a correr el instalador del README): aplica la migración 099 (rol administrador)
 000. [ ] DIMI: actualizar en el servidor (volver a correr el instalador del README): aplica la migración 098 (módulos y pedidos de demo). Revisar los precios de los módulos en Panel Tukán → Planes y precios
