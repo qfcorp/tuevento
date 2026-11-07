@@ -2,7 +2,7 @@
 
 Versión con capturas: [Manual_TuEvento.pdf](Manual_TuEvento.pdf). Las capturas están en [manual/capturas](manual/capturas) y salen del local de ejemplo «Quinta Demo Tukanec».
 Para regenerar todo (base de ejemplo, capturas y PDF): `bash docs/manual/generar/generar.sh`.
-Ayuda: WhatsApp 099 640 8397 · info@tukansoftware.com · tukansoftware.com
+Ayuda: WhatsApp 098 366 2181 · info@tukansoftware.com · tukansoftware.com
 
 Cada parte dice si es de la **base** (la tienen todos) o de un **módulo** (se enciende en Mi plan). Si un módulo no está en tu plan, su pantalla dice «Este módulo no está en tu plan». Apagar un módulo nunca borra datos.
 
@@ -118,7 +118,7 @@ Periodos Este mes / Mes pasado / Este año / Otras fechas. Secciones: Ventas, Co
 **Más → Mi plan:** tus módulos encendidos. En el Básico dice «Tu plan trae 3 módulos a tu elección» y cuántos te quedan: los que elegiste dicen «Incluido · lo elegiste», los demás que pagas dicen «Extra», y mientras te queden por elegir, los que no tienes dicen «Puedes elegirlo en tu plan» con el botón **Elegir este módulo**. Si ya elegiste tus 3, los que no tienes dicen «Precio por cotización» y tienen **Pedir cotización** (también en la pantalla del módulo apagado y en cada plan); **Preguntar por WhatsApp** para renovar (Tukán te cotiza). Demos: **Solicitar demo** → Tukán la prepara con datos de ejemplo y todos los módulos por los días acordados; al terminar, «Tu demo terminó» y los datos quedan guardados.
 
 ## 19. Ayuda e inteligencia artificial
-- **Ayuda (base, todos los planes y cargos):** **Más → Ayuda** → cuadro **¿Qué necesita hacer?** (hasta 500 letras) → **Preguntar**. Responde al instante y paso a paso con este manual. Las preguntas que ya se hicieron quedan guardadas (Tukán las revisa) y salen de inmediato. Hasta 10 preguntas por minuto. Si no sirvió: **WhatsApp 099 640 8397**.
+- **Ayuda (base, todos los planes y cargos):** **Más → Ayuda** → cuadro **¿Qué necesita hacer?** (hasta 500 letras) → **Preguntar**. Responde al instante y paso a paso con este manual. Las preguntas que ya se hicieron quedan guardadas (Tukán las revisa) y salen de inmediato. Hasta 10 preguntas por minuto. Si no sirvió: **WhatsApp 098 366 2181**.
 - **Asistente IA (incluido en el plan Completo; en el Básico, «Pídalo y le cotizamos» en Mi plan):** en **Eventos** o **Nuevo evento** → **✨ Desde un mensaje de WhatsApp** → pega el mensaje del cliente («boda de 150 personas el 14 de febrero con DJ…») → **Proponer la cotización** → borrador con cliente, tipo, fecha, horas, invitados, espacio, paquete y productos de **tu catálogo** (lo que no tienes va en notas; lo que falta preguntar, en **Falta preguntarle al cliente**) → revisa → **Guardar evento y cotización** (evento en Consulta y cotización en borrador; no se envía nada al cliente).
 - Si no se puede leer el mensaje automáticamente: «En este momento no pudimos procesar el texto automáticamente; puede hacerlo a mano aquí» con el enlace a **Nuevo evento**. Sin el módulo, el botón no aparece.
 - Para Tukán: la IA se configura una vez en el servidor (`/etc/tukan-ia.env`, `bash deploy/configurar_ia.sh` del Panel Tukán Central). Sin ese archivo la Ayuda responde con las preguntas guardadas y el manual. Gasto por negocio y mes con tope (4,00 USD con el módulo, incluido o comprado aparte; 0,50 USD sin él; una demo, 0,50 USD en total aunque tenga todos los módulos; Tukán lo cambia desde el Panel con «Tope de IA»), en el Panel → Más → IA. Preguntas guardadas: Panel de TuEvento → **Preguntas IA**.

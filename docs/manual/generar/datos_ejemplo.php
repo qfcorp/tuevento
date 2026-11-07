@@ -46,7 +46,7 @@ $foto = function (array $rgb = [210, 225, 240]): array {
 };
 
 // ------------------------------------------------------------------ Negocio, plan y equipo
-$alta = (new Altas($db))->crearNegocioConDueno('Quinta Demo Tukanec', 'Andrea Salazar', '0996408397', 'demo@tuevento.tukanec.com', $CLAVE, 'quinta', 'Quito', 'super');
+$alta = (new Altas($db))->crearNegocioConDueno('Quinta Demo Tukanec', 'Andrea Salazar', '0983662181', 'demo@tuevento.tukanec.com', $CLAVE, 'quinta', 'Quito', 'super');
 $nid = (int) $alta['negocio_id'];
 $db->prepare("UPDATE negocios SET razon_social = 'Quinta Demo Tukanec S.A.', ruc = '1790000000001', direccion = 'Vía a Tumbaco km 5, Cumbayá',
               horas_montaje = 3, horas_desmontaje = 1, garantia_defecto = 300 WHERE id = ?")->execute([$nid]);
