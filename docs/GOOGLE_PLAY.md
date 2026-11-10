@@ -92,11 +92,17 @@ Productos sugeridos cuando se prenda (precio web ÷ 0,85, redondeado a ,99; cód
 
 | ID del producto | Plan | Período | Precio web | Google Play |
 |---|---|---|---|---|
-| `tuevento_basico_mensual` | Básico (`esencial`) | 1 mes | $12 | $14,99 |
-| `tuevento_basico_semestral` | Básico | 6 meses | $60 | $70,99 |
-| `tuevento_basico_anual` | Básico | 1 año | $120 | $141,99 |
+| `tuevento_basico_mensual` | Básico (`esencial`) | 1 mes | $12,99 | $15,99 |
+| `tuevento_basico_semestral` | Básico | 6 meses | $64,95 | $76,99 |
+| `tuevento_basico_anual` | Básico | 1 año | $129,90 | $152,99 |
 | `tuevento_completo_mensual` | Completo (`quinta`) | 1 mes | $25 | $29,99 |
 | `tuevento_completo_semestral` | Completo | 6 meses | $125 | $147,99 |
 | `tuevento_completo_anual` | Completo | 1 año | $250 | $294,99 |
 
 Mientras esté apagado, en Play Console **no** se crean suscripciones (`tienda/tuevento/play.json` → `"suscripciones": []`).
+
+
+## Precios del 10 nov 2026
+- El Básico pasa de $12 a **$12,99** al mes ($64,95 por 6 meses, $129,90 por 1 año), más IVA.
+- En Google Play: **$15,99 / $76,99 / $152,99**. El Completo no cambia: $29,99 / $147,99 / $294,99.
+- Si los productos ya estaban creados en Play Console con $14,99 / $70,99 / $141,99, hay que cambiarles el precio ahí.
