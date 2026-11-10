@@ -240,12 +240,12 @@ Pedido de Dimitry: demos automáticas de 3 días; el interesado llena todos sus 
 - Pruebas: `logica_116_demos_auto.php` (69) y `web_116_demos_auto.sh` (73, con un Panel simulado que revisa la firma). Se ajustaron las pruebas viejas que pedían demo con menos datos o esperaban 7 días.
 - **Falta:** DIMI: actualizar en el servidor (instalador del README) para aplicar la migración 116. Probar con el Panel de verdad cuando esté subido `demo_aviso.php`.
 
-## 10 nov 2026 (18:04) — «Pasarme al Completo» cambia SOLO, sin pedido para Tukán
-Dimitry: «Déjalo que se pase solo. Todos deberían ser iguales: deberían cambiarse solos, no andar con nota.»
-- **Con suscripción con tarjeta pagada:** igual que antes (cambia al momento y manda `cambiar` con `pasa_a_completo`).
-- **Con cobro con tarjeta y sin suscripción:** igual que antes (lleva a pagar el Completo, que queda marcado). Si tiene un pago con tarjeta sin terminar, le pide terminarlo o cancelarlo.
-- **Sin cobro con tarjeta y cliente que paga:** el plan cambia al Completo en ese momento, sin pedido ni nota. No se apaga nada, el vencimiento no cambia y no se registra ningún pago. Mensaje: «Listo: ya tienes el plan Completo con todos los módulos. Desde tu próxima renovación (dd/mm) pagas $Y + IVA al mes.» Queda en el registro del negocio que ve Tukán (y el Panel en su bitácora): «El dueño se pasó al plan Completo desde Mi plan». El programa no tiene otra forma de avisar a Tukán sin crear un pedido, así que solo queda el registro.
-- **Demo sin cobro con tarjeta:** se ve el aviso pero sin botón; el servidor tampoco la cambia.
-- **Precio acordado:** ni se sugiere ni se cambia solo. **Bajar del Completo al Básico** sigue bloqueado con suscripción con tarjeta pagada.
-- Se quitó el pedido con la nota «Quiere pasarse al plan Completo» y sus pruebas. Pruebas nuevas en `web_114` (sección 12).
-- **Para que Dimitry sepa:** sin suscripción con tarjeta, el programa no tiene cómo impedir que Tukán baje el plan desde su panel (sigue como siempre); y un cliente que se pasó solo al Completo paga el valor nuevo recién cuando Tukán le registre la renovación.
+## 10 nov 2026 (18:22) — «Pasarme al Completo»: SIEMPRE pagando (corrección de Dimitry)
+Dimitry: «Yo no pedí eso: debe cobrarse. Debe tener un método de pago válido y pagar el prorrateo.» Por un momento (commit de las 18:04) el plan cambiaba solo sin cobro con tarjeta: **eso se quitó**. Nadie pasa al Completo sin pagar.
+- **Con suscripción con tarjeta pagada:** cambia el plan al momento y manda `cambiar` con `pasa_a_completo: true` y el Completo del mismo período. Si el valor sube, el Panel cobra aparte el prorrateo y el dueño ve: «Por los días que faltan se cobra aparte $Y con IVA: toca «Pagar ahora» en «Pagar con tarjeta»». Si baja, rige desde el próximo cobro. Si el Panel no acepta el cambio, el plan se queda como estaba.
+- **Con cobro con tarjeta y sin suscripción:** el botón lleva a «Pagar con tarjeta» con el Completo marcado. El plan cambia solo cuando el pago queda aprobado (`registrar_pago`).
+- **Sin cobro con tarjeta disponible** (Panel apagado, caído o programa sin conectar): el plan NO cambia y no se crea pedido. Sale: «Para pasarte al Completo necesitas pagar con tarjeta. En este momento el pago con tarjeta no está disponible: escríbenos y te ayudamos.» con el botón de WhatsApp de Tukán. En la app de Google Play, nada.
+- **Demo sin cobro con tarjeta:** se ve el aviso sin botón. **Precio acordado:** ni se sugiere ni se cambia. **Bajar del Completo al Básico** sigue bloqueado durante el período pagado.
+- **Tukán** sigue pudiendo cambiar el plan desde el Panel o desde el panel interno; con suscripción pagada se manda `cambiar` como ya estaba.
+- Se quitaron el pedido con nota, el cambio sin pagar, su mensaje («Desde tu próxima renovación pagas…»), su registro y sus pruebas. Pruebas nuevas en `web_114` (sección 12) y `logica_114`.
+- También se actualizó `src/tukan_correo.php` a la versión 2 de la librería común del Panel (con `adjuntos`), copiada tal cual.

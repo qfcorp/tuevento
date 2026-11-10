@@ -46,7 +46,7 @@ if (es_post() && in_array($_POST['accion'] ?? '', ['cancelar_plan', 'seguir_plan
 // Pagar el plan con tarjeta, solo (src/PagoPlan.php). En la app de Google Play no existe (regla de Google).
 $pagoPlan = en_app_android() ? null : new PagoPlan(db());
 // «Pasarme al Completo» con suscripción con tarjeta pagada (10 nov 2026, tercera parte): cambia de plan ya y el Panel cobra el
-// Completo desde el próximo cobro (lo ya pagado no se devuelve). Sin cobro con tarjeta, el cliente que paga cambia SOLO (sin pedido).
+// Completo (prorrateo aparte si sube; si baja, desde el próximo cobro). Sin suscripción va a pagar con tarjeta. Sin tarjeta, no cambia.
 if (es_post() && ($_POST['accion'] ?? '') === 'pasar_completo') {
     verificar_csrf();
     try {
@@ -55,43 +55,35 @@ if (es_post() && ($_POST['accion'] ?? '') === 'pasar_completo') {
         $codCompleto = $sug['plan'] ?? null;
         foreach (modulos()->planes() as $cod => $pl) if (!empty($pl['todos'])) $codCompleto ??= (string) $cod;
         if (!$codCompleto || $codCompleto === (string) $u['plan_codigo']) throw new RuntimeException('Ya tienes el plan Completo.');
+        if (modulos()->estado($nid)['precio_acordado'] !== null) throw new RuntimeException('Tienes un precio acordado con Tukán: escríbenos por WhatsApp para cambiar de plan.');
+        // (10 nov 2026, corrección de Dimitry: «debe cobrarse… un método de pago válido y pagar el prorrateo») Nadie pasa al
+        // Completo sin pagar. Sin cobro con tarjeta disponible (Panel apagado, caído o sin conectar) el plan NO cambia y no se crea pedido.
+        if (!$pagoPlan->activo($nid, (string) $u['email'])) throw new RuntimeException(PagoPlan::SIN_TARJETA);
         $sus = $pagoPlan->suscripcionPagada($nid, (string) $u['email']);
         if (!$sus) {
-            // (10 nov 2026, Dimitry: «déjalo que se pase solo… no andar con nota») Ya no se crea un pedido para Tukán.
-            if ($sug === null && modulos()->estado($nid)['precio_acordado'] !== null) throw new RuntimeException('Tienes un precio acordado con Tukán: escríbenos por WhatsApp para cambiar de plan.');
-            if ($pagoPlan->activo($nid, (string) $u['email'])) {
-                // Con cobro con tarjeta y sin suscripción pagada: se paga el Completo con tarjeta (queda marcado)
-                if ($pagoPlan->suscripcion($nid)) throw new RuntimeException('Tienes un pago con tarjeta sin terminar: termínalo o cancélalo y vuelve a tocar «Pasarme al Completo».');
-                header('Location: ' . url('planes', ['pagar' => $codCompleto]) . '#pagar-' . rawurlencode($codCompleto));
-                exit;
-            }
-            if ($u['estado'] === 'prueba') throw new RuntimeException('Estás en tu demo: ya tienes todos los módulos. Al contratar eliges el plan Completo.');
-            // Sin cobro con tarjeta y cliente que paga: el plan cambia SOLO, ahora. No se apaga nada (el Completo trae todo) y lo ya
-            // pagado no cambia: el valor nuevo se cobra desde su próxima renovación.
-            (new PanelTukan(db()))->cambiarPlan($nid, $codCompleto);
-            modulos()->olvidar();
-            modulos_olvidar();
-            db()->prepare('INSERT INTO registro_admin (admin_id, negocio_id, accion) VALUES (NULL, ?, ?)')
-                ->execute([$nid, mb_substr('El dueño se pasó al plan Completo desde Mi plan (' . $u['nombre'] . ' <' . $u['email'] . '>)', 0, 300)]);
-            $hasta = (string) ($u['activo_hasta'] ?? '');
-            aviso('Listo: ya tienes el plan Completo con todos los módulos. Desde tu próxima renovación' . ($hasta !== '' ? ' (' . date('d/m', strtotime($hasta)) . ')' : '')
-                . ' pagas ' . dinero(modulos()->mensual($nid)) . ' + IVA al mes.');
-        } else {
-            $mods = modulos();
-            $antes = $mods->estado($nid);
-            db()->beginTransaction();
-            try {
-                (new PanelTukan(db()))->cambiarPlan($nid, $codCompleto);
-                $mods->olvidar();
-                PagoPlan::revisarBaja($sus, $antes, $mods->estado($nid), $u['activo_hasta'] ?? null, true);
-                db()->commit();
-            } catch (Throwable $e) {
-                if (db()->inTransaction()) db()->rollBack();
-                throw $e;
-            }
-            $m = $pagoPlan->ajustar($nid, $sus, (string) $u['email']);
-            aviso($m ?? 'Pasaste al plan Completo.', $m === null || $pagoPlan->ultimoOk ? 'ok' : 'error');
+            // Con cobro con tarjeta y sin suscripción pagada: va a pagar el Completo (queda marcado). El plan cambia al aprobarse el pago.
+            if ($pagoPlan->suscripcion($nid)) throw new RuntimeException('Tienes un pago con tarjeta sin terminar: termínalo o cancélalo y vuelve a tocar «Pasarme al Completo».');
+            header('Location: ' . url('planes', ['pagar' => $codCompleto]) . '#pagar-' . rawurlencode($codCompleto));
+            exit;
         }
+        // Con suscripción con tarjeta pagada: cambia ya y el Panel cobra (prorrateo aparte si sube; si baja, desde el próximo cobro).
+        // Si el Panel no acepta el cambio, el plan se queda como estaba.
+        $mods = modulos();
+        $antes = $mods->estado($nid);
+        db()->beginTransaction();
+        try {
+            (new PanelTukan(db()))->cambiarPlan($nid, $codCompleto);
+            $mods->olvidar();
+            PagoPlan::revisarBaja($sus, $antes, $mods->estado($nid), $u['activo_hasta'] ?? null, true);
+            $m = $pagoPlan->ajustar($nid, $sus, (string) $u['email'], true);
+            if ($m !== null && !$pagoPlan->ultimoOk) throw new RuntimeException('No se pudo cobrar el cambio, así que tu plan sigue igual. ' . $m);
+            db()->commit();
+        } catch (Throwable $e) {
+            if (db()->inTransaction()) db()->rollBack();
+            $mods->olvidar();
+            throw $e;
+        }
+        aviso($m ?? 'Pasaste al plan Completo.');
     } catch (RuntimeException $e) {
         aviso($e->getMessage(), 'error');
     }
