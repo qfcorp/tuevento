@@ -239,3 +239,13 @@ Pedido de Dimitry: demos automáticas de 3 días; el interesado llena todos sus 
 - **«3 días en todo» (Dimitry):** toda demo dura 3 días: la del formulario, la que crea el Panel (si no manda días, toma el ajuste) y la que Tukán crea a mano en Panel Tukán → Nueva demo (ahí dice «La demo dura 3 días»). Sale del ajuste «Días de demo» de Planes y precios. Alargar sigue en la ficha del negocio. Única excepción: la cuenta del revisor de Google Play (`deploy/demo_google.php`), que dura 1 año a propósito.
 - Pruebas: `logica_116_demos_auto.php` (69) y `web_116_demos_auto.sh` (73, con un Panel simulado que revisa la firma). Se ajustaron las pruebas viejas que pedían demo con menos datos o esperaban 7 días.
 - **Falta:** DIMI: actualizar en el servidor (instalador del README) para aplicar la migración 116. Probar con el Panel de verdad cuando esté subido `demo_aviso.php`.
+
+## 10 nov 2026 (18:04) — «Pasarme al Completo» cambia SOLO, sin pedido para Tukán
+Dimitry: «Déjalo que se pase solo. Todos deberían ser iguales: deberían cambiarse solos, no andar con nota.»
+- **Con suscripción con tarjeta pagada:** igual que antes (cambia al momento y manda `cambiar` con `pasa_a_completo`).
+- **Con cobro con tarjeta y sin suscripción:** igual que antes (lleva a pagar el Completo, que queda marcado). Si tiene un pago con tarjeta sin terminar, le pide terminarlo o cancelarlo.
+- **Sin cobro con tarjeta y cliente que paga:** el plan cambia al Completo en ese momento, sin pedido ni nota. No se apaga nada, el vencimiento no cambia y no se registra ningún pago. Mensaje: «Listo: ya tienes el plan Completo con todos los módulos. Desde tu próxima renovación (dd/mm) pagas $Y + IVA al mes.» Queda en el registro del negocio que ve Tukán (y el Panel en su bitácora): «El dueño se pasó al plan Completo desde Mi plan». El programa no tiene otra forma de avisar a Tukán sin crear un pedido, así que solo queda el registro.
+- **Demo sin cobro con tarjeta:** se ve el aviso pero sin botón; el servidor tampoco la cambia.
+- **Precio acordado:** ni se sugiere ni se cambia solo. **Bajar del Completo al Básico** sigue bloqueado con suscripción con tarjeta pagada.
+- Se quitó el pedido con la nota «Quiere pasarse al plan Completo» y sus pruebas. Pruebas nuevas en `web_114` (sección 12).
+- **Para que Dimitry sepa:** sin suscripción con tarjeta, el programa no tiene cómo impedir que Tukán baje el plan desde su panel (sigue como siempre); y un cliente que se pasó solo al Completo paga el valor nuevo recién cuando Tukán le registre la renovación.

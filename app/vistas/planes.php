@@ -29,14 +29,17 @@ $avisoCompleto = function (string $donde) use ($sugerencia, $tarjeta, $u): strin
           . ' + IVA y trae <strong>todos</strong> los módulos y el Asistente IA. Te sugerimos pasarte al Completo.'
         : '<div class="aviso aviso-suave mp-sugerencia" data-sugerencia="cerca">Con tus módulos ' . $pagas . '. <strong>Por ' . dinero($s['diferencia'])
           . ' más tienes el plan Completo</strong> con todos los módulos y el Asistente IA.';
-    // El botón: pagar el Completo con tarjeta · pasarse ya (suscripción pagada) · o el pedido de cambio de plan de siempre
+    // El botón: pagar el Completo con tarjeta · pasarse ya (suscripción pagada) · o, sin cobro con tarjeta, cambiar solo (cliente que paga)
     $sus = $tarjeta['suscripcion'] ?? null;
     if ($tarjeta && !$sus && !empty($tarjeta['opciones'][$s['plan']])) {
         $h .= ' <a class="boton boton-chico" href="' . e(url('planes', ['pagar' => $s['plan']])) . '#pagar-' . e($s['plan']) . '">Pasarme al Completo</a>';
+    } elseif (!$tarjeta && $u['estado'] === 'prueba') {
+        // Demo sin cobro con tarjeta: sin botón (la demo ya tiene todo encendido; el plan se elige al contratar)
     } else {
         $pagada = $sus && in_array($sus['estado'] ?? '', ['activa', 'en_gracia'], true);
         $h .= ' <form method="post" action="' . e(url('planes')) . '" style="display:inline"' . ($pagada
-                ? ' onsubmit="return confirm(' . e(json_encode('¿Pasarte al plan Completo? Tienes todos los módulos desde ahora y la suscripción con tarjeta cobra el Completo desde el próximo cobro.', JSON_UNESCAPED_UNICODE)) . ')"' : '') . '>'
+                ? ' onsubmit="return confirm(' . e(json_encode('¿Pasarte al plan Completo? Tienes todos los módulos desde ahora y la suscripción con tarjeta cobra el Completo desde el próximo cobro.', JSON_UNESCAPED_UNICODE)) . ')"'
+                : (!$tarjeta ? ' onsubmit="return confirm(' . e(json_encode('¿Pasarte al plan Completo? Tienes todos los módulos desde ahora y pagas el Completo desde tu próxima renovación.', JSON_UNESCAPED_UNICODE)) . ')"' : '')) . '>'
             . campo_csrf() . '<input type="hidden" name="accion" value="pasar_completo"><button class="boton boton-chico" type="submit">Pasarme al Completo</button></form>';
     }
     return $h . '</div>';

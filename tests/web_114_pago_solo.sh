@@ -304,18 +304,57 @@ panel_modo false
 get "r=planes" > /dev/null
 contiene "Cobro con tarjeta apagado: la sugerencia igual sale" "$TMP/pag.html" 'data-sugerencia="mayor"'
 no_contiene "… sin el enlace a pagar con tarjeta" "$TMP/pag.html" "pagar=quinta"
-ANTES=$(sql "SELECT count(*) FROM modulos_solicitudes WHERE negocio_id=$NK")
-post "r=planes" -d accion=pasar_completo > /dev/null
-check "… «Pasarme al Completo» crea el pedido de cambio de plan como siempre" "$((ANTES+1))" "$(sql "SELECT count(*) FROM modulos_solicitudes WHERE negocio_id=$NK AND nota LIKE 'Quiere pasarse al plan Completo%'")"
-check "… sin cambiar el plan" "esencial" "$(sql "SELECT plan_codigo FROM negocios WHERE id=$NK")"
-get "r=planes" > /dev/null
-contiene "… y lo dice" "$TMP/pag.html" "Listo: pediste pasarte al plan Completo"
-panel_modo true
+contiene "… con el botón «Pasarme al Completo»" "$TMP/pag.html" 'name="accion" value="pasar_completo"'
 get "r=inicio&app=play" > /dev/null
 get "r=planes" > /dev/null
 no_contiene "En la app de Google Play: sin sugerencia" "$TMP/pag.html" "data-sugerencia"
 no_contiene "… ni «Pasarme al Completo»" "$TMP/pag.html" "Pasarme al Completo"
+ANTES=$(sql "SELECT count(*) FROM modulos_solicitudes WHERE negocio_id=$NK")
+post "r=planes" -d accion=pasar_completo > /dev/null
+check "… y desde la app el servidor no cambia el plan" "esencial" "$(sql "SELECT plan_codigo FROM negocios WHERE id=$NK")"
 get "r=inicio&app=web" > /dev/null
+
+echo "12. «Pasarme al Completo» sin cobro con tarjeta: el cliente que paga cambia SOLO (sin pedido para Tukán)"
+VENCE=$(sql "SELECT activo_hasta FROM negocios WHERE id=$NK")
+post "r=planes" -d accion=pasar_completo > /dev/null
+check "El plan Completo queda aplicado en ese momento" "quinta|activo" "$(sql "SELECT plan_codigo||'|'||estado FROM negocios WHERE id=$NK")"
+check "El vencimiento no cambia (ni se alarga ni se acorta)" "$VENCE" "$(sql "SELECT activo_hasta FROM negocios WHERE id=$NK")"
+check "Sin solicitud nueva para Tukán" "$ANTES" "$(sql "SELECT count(*) FROM modulos_solicitudes WHERE negocio_id=$NK")"
+check "Sin pago nuevo registrado" "0" "$(sql "SELECT count(*) FROM suscripciones WHERE negocio_id=$NK")"
+check "Queda anotado en el registro que ve Tukán" "1" "$(sql "SELECT count(*) FROM registro_admin WHERE negocio_id=$NK AND accion LIKE 'El dueño se pasó al plan Completo desde Mi plan%'")"
+get "r=planes" > /dev/null
+contiene "Mensaje al dueño con la fecha de su renovación y el valor" "$TMP/pag.html" "Listo: ya tienes el plan Completo con todos los módulos. Desde tu próxima renovación ($(date -d "$VENCE" +%d/%m)) pagas \$25,00 + IVA al mes."
+contiene "Ya tiene el plan Completo" "$TMP/pag.html" "Plan <strong>Completo</strong>"
+no_contiene "… y ya no sale la sugerencia" "$TMP/pag.html" "data-sugerencia"
+check "Tiene todos los módulos, con el Asistente IA" "1" "$(TUEVENTO_DB_NAME=$DB TUEVENTO_DB_USER=tuevento TUEVENTO_DB_PASS=$PGPASSWORD php -r 'require "tests/base.php"; $m = new TuEvento\Modulos(TuEvento\Db::conectar()); $a = $m->activos((int) $argv[1]); echo (int) (in_array("asistente_ia", $a, true) && in_array("invitados", $a, true) && in_array("mobiliario", $a, true));' "$NK")"
+post "r=planes" -d accion=pasar_completo > /dev/null
+get "r=planes" > /dev/null
+contiene "Tocar otra vez: «Ya tienes el plan Completo»" "$TMP/pag.html" "Ya tienes el plan Completo"
+rm -f "$JAR"; post "r=admin_entrar" --data-urlencode "email=$ADM" --data-urlencode "clave=ClaveDelPanel123" > /dev/null
+get "r=admin_negocio&id=$NK" > /dev/null
+contiene "Tukán lo ve en la ficha del negocio" "$TMP/pag.html" "El dueño se pasó al plan Completo desde Mi plan"
+post_desde "r=admin_negocio&id=$NK" "r=admin_negocio&id=$NK&accion=plan" -d plan=esencial > /dev/null
+check "Sin suscripción con tarjeta, Tukán sí puede cambiar el plan desde su panel (como siempre)" "esencial" "$(sql "SELECT plan_codigo FROM negocios WHERE id=$NK")"
+# Con precio acordado: no se sugiere ni se cambia solo
+registrar esencial "Local Acordado $RANDOM"; pagar_plan esencial; NAC=$NID
+sql "UPDATE negocios SET modulos_extra='paquetes,contratos,portal_cliente,plano,asistente_ia,invitados', precio_acordado=30 WHERE id=$NAC" > /dev/null
+get "r=planes" > /dev/null
+no_contiene "Precio acordado: sin sugerencia ni botón" "$TMP/pag.html" "Pasarme al Completo"
+post "r=planes" -d accion=pasar_completo > /dev/null
+check "… y el servidor no lo cambia solo" "esencial" "$(sql "SELECT plan_codigo FROM negocios WHERE id=$NAC")"
+# Demo del Básico sin cobro con tarjeta: se ve el aviso pero sin botón; el servidor tampoco la cambia
+registrar esencial "Demo Básica Sin Tarjeta $RANDOM"; NDB=$NID
+sql "UPDATE negocios SET modulos_extra='paquetes,contratos,portal_cliente,plano,asistente_ia,invitados' WHERE id=$NDB" > /dev/null
+get "r=planes" > /dev/null
+contiene "Demo sin tarjeta: ve el aviso (pagarías…)" "$TMP/pag.html" 'data-sugerencia="mayor"><strong>Con tus módulos pagarías'
+no_contiene "… pero sin el botón" "$TMP/pag.html" "Pasarme al Completo"
+post "r=planes" -d accion=pasar_completo > /dev/null
+check "… y el servidor no la cambia" "esencial|prueba" "$(sql "SELECT plan_codigo||'|'||estado FROM negocios WHERE id=$NDB")"
+panel_modo true
+get "r=planes" > /dev/null
+contiene "Demo con cobro con tarjeta: el botón lleva a pagar el Completo" "$TMP/pag.html" 'pagar=quinta#pagar-quinta">Pasarme al Completo</a>'
+r=$(post "r=planes" -d accion=pasar_completo)
+check "… y si llega el pedido directo, también la lleva a pagar" "302 $BASE/?r=planes&pagar=quinta#pagar-quinta" "$r"
 
 BASE=$BASE_DE_SIEMPRE
 kill $PANELSIM $SITIOPAGO 2>/dev/null
