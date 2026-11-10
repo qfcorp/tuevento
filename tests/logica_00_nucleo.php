@@ -12,7 +12,7 @@ $fecha = $hoy->modify('+120 days')->format('Y-m-d');
 
 titulo('1. Alta del negocio con datos de ejemplo');
 [$nid, $dueno] = negocio_prueba($db);
-check('Negocio en prueba gratis 7 días', $hoy->modify('+7 days')->format('Y-m-d'), $db->query("SELECT prueba_hasta FROM negocios WHERE id = $nid")->fetchColumn());
+check('Negocio en demo de 3 días (migración 116)', $hoy->modify('+3 days')->format('Y-m-d'), $db->query("SELECT prueba_hasta FROM negocios WHERE id = $nid")->fetchColumn());
 check('2 espacios de ejemplo', 2, (int) $db->query("SELECT count(*) FROM espacios WHERE negocio_id = $nid")->fetchColumn());
 check('18 productos en el catálogo', 18, (int) $db->query("SELECT count(*) FROM productos WHERE negocio_id = $nid")->fetchColumn());
 check('3 paquetes', 3, (int) $db->query("SELECT count(*) FROM paquetes WHERE negocio_id = $nid")->fetchColumn());

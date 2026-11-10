@@ -23,7 +23,7 @@ $primer = fn(?string $x) => explode(' ', trim((string) $x))[0];
         <ul class="filas">
         <?php foreach ($pedidos as $pd): $waPd = TuEvento\WhatsApp::enlace($pd['whatsapp'], 'Hola ' . explode(' ', $pd['nombre'])[0] . ', te escribo de TuEvento por la demo que pediste para ' . $pd['negocio'] . '.'); ?>
             <li><span><strong><?= e($pd['negocio']) ?></strong> · <?= e($pd['nombre']) ?><?= $pd['ciudad'] ? ' · ' . e($pd['ciudad']) : '' ?>
-                <small class="suave" style="display:block"><?= e(TuEvento\PedidosDemo::ESTADOS[$pd['estado']]) ?> · <?= e(date('d/m/Y H:i', strtotime($pd['creado']))) ?> · <?= e($pd['whatsapp']) ?> · <?= e($pd['email']) ?>
+                <small class="suave" style="display:block"><?= e(TuEvento\PedidosDemo::ESTADOS[$pd['estado']]) ?> · <?= e(date('d/m/Y H:i', strtotime($pd['creado']))) ?> · <?= e($pd['whatsapp']) ?><?= !empty($pd['telefono']) ? ' · tel. ' . e($pd['telefono']) : '' ?> · <?= e($pd['email']) ?><?= !empty($pd['direccion']) ? ' · ' . e($pd['direccion']) : '' ?>
                     <?= $pd['modulos'] !== '' ? '<br>Le interesa: ' . e(implode(', ', array_map([TuEvento\Modulos::class, 'nombre'], TuEvento\Modulos::parse($pd['modulos'])))) : '' ?>
                     <?= $pd['necesita'] ? '<br>«' . e(mb_substr($pd['necesita'], 0, 200)) . '»' : '' ?></small></span>
                 <span class="acciones">
