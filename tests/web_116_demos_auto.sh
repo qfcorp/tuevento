@@ -25,6 +25,7 @@ no_contiene "Ya no pide teléfono fijo" "$TMP/pag.html" 'name="telefono"'
 contiene "El teléfono se llama «Celular / WhatsApp»" "$TMP/pag.html" '<label for="celular">Celular / WhatsApp</label>'
 contiene "Dice adónde llega la clave" "$TMP/pag.html" "Te enviaremos la clave de tu demo a este correo: escríbelo bien."
 contiene "Dice que la demo dura 3 días" "$TMP/pag.html" "La demo dura 3 días."
+contiene "… y que prepararla toma entre 5 y 10 minutos" "$TMP/pag.html" "Preparar tu demo toma entre 5 y 10 minutos aproximadamente."
 
 echo "2. Incompleto: se rechaza campo por campo y conserva lo escrito"
 N0=$(sql "SELECT count(*) FROM pedidos_demo")
@@ -46,7 +47,7 @@ check "Nada de eso se guardó" "$N0" "$(sql "SELECT count(*) FROM pedidos_demo")
 echo "3. Completo y el Panel NO contesta (sitio de siempre): el pedido se guarda igual y sale la página de gracias"
 C1="paula$RANDOM@interesada.ec"
 d116_pedir " ${C1^^} " "celular=+593 99 123 4567" > /dev/null
-contiene "Página de gracias con el texto del contrato" "$TMP/post.html" "¡Listo! En unos minutos te llega al correo tu clave, el manual y la guía de primeros pasos. Revisa también la carpeta de spam."
+contiene "Página de gracias con el texto del contrato" "$TMP/post.html" "¡Listo! Estamos preparando tu demo: toma entre 5 y 10 minutos aproximadamente. Cuando esté lista te llega al correo tu clave, el manual y la guía de primeros pasos. Revisa también la carpeta de spam."
 no_contiene "Sin ningún error a la vista" "$TMP/post.html" "aviso-error"
 check "Guardado con los 6 datos (correo en minúsculas y sin espacios; celular solo con números y +; la columna telefono igual al celular)" "Paula Interesada|Quinta Las Demos|+593991234567|+593991234567|Av. de los Shyris N35-71 y Suecia|Quito|$C1|nueva" \
       "$(sql "SELECT nombre||'|'||negocio||'|'||telefono||'|'||whatsapp||'|'||direccion||'|'||ciudad||'|'||email||'|'||estado FROM pedidos_demo WHERE email='$C1'")"
@@ -101,7 +102,7 @@ for _ in $(seq 1 50); do curl -s -o /dev/null "http://127.0.0.1:$PD_P/" && curl 
 BASE_116=$BASE; BASE="http://127.0.0.1:$PD_S"; rm -f "$JAR"
 C2="aviso$RANDOM@interesada.ec"
 d116_pedir "$C2" > /dev/null
-contiene "Página de gracias" "$TMP/post.html" "¡Listo! En unos minutos te llega al correo tu clave"
+contiene "Página de gracias" "$TMP/post.html" "¡Listo! Estamos preparando tu demo: toma entre 5 y 10 minutos aproximadamente."
 PD2=$(sql "SELECT id FROM pedidos_demo WHERE email='$C2'")
 check "El Panel recibió el aviso: POST firmado, con el id de la solicitud" "BIEN POST {\"accion\":\"demo_pedida\",\"id\":\"demo_pedida:$PD2\"}" "$(tail -1 "$TMP/panel116/avisos.log")"
 d116_pedir "incompleto@interesada.ec" "ciudad=" > /dev/null
@@ -109,7 +110,7 @@ check "Un pedido rechazado no avisa al Panel" "1" "$(wc -l < "$TMP/panel116/avis
 kill $D116_PANEL 2>/dev/null; sleep 0.3
 C3="caido$RANDOM@interesada.ec"
 d116_pedir "$C3" > /dev/null
-contiene "Panel caído: la página de gracias sale igual" "$TMP/post.html" "¡Listo! En unos minutos te llega al correo tu clave"
+contiene "Panel caído: la página de gracias sale igual" "$TMP/post.html" "¡Listo! Estamos preparando tu demo: toma entre 5 y 10 minutos aproximadamente."
 no_contiene "… sin error para el interesado" "$TMP/post.html" "aviso-error"
 check "… y el pedido quedó guardado" "nueva" "$(sql "SELECT estado FROM pedidos_demo WHERE email='$C3'")"
 BASE=$BASE_116; kill $D116_SITIO 2>/dev/null

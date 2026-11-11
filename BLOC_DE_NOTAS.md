@@ -281,3 +281,9 @@ Dimitry: «No hay que poner teléfono fijo; con un teléfono es suficiente.»
 - Ahora son **6 datos obligatorios**: nombre, nombre comercial, celular, dirección, ciudad y correo (`PedidosDemo::CAMPOS`).
 - Para el Panel, el `detalle` de `demo_pedida` manda `celular` y, por compatibilidad, `telefono` con el mismo valor. La columna `telefono` de `pedidos_demo` se guarda igual al celular (no hizo falta migración).
 - Lo que diga «7 datos» o «teléfono, celular» en las notas de arriba quedó reemplazado por esto. Manual, PDF y pruebas (`logica_116`, `web_116`) al día.
+
+## 10 nov 2026 (19:48) — Solicitar demo: avisa que tarda entre 5 y 10 minutos
+Dimitry: «Debes indicar que el proceso de creación de demos demora entre 5 a 10 minutos aproximadamente, para que no espere inmediatamente.»
+- En el formulario, junto a «La demo dura 3 días.»: «Preparar tu demo toma entre 5 y 10 minutos aproximadamente.»
+- La página de gracias ahora dice: «¡Listo! Estamos preparando tu demo: toma entre 5 y 10 minutos aproximadamente. Cuando esté lista te llega al correo tu clave, el manual y la guía de primeros pasos. Revisa también la carpeta de spam.» (reemplaza «En unos minutos te llega…»).
+- Manual, PDF y pruebas (`web_116`) al día.
