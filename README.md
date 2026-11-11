@@ -119,7 +119,7 @@ App **TuEvento** (`com.tukansoftware.tuevento`, repositorio `qfcorp/tukan-apps`)
 
 ## Ayuda e inteligencia artificial (migración 110)
 Con la librería compartida del Panel Tukán Central **`src/tukan_ia.php`** (copiada SIN cambios de `compartido/`, guía `compartido/LEEME_IA.md`).
-- **Ayuda** (todos los planes y cargos): **Más → Ayuda**, cuadro «¿Qué necesita hacer?» → `tukan_ia_ayuda()`: pregunta frecuente guardada (costo 0) →
+- **Ayuda** (todos los planes y cargos): **Menú → Ayuda**, cuadro «¿Qué necesita hacer?» → `tukan_ia_ayuda()`: pregunta frecuente guardada (costo 0) →
   IA (modelo rápido) con las secciones del manual del cliente (`docs/manual/manual.html` convertido a texto y guardado en caché en la carpeta temporal;
   si no está, `docs/MANUAL.md`) y la respuesta queda como FAQ automática → sin poder gastar, el manual tal cual + el WhatsApp. POST con CSRF, 10 preguntas
   por minuto por usuario. Sin el módulo: máximo **30 respuestas nuevas al mes** por negocio. Nunca dice «límite», «cupo» ni «saldo».
@@ -168,7 +168,7 @@ Con el mismo ID y el mismo secreto, el panel central ve y maneja a los clientes 
 - **Solicitudes**: **pedidos de demo** (`demo_pedida`, con Crear demo prellenado), **pedidos de módulos** desde Mi plan (`cambio_modulos`, con Aprobar = `cambiar_modulos` y Rechazar), demos que terminan en 2 días / hoy / terminadas sin pagar (60 días), planes que vencen en 5 días o vencidos sin renovar (30 días) y dominios incluidos por registrar. Se marcan "en proceso", "atendida" o "descartada" (tabla `tukan_central_atenciones`).
 - **Operaciones** (con las mismas funciones del panel de Tukán y una línea en "Últimos movimientos del panel" con el correo del Central): crear demo (con datos de ejemplo, plan y módulos opcionales, desde un pedido de demo; la contraseña temporal se muestra una sola vez), alargar la demo, registrar pago (con la fecha en que pagó), anular pago, suspender, reactivar, cancelar, cambiar plan, nueva clave del dueño, nota interna, atender solicitud, guardar plan/precios, **cambiar_modulos** (encender/apagar con dependencias, precio acordado; solo el rol dueño) y **guardar_modulos** (catálogo y módulos de cada plan).
 - **Finanzas**: cobrado por mes (por plan, tiempo y forma de pago), nuevos pagadores, devengado, ingreso mensual recurrente (lo que pagan al mes con sus módulos) y `por_modulo` (cuántos lo tienen y cuánto suman los extras).
-- **IA** (Anexo C): `ia_uso` (gasto de IA del mes por negocio, para **Más → IA** del Central) y `ia_tope` (tope del mes de un negocio; solo el rol dueño).
+- **IA** (Anexo C): `ia_uso` (gasto de IA del mes por negocio, para **Menú → IA** del Central) y `ia_tope` (tope del mes de un negocio; solo el rol dueño).
 - Si el Central repite una operación (se cortó la red), TuEvento no la hace dos veces: devuelve el mismo resultado (`tukan_central_operaciones`, 90 días, sin contraseñas).
 - **Pausar y borrar clientes** (Anexo A del protocolo):
   - `pausar` (tipo: falta de pago, pedido del cliente, revisión, uso indebido u otro + motivo): el negocio no puede trabajar y ve "Tu cuenta está pausada" con el motivo (en revisión y uso indebido, un texto genérico) y el WhatsApp de Tukán; su página pública y todos sus portales y enlaces dicen "temporalmente no disponible". `reactivar` la quita.
