@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Demos automáticas de 3 días (10 nov 2026, contrato de las demos automáticas): formulario «Solicitar demo» con los 7 datos
+# Demos automáticas de 3 días (10 nov 2026, contrato de las demos automáticas): formulario «Solicitar demo» con los 6 datos
 # obligatorios, aviso al instante al Panel Tukán Central (demo_aviso.php, token v2 de tipo «demo») con un Panel SIMULADO,
 # /manual.pdf y /primeros_pasos.pdf públicos, tarjeta de la demo en Inicio y botones de descarga en Ayuda.
 # Lo carga tests/run_web.sh (con web_base.sh).
@@ -8,25 +8,27 @@ D116_C96() { php -r '$v = json_decode((string) file_get_contents($argv[1]), true
 # Pedido completo: d116_pedir correo [campo=valor que reemplaza ...] -> "codigo destino"
 d116_pedir() {
   local correo=$1; shift
-  declare -A c=([nombre]="Paula Interesada" [nombre_comercial]="Quinta Las Demos" [telefono]="022345678" [celular]="0991234567" [direccion]="Av. de los Shyris N35-71 y Suecia" [ciudad]="Quito" [email]="$correo")
+  declare -A c=([nombre]="Paula Interesada" [nombre_comercial]="Quinta Las Demos" [celular]="0991234567" [direccion]="Av. de los Shyris N35-71 y Suecia" [ciudad]="Quito" [email]="$correo")
   local kv; for kv in "$@"; do c[${kv%%=*}]=${kv#*=}; done
   local a=(); local k; for k in "${!c[@]}"; do a+=(--data-urlencode "$k=${c[$k]}"); done
   post "r=registro" "${a[@]}" --data-urlencode "modulos[]=invitados"
 }
 rm -f "$JAR"
 
-echo "1. El formulario pide los 7 datos, todos obligatorios, y dice que la demo dura 3 días"
+echo "1. El formulario pide los 6 datos (un solo teléfono: el celular), todos obligatorios, y dice que la demo dura 3 días"
 check "Días de demo: 3 (migración 116, una sola vez)" "3|2026-11-10" "$(sql "SELECT (SELECT valor FROM ajustes WHERE clave='dias_prueba')||'|'||(SELECT valor FROM ajustes WHERE clave='demo_3_dias')")"
 check "Solicitar demo abre" "200" "$(get "r=registro")"
-for campo in nombre nombre_comercial telefono celular direccion ciudad email; do
+for campo in nombre nombre_comercial celular direccion ciudad email; do
   check "Campo «$campo» obligatorio en el navegador" "1" "$(grep -c "name=\"$campo\"[^>]* required" "$TMP/pag.html")"
 done
+no_contiene "Ya no pide teléfono fijo" "$TMP/pag.html" 'name="telefono"'
+contiene "El teléfono se llama «Celular / WhatsApp»" "$TMP/pag.html" '<label for="celular">Celular / WhatsApp</label>'
 contiene "Dice adónde llega la clave" "$TMP/pag.html" "Te enviaremos la clave de tu demo a este correo: escríbelo bien."
 contiene "Dice que la demo dura 3 días" "$TMP/pag.html" "La demo dura 3 días."
 
 echo "2. Incompleto: se rechaza campo por campo y conserva lo escrito"
 N0=$(sql "SELECT count(*) FROM pedidos_demo")
-for campo in nombre nombre_comercial telefono celular direccion ciudad email; do
+for campo in nombre nombre_comercial celular direccion ciudad email; do
   d116_pedir "falta_$campo@prueba.ec" "$campo=" > /dev/null
   contiene "Sin «$campo»: error junto al campo" "$TMP/post.html" "id=\"err-$campo\""
   check "… y es el único marcado" "1" "$(grep -o 'class="campo-error"' "$TMP/post.html" | wc -l)"
@@ -36,21 +38,21 @@ contiene "… (dirección)" "$TMP/post.html" 'name="direccion" value="Av. de los
 d116_pedir "correo malo@" > /dev/null
 contiene "Correo malo: rechazado junto al campo" "$TMP/post.html" 'id="err-email" role="alert" style="color:#7E2A23;display:block">El correo no es válido'
 d116_pedir "cel@prueba.ec" "celular=0212345678" > /dev/null
-contiene "Celular que no empieza con 09: rechazado" "$TMP/post.html" "Escribe tu celular: 09XXXXXXXX o +5939XXXXXXXX."
-d116_pedir "tel@prueba.ec" "telefono=abc123" > /dev/null
-contiene "Teléfono con letras: rechazado" "$TMP/post.html" 'id="err-telefono"'
+contiene "Celular que no empieza con 09: rechazado" "$TMP/post.html" "Escribe tu celular o WhatsApp: 09XXXXXXXX o +5939XXXXXXXX."
+d116_pedir "tel@prueba.ec" "celular=abc123" > /dev/null
+contiene "Celular con letras: rechazado" "$TMP/post.html" 'id="err-celular"'
 check "Nada de eso se guardó" "$N0" "$(sql "SELECT count(*) FROM pedidos_demo")"
 
 echo "3. Completo y el Panel NO contesta (sitio de siempre): el pedido se guarda igual y sale la página de gracias"
 C1="paula$RANDOM@interesada.ec"
-d116_pedir " ${C1^^} " "celular=+593 99 123 4567" "telefono=02 234-5678" > /dev/null
+d116_pedir " ${C1^^} " "celular=+593 99 123 4567" > /dev/null
 contiene "Página de gracias con el texto del contrato" "$TMP/post.html" "¡Listo! En unos minutos te llega al correo tu clave, el manual y la guía de primeros pasos. Revisa también la carpeta de spam."
 no_contiene "Sin ningún error a la vista" "$TMP/post.html" "aviso-error"
-check "Guardado con los 7 datos (correo en minúsculas y sin espacios; teléfonos solo con números y +)" "Paula Interesada|Quinta Las Demos|022345678|+593991234567|Av. de los Shyris N35-71 y Suecia|Quito|$C1|nueva" \
+check "Guardado con los 6 datos (correo en minúsculas y sin espacios; celular solo con números y +; la columna telefono igual al celular)" "Paula Interesada|Quinta Las Demos|+593991234567|+593991234567|Av. de los Shyris N35-71 y Suecia|Quito|$C1|nueva" \
       "$(sql "SELECT nombre||'|'||negocio||'|'||telefono||'|'||whatsapp||'|'||direccion||'|'||ciudad||'|'||email||'|'||estado FROM pedidos_demo WHERE email='$C1'")"
 PD=$(sql "SELECT id FROM pedidos_demo WHERE email='$C1'")
 
-echo "4. El Panel lo lee por el conector (solicitud demo_pedida) con las 7 claves exactas"
+echo "4. El Panel lo lee por el conector (solicitud demo_pedida) con las claves exactas"
 printf '{"id":"demo_pedida:%s"}' "$PD" > "$TMP/d116_body.json"
 TOK=$(php -r '$t = time(); $c = (string) file_get_contents($argv[1]); $b = fn($s) => rtrim(strtr(base64_encode($s), "+/", "-_"), "=");
   $a = $b(json_encode(["v" => 2, "tipo" => "solicitud", "inst" => getenv("TUKAN_CENTRAL_ID"), "email" => "sistema@tukanec.com", "nombre" => "Panel", "rol" => "dueno", "iat" => $t, "exp" => $t + 60,
@@ -61,7 +63,7 @@ check "Acción «solicitud» del conector: 200" "200" "$r"
 check "Es una demo pedida, pendiente" "demo_pedida|pendiente" "$(D116_C96 "$TMP/d116.out" solicitud.tipo)|$(D116_C96 "$TMP/d116.out" solicitud.estado)"
 check "detalle.nombre" "Paula Interesada" "$(D116_C96 "$TMP/d116.out" solicitud.detalle.nombre)"
 check "detalle.nombre_comercial" "Quinta Las Demos" "$(D116_C96 "$TMP/d116.out" solicitud.detalle.nombre_comercial)"
-check "detalle.telefono" "022345678" "$(D116_C96 "$TMP/d116.out" solicitud.detalle.telefono)"
+check "detalle.telefono (el mismo valor del celular, por compatibilidad)" "+593991234567" "$(D116_C96 "$TMP/d116.out" solicitud.detalle.telefono)"
 check "detalle.celular" "+593991234567" "$(D116_C96 "$TMP/d116.out" solicitud.detalle.celular)"
 check "detalle.direccion" "Av. de los Shyris N35-71 y Suecia" "$(D116_C96 "$TMP/d116.out" solicitud.detalle.direccion)"
 check "detalle.ciudad" "Quito" "$(D116_C96 "$TMP/d116.out" solicitud.detalle.ciudad)"

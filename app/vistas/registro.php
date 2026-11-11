@@ -42,27 +42,20 @@ $waTukan = 'https://wa.me/' . whatsapp_ventas() . '?text=' . rawurlencode('Hola,
     </div>
     <div class="fila-campos">
         <div class="campo">
-            <label for="telefono">Teléfono de contacto</label>
-            <input type="tel" id="telefono" name="telefono" value="<?= e($d['telefono']) ?>" maxlength="20" placeholder="022345678" pattern="\+?[0-9 \-]{7,20}" autocomplete="tel" required<?= $inv('telefono') ?>>
-            <?= $err('telefono') ?>
-        </div>
-        <div class="campo">
-            <label for="celular">Celular</label>
+            <label for="celular">Celular / WhatsApp</label>
             <input type="tel" id="celular" name="celular" value="<?= e($d['celular']) ?>" maxlength="20" placeholder="0991234567" pattern="\+?[0-9 \-]{9,20}" autocomplete="mobile tel" required<?= $inv('celular') ?>>
             <?= $err('celular') ?>
-        </div>
-    </div>
-    <div class="fila-campos">
-        <div class="campo">
-            <label for="direccion">Dirección de tu negocio</label>
-            <input type="text" id="direccion" name="direccion" value="<?= e($d['direccion']) ?>" minlength="5" maxlength="250" autocomplete="street-address" required<?= $inv('direccion') ?>>
-            <?= $err('direccion') ?>
         </div>
         <div class="campo">
             <label for="ciudad">Ciudad</label>
             <input type="text" id="ciudad" name="ciudad" value="<?= e($d['ciudad']) ?>" minlength="2" maxlength="80" placeholder="Quito" autocomplete="address-level2" required<?= $inv('ciudad') ?>>
             <?= $err('ciudad') ?>
         </div>
+    </div>
+    <div class="campo">
+        <label for="direccion">Dirección de tu negocio</label>
+        <input type="text" id="direccion" name="direccion" value="<?= e($d['direccion']) ?>" minlength="5" maxlength="250" autocomplete="street-address" required<?= $inv('direccion') ?>>
+        <?= $err('direccion') ?>
     </div>
     <div class="campo">
         <label for="email">Correo</label>
