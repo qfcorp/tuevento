@@ -4,7 +4,10 @@
 
 ## 10 nov 2026 — Identidad gráfica común Tukán (decisión de Dimitry: todos los programas iguales, modelo el ERP)
 - TuEvento usa el **kit común** `public/assets/tukan-ui.css` + `tukan-ui.js` (idénticos en todos los programas; no se editan aquí).
-  Lo único propio es el color: vino `#6B2D3C` (línea `<style>` en `app/vistas/_diseno.php`).
+  Lo único propio es el color (línea `<style>` en `app/vistas/_diseno.php`): **naranja `#D9822B` con texto azul noche `#14213D`**,
+  el mismo de tukansoftware.com (**decisión de Dimitry 10 nov: color de la web**; antes vino `#6B2D3C`). Como el naranja es claro,
+  la letra en naranja sobre blanco usa un tono más oscuro y las piezas de antes con fondo del color llevan texto azul noche
+  (ver `docs/LINEA_GRAFICA.md`). Portal público, PDF, correos y el color de cada negocio sin cambios.
 - Barra de arriba del color del programa (logo del negocio, nombre, usuario, Salir); menú izquierdo azul noche con TODO a la
   vista, en grupos (Principal, Ventas, Dinero, Operación, Configuración) y con emoji; en el celular se abre con ☰ (ya no hay
   barra de botones abajo; la pantalla «Más» sigue existiendo en `/?r=mas`).

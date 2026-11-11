@@ -12,9 +12,22 @@ cabecera azul noche. **Cada programa solo cambia su color.**
 
 ## Color de TuEvento (la única línea propia, en `app/vistas/_diseno.php`)
 ```html
-<style>:root{ --tk-color:#6B2D3C; --tk-color-claro:#E8A0AC; --tk-color-texto:#ffffff; }</style>
+<style>:root{ --tk-color:#D9822B; --tk-color-claro:#EBA35C; --tk-color-texto:#14213D; }</style>
 ```
-`#6B2D3C` es el vino que TuEvento ya usaba. Blanco sobre ese vino: contraste 10,2:1. `#E8A0AC` sobre azul noche: 8,6:1.
+**Decisión de Dimitry, 10 nov 2026: el color de la web.** Cada programa usa por dentro el mismo color que tiene en
+tukansoftware.com (y en el Panel). TuEvento es **naranja `#D9822B`** (antes vino `#6B2D3C`). También `<meta name="theme-color">`
+y `theme_color` de `public/manifest.json` (los íconos y la app de Google Play no cambian).
+- El naranja es claro: el **texto sobre la barra, el botón principal y la opción activa del menú es azul noche `#14213D`**
+  (5,5:1; blanco daba 2,9:1). `#EBA35C` (cifras y títulos del menú) sobre azul noche: 8,4:1.
+- **Como letra sobre blanco el naranja no se lee** (2,9:1). En el puente (`app.css`): `--te-color-letra` = el mismo naranja
+  más oscuro (`color-mix(… 65%, #000)` ≈ `#8D541C`, 6,1:1). Lo usan los enlaces sueltos, el foco del teclado en el contenido,
+  las iniciales «Te» del círculo de la barra y **`--verde`** (las piezas de antes que lo usaban como letra: pestañas, «Ver…»,
+  montos, días del fin de semana del calendario). `--verde-claro` y `--verde-oscuro` también son tonos del naranja.
+- Las piezas de antes que usaban `--verde` de **fondo con letra blanca** (botón `.boton` suelto, chips activos, contadores,
+  pestañas del día del evento, embudo de reportes, paso actual, sello de entrar…) están listadas una a una al final del puente
+  («Piezas de antes con fondo del color del programa»): fondo naranja y texto `var(--tk-color-texto)`. **Si aparece una pieza
+  nueva con fondo del color, agrégala ahí** (blanco sobre naranja no se lee).
+- El portal público del cliente, los PDF, los correos y los colores que elige cada negocio (vino por defecto) no cambian.
 
 ## Menú (`app/menu.php`, función `tk_menu()`): una sola definición para el menú y la pantalla «Más»
 | Grupo | Opciones (las de módulos apagados o sin permiso no salen) |

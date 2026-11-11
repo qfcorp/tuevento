@@ -36,5 +36,8 @@ contiene "Privacidad habla de eventos" "$TMP/pag.html" "quintas"
 check "Ruta que no existe: 404" "404" "$(get "r=no_existe")"
 check "Menú Más" "200" "$(get "r=mas")"
 contiene "Más lista Catálogo" "$TMP/pag.html" "Catálogo y precios"
+# Color de TuEvento = el de tukansoftware.com (decisión de Dimitry, 10 nov 2026): naranja con texto azul noche
+contiene "Color del programa: naranja de la web con texto azul noche" "$TMP/pag.html" '--tk-color:#D9822B; --tk-color-claro:#EBA35C; --tk-color-texto:#14213D;'
+no_contiene "… ya no el vino de antes" "$TMP/pag.html" '--tk-color:#6B2D3C'
 check "Búsqueda rápida responde JSON" "200" "$(get "r=buscar&q=bo")"
 contiene "JSON de búsqueda" "$TMP/pag.html" "resultados"
