@@ -92,7 +92,7 @@ final class TukanLegal
             . '<a href="' . self::URL_TERMINOS . '" target="_blank" rel="noopener">Términos y condiciones</a> y la '
             . '<a href="' . self::e($privacidad) . '" target="_blank" rel="noopener">Política de privacidad</a> de Tukán Software.</p>'
             . '<label><input type="checkbox" name="acepto_terminos" value="1" required> Leí y acepto los términos y la política de privacidad</label> '
-            . '<button data-ico="check" class="boton" type="submit">Aceptar</button></form></div>';
+            . '<button class="boton" type="submit">Aceptar</button></form></div>';
     }
 
     /** «Términos · Privacidad» (pie de página, pantalla de entrar). */

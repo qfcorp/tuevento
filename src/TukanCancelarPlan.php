@@ -155,7 +155,7 @@ final class TukanCancelarPlan
                 . ($f !== '' ? $tu('Sigues usando todo hasta el ', 'Sigue usando todo hasta el ') . '<strong>' . self::e($f) . '</strong> y después no se cobra más.' : 'No se renovará.')
                 . ' ' . $tu('Tus datos se guardan por si vuelves.', 'Sus datos se guardan por si vuelve.') . '</p>'
                 . '<form method="post" action="' . self::e($accion) . '">' . $csrf . '<input type="hidden" name="accion" value="seguir_plan">'
-                . '<button data-ico="flecha" class="boton" type="submit">Seguir con mi plan</button></form></section>';
+                . '<button class="boton" type="submit">Seguir con mi plan</button></form></section>';
         }
         $f = self::fecha($hasta);
         return $h . '<details><summary>' . $tu('Quiero cancelar mi plan', 'Quiero cancelar mi plan') . '</summary>'
@@ -167,6 +167,6 @@ final class TukanCancelarPlan
             . '<form method="post" action="' . self::e($accion) . '">' . $csrf . '<input type="hidden" name="accion" value="cancelar_plan">'
             . '<label>' . $tu('¿Por qué te vas? (opcional)', '¿Por qué se va? (opcional)') . '<textarea name="motivo" rows="2" maxlength="500"></textarea></label>'
             . '<label class="tc-confirmo"><input type="checkbox" name="confirmo" value="1" required> Sí, quiero cancelar mi plan</label>'
-            . '<button data-ico="cruz" class="boton boton-peligro" type="submit">Cancelar mi plan</button></form></details></section>';
+            . '<button class="boton boton-peligro" type="submit">Cancelar mi plan</button></form></details></section>';
     }
 }
