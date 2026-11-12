@@ -42,4 +42,5 @@ if [ "${SOLO_PDF:-0}" != "1" ]; then
 fi
 echo "== 4. PDF del manual"
 python3 "$AQUI/pdf.py" "$MANUAL/manual.html" "$RAIZ/docs/Manual_TuEvento.pdf" "Manual de TuEvento"
+python3 "$AQUI/pdf.py" "$RAIZ/docs/presentacion/presentacion.html" "$RAIZ/docs/TuEvento_Presentacion.pdf" "TuEvento · Presentación" --diapositivas
 pdfinfo "$RAIZ/docs/Manual_TuEvento.pdf" 2>/dev/null | grep -E "Pages" || true

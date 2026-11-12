@@ -3,6 +3,7 @@
 Programa para **salones de eventos, quintas y haciendas** de Ecuador, de la marca Tukán Software.
 Dirección: **tuevento.tukanec.com** (servidor qfcorp). Web de la marca: tukansoftware.com.
 
+- Presentación de ventas: [docs/TuEvento_Presentacion.pdf](docs/TuEvento_Presentacion.pdf) (fuente: `docs/presentacion/presentacion.html`; se regenera con `generar.sh`)
 - Plan, avance y pendientes: [BLOC_DE_NOTAS.md](BLOC_DE_NOTAS.md)
 - Cómo está hecho y reglas para programar: [docs/GUIA_DESARROLLO.md](docs/GUIA_DESARROLLO.md)
 - **Manual para el cliente** (con capturas reales): [docs/Manual_TuEvento.pdf](docs/Manual_TuEvento.pdf) · versión por módulo: [docs/MANUAL.md](docs/MANUAL.md) · se regenera con `bash docs/manual/generar/generar.sh`
@@ -72,7 +73,7 @@ en Mi plan solo ve el precio de lo que ya paga). Se cambian en Panel Tukán → 
 | Exportar a Excel y Google Calendar | Descargas para Excel y calendario externo | — |
 | **Asistente IA** (**incluido en Completo**; en Básico, extra de $5 que no cuenta entre los 3) | Cotización a partir del mensaje de WhatsApp del cliente (borrador para revisar); tope de gasto mayor | — |
 
-- **Precio al mes** de cada cliente = plan + módulos extra (los primeros 3 del Básico, incluidos; los demás $5; el Asistente IA $5) − módulos quitados (o un **precio acordado** fijo). Es el que sugiere
+- **Precio al mes** de cada cliente = plan + módulos extra (los primeros 3 del Básico, incluidos; los demás $5; el Asistente IA $3) − módulos quitados (o un **precio acordado** fijo). Es el que sugiere
   "Registrar pago", el `cotizar` y el `mensual_estimado` del Panel Central. Precios, descripciones y qué trae cada plan se cambian en
   Panel Tukán → **Planes y precios → Catálogo de módulos**.
 - **Mi plan** (dueño y administradores): ve sus módulos encendidos y lo que paga por su plan (su contrato). Los módulos y planes que no tiene

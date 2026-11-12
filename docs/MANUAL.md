@@ -136,14 +136,14 @@ Periodos Este mes / Mes pasado / Este año / Otras fechas. Secciones: Ventas, Co
 - **¿Hace facturas electrónicas?** No; sí lee el XML de las facturas de tus proveedores.
 - **¿Cuánto cuesta?** Depende de los módulos: escríbenos y te mandamos la cotización.
 
-## Factura electrónica con TuFactura (módulo aparte, viene apagado)
+## Factura electrónica con TuFactura (Próximamente)
 *9 nov 2026*
 
 Con este módulo, cada pago confirmado de un evento sale como **factura electrónica autorizada por el SRI** y le llega al cliente por correo.
 
 **Cómo se consigue**
-- **TuFactura cuesta $30 + IVA al año** y este enlace va incluido. En TuEvento el módulo cuesta $0.
-- Pídelo a Tukán Software. Tukán crea tu cuenta de TuFactura y enciende el módulo desde el Panel Tukán Central.
+- **TuFactura (facturación electrónica del SRI): Próximamente.**
+- Cuando esté disponible, Tukán Software crea tu cuenta de TuFactura y enciende el módulo. Escríbenos por WhatsApp al 098 366 2181 y te avisamos.
 - No viene en ningún plan ni en la demo.
 
 **Conectar tu cuenta** (una sola vez, el administrador)

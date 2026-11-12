@@ -9,14 +9,15 @@ TF_SIM_DIR="$TMP/tfsim" php -S "127.0.0.1:$PS" tests/tufactura_simulado.php > /d
 TFSIM=$!
 for _ in $(seq 1 50); do curl -s -o /dev/null "http://127.0.0.1:$PS/" && break; sleep 0.1; done
 
-echo "1. Factura electrónica apagada: se puede pedir"
+echo "1. Factura electrónica apagada: dice Próximamente, sin precio ni botón"
 registrar quinta "Hacienda Factura $RANDOM"
 pagar_plan quinta
 get "r=mas" > /dev/null
 contiene "Más tiene «Factura electrónica»" "$TMP/pag.html" "r=tufactura"
 check "Apagado: la pantalla abre" "200" "$(get 'r=tufactura')"
-contiene "Apagado: explica TuFactura y deja pedirlo" "$TMP/pag.html" "Quiero facturar con TuFactura"
-contiene "… el pedido va a Mi plan" "$TMP/pag.html" "modulo=facturacion"
+contiene "Apagado: explica TuFactura y dice Próximamente (sin botón para pedirla)" "$TMP/pag.html" "Próximamente"
+no_contiene "… sin botón para pedirla" "$TMP/pag.html" "modulo=facturacion"
+no_contiene "… sin el precio de \$30" "$TMP/pag.html" '$30'
 
 echo "2. Encendido: conectar y facturar un pago"
 sql "UPDATE negocios SET modulos_extra = CASE WHEN COALESCE(modulos_extra, '') = '' THEN 'facturacion' ELSE modulos_extra || ',facturacion' END WHERE id = $NID" > /dev/null

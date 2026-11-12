@@ -52,7 +52,7 @@ $mods->olvidar();
 foreach ([$nEsPaga, $nSal, $nQui] as $x) $pagado($x);
 $db->exec("UPDATE negocios SET modulos_extra = 'plano', modulos_quitados = 'metas' WHERE id = $nSal");
 $sSal = $planes->suscribir($nSal, 'salon', 'mensual', $hoy, 'transferencia');
-check('Antes: el Salón paga $39 + plano $6 − metas $4 = $41', 41.0, $mods->mensual($nSal));
+check('Antes: el Salón paga $39 + plano $5 − metas $5 = $39', 39.0, $mods->mensual($nSal));
 $db->exec(file_get_contents(RAIZ . '/db/migraciones/112_planes_20_45.sql'));
 $mods->olvidar();
 $pl = $mods->planes();
@@ -64,7 +64,7 @@ check('Quien pagaba Esencial conserva el módulo de su plan: pasa a ser uno de s
 check('Una demo de Esencial no recibe extras (sigue con todo encendido)', '', (string) $valor("SELECT modulos_extra FROM negocios WHERE id = $nEsDemo"));
 check('El negocio del Salón pasa a Completo, con su pago', ['quinta', 'quinta'],
       [$valor("SELECT plan_codigo FROM negocios WHERE id = $nSal"), $valor("SELECT plan_codigo FROM suscripciones WHERE id = $sSal")]);
-check('… lo que tenía quitado sigue quitado: $45 − metas $4 = $41', [['metas'], 41.0], [$mods->estado($nSal)['quitados'], $mods->mensual($nSal)]);
+check('… lo que tenía quitado sigue quitado: $45 − metas $5 = $40', [['metas'], 40.0], [$mods->estado($nSal)['quitados'], $mods->mensual($nSal)]);
 check('La Quinta pasa a Completo: $45 con el Asistente IA', [45.0, true], [$mods->mensual($nQui), $mods->activo($nQui, 'asistente_ia')]);
 check('Asistente IA $5 en el catálogo', 5.0, $mods->catalogo()['asistente_ia']['precio_mensual']);
 $db->exec("UPDATE planes SET precio_mensual = 22, descripcion = 'La cambió Dimitry' WHERE codigo = 'esencial'; UPDATE modulos SET precio_mensual = 6 WHERE id = 'asistente_ia'");
@@ -129,7 +129,7 @@ check('4 a elegir y $4 cada uno más (8 módulos: $20 + 4 × $4)', [4, 4.0, 36.0
       [$mods->planes()['esencial']['modulos_elegir'], $mods->planes()['esencial']['precio_modulo_extra'], $mods->mensual($b)]);
 $planes->guardarPlan('esencial', 'Básico', 20.0, 1, 2, 'La base + 4 a tu elección', null, null);
 $mods->olvidar();
-check('Sin precio por módulo (vacío): cada uno más a su precio del catálogo (no cambia los módulos a elegir)', [4, null, 20.0 + 8 + 8 + 6 + 5],
+check('Sin precio por módulo (vacío): cada uno más a su precio del catálogo (no cambia los módulos a elegir)', [4, null, 20.0 + 5 + 5 + 5 + 5],
       [$mods->planes()['esencial']['modulos_elegir'], $mods->planes()['esencial']['precio_modulo_extra'], $mods->mensual($b)]);
 $planes->guardarPlan('esencial', 'Básico', 20.0, 1, 2, 'La base de TuEvento + 3 módulos que tú eliges.', 3, 5.0);
 $mods->olvidar();

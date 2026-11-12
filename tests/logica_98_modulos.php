@@ -26,7 +26,7 @@ titulo('1. Catálogo y dependencias');
 check('17 módulos (con el Asistente IA de $5, migración 112), cada uno con nombre, ícono, descripción, precio, dependencias y grupo', 17, count(array_filter(Modulos::CATALOGO,
     fn($m, $id) => count($m) === 6 && $m[0] !== '' && $m[1] !== '' && mb_strlen($m[2]) > 30 && $m[3] > 0
                    && is_array($m[4]) && isset(Modulos::GRUPOS[$m[5]]), ARRAY_FILTER_USE_BOTH)));
-check('Asistente IA y factura electrónica: solo a pedido, fuera de "*"; la IA $5 al mes (migración 112)', [['asistente_ia', 'facturacion'], false, 5.0],
+check('Asistente IA y factura electrónica: solo a pedido, fuera de "*"; la IA $3 al mes (migraciones 112 y 113)', [['asistente_ia', 'facturacion'], false, 3.0],
       [Modulos::SOLO_A_PEDIDO, in_array('asistente_ia', Modulos::parse('*'), true), Modulos::CATALOGO['asistente_ia'][3]]);
 check('ids en minúsculas y _', [], array_values(array_filter($todos, fn($id) => !preg_match('/^[a-z_]+$/', $id))));
 check('Toda dependencia existe y no hay ciclos', true, (function () use ($todos) {
@@ -34,7 +34,7 @@ check('Toda dependencia existe y no hay ciclos', true, (function () use ($todos)
     return true;
 })());
 check('La base no se apaga y tiene texto', true, count(Modulos::BASE) >= 8);
-check('Catálogo desde la base: precios de la migración', [3.0, 6.0, 4.0, 8.0], [$mods->catalogo()['paquetes']['precio_mensual'], $mods->catalogo()['contratos']['precio_mensual'],
+check('Catálogo desde la base: precios de la migración', [5.0, 5.0, 5.0, 5.0], [$mods->catalogo()['paquetes']['precio_mensual'], $mods->catalogo()['contratos']['precio_mensual'],
       $mods->catalogo()['cobros_linea']['precio_mensual'], $mods->catalogo()['invitados']['precio_mensual']]);
 check('conDependencias: cobros en línea trae el portal del cliente', ['portal_cliente', 'cobros_linea'], Modulos::conDependencias(['cobros_linea']));
 check('conDependencias: boda en vivo trae el día del evento', ['dia_evento', 'boda_vivo'], Modulos::conDependencias(['boda_vivo']));
@@ -81,18 +81,18 @@ check('Encender boda en vivo enciende también el día del evento (y lo dice)', 
       [$r['automaticos'], str_contains($r['texto'], 'Se encendieron también (los necesita): Día del evento')]);
 $eS = $mods->estado($nS);
 check('Extra y quitados guardados', [['dia_evento', 'invitados', 'boda_vivo'], ['metas']], [$eS['extra'], $eS['quitados']]);
-check('Precio = plan + extra − quitados (39 + 8 + 8 + 5 − 4)', [21.0, 4.0, 56.0], [$eS['precio_extra'], $eS['descuento'], $eS['mensual']]);
+check('Precio = plan + extra − quitados (39 + 5 + 5 + 5 − 5)', [15.0, 5.0, 49.0], [$eS['precio_extra'], $eS['descuento'], $eS['mensual']]);
 check('Activos = (plan − quitados) + extra', true, in_array('invitados', $eS['activos'], true) && !in_array('metas', $eS['activos'], true));
 check('Encender lo mismo otra vez: sin cambios', true, $mods->cambiar($nS, ['invitados'], [])['sin_cambios']);
 check_error('No se apaga uno que otro encendido necesita', 'No se puede apagar Día del evento: lo necesita Boda en vivo', fn() => $mods->cambiar($nS, [], ['dia_evento']));
 check_error('Módulo que no existe', 'Ese módulo no existe', fn() => $mods->cambiar($nS, ['nada'], []));
 check_error('Encender y apagar a la vez', 'No se puede encender y apagar a la vez', fn() => $mods->cambiar($nS, ['plano'], ['plano']));
 $r = $mods->cambiar($nS, [], ['boda_vivo', 'dia_evento']);
-check('Apagar los dos juntos sí se puede', [['dia_evento', 'boda_vivo'], 43.0], [$r['apagados'], $mods->mensual($nS)]);
+check('Apagar los dos juntos sí se puede', [['dia_evento', 'boda_vivo'], 39.0], [$r['apagados'], $mods->mensual($nS)]);
 $mods->cambiar($nS, [], [], 30.0);
-check('Precio acordado manda', [30.0, 30.0, 43.0], [$mods->estado($nS)['precio_acordado'], $mods->mensual($nS), $mods->estado($nS)['calculado']]);
+check('Precio acordado manda', [30.0, 30.0, 39.0], [$mods->estado($nS)['precio_acordado'], $mods->mensual($nS), $mods->estado($nS)['calculado']]);
 $mods->cambiar($nS, [], [], null);
-check('Quitar el precio acordado', [null, 43.0], [$mods->estado($nS)['precio_acordado'], $mods->mensual($nS)]);
+check('Quitar el precio acordado', [null, 39.0], [$mods->estado($nS)['precio_acordado'], $mods->mensual($nS)]);
 $mods->cambiar($nE, [], [], false);
 check('Descuento nunca deja el precio en negativo', true, (function () use ($mods, $nE, $db) {
     $db->exec("UPDATE planes SET modulos = 'paquetes,contratos,portal_cliente,dia_evento' WHERE codigo = 'esencial'");
@@ -103,15 +103,15 @@ check('Descuento nunca deja el precio en negativo', true, (function () use ($mod
     return $ok;
 })());
 check('Aislamiento: cambiar un negocio no toca a otro', $pl['quinta']['modulos'], $mods->activos($nQ));
-check('Cotizar con sus módulos: Salón + invitados, semestral (paga 5)', [43.0 * 5, 43.0], (function () use ($db, $nS) {
+check('Cotizar con sus módulos: Salón + invitados, semestral (paga 5)', [39.0 * 5, 39.0], (function () use ($db, $nS) {
     $p = new Planes($db);
     $c = $p->cotizarNegocio($nS, 'salon', 'semestral');
     return [$c['monto'], $c['mensual']];
 })());
-check('Cotizar con otro plan: Quinta (todo) con metas quitado', 65.0, (new Planes($db))->cotizarNegocio($nS, 'quinta', 'mensual')['monto']);
+check('Cotizar con otro plan: Quinta (todo) con metas quitado', 64.0, (new Planes($db))->cotizarNegocio($nS, 'quinta', 'mensual')['monto']);
 $sid = (new Planes($db))->suscribir($nS, 'salon', 'mensual', $hoy, 'transferencia');
-check('Registrar pago sin monto: sugiere lo que paga con sus módulos', 43.0, (float) $db->query("SELECT monto FROM suscripciones WHERE id = $sid")->fetchColumn());
-check('Ingreso mensual del panel = lo que paga con módulos', 43.0, (new PanelTukan($db))->ingresoMensual($hoy));
+check('Registrar pago sin monto: sugiere lo que paga con sus módulos', 39.0, (float) $db->query("SELECT monto FROM suscripciones WHERE id = $sid")->fetchColumn());
+check('Ingreso mensual del panel = lo que paga con módulos', 39.0, (new PanelTukan($db))->ingresoMensual($hoy));
 
 // ---------------------------------------------------------------------------------------------
 titulo('4. Demo con los módulos elegidos; apagar no borra datos');
@@ -242,11 +242,11 @@ $c = $pedir('cliente', ['id' => (string) $nS])[1]['cliente'];
 check('cliente.modulos con la forma de B.2 (+ módulos a elegir de la migración 112)', ['del_plan', 'extra', 'quitados', 'activos', 'pagados', 'precio_plan', 'precio_extra', 'descuento', 'precio_acordado', 'mensual', 'demo', 'demo_todos',
                                                      'modulos_elegir', 'elegidos', 'por_elegir', 'precio_por_extra'],
       array_keys($c['modulos']));
-check('cliente: mensual_estimado = lo que paga con sus módulos (39 + invitados 8 − metas 4)', [43.0, 43.0], [$c['modulos']['mensual'], $c['mensual_estimado']]);
+check('cliente: mensual_estimado = lo que paga con sus módulos (39 + invitados 5 − metas 5)', [39.0, 39.0], [$c['modulos']['mensual'], $c['mensual_estimado']]);
 check('cliente: botón "Módulos" (cambiar_modulos)', true, in_array('cambiar_modulos', array_column($c['acciones_posibles'], 'accion'), true));
-check('clientes: la lista también trae modulos y mensual_estimado', 43.0,
+check('clientes: la lista también trae modulos y mensual_estimado', 39.0,
       array_column($pedir('clientes', ['por_pagina' => 200])[1]['clientes'], null, 'id')[(string) $nS]['mensual_estimado']);
-check('cotizar: con sus módulos', 43.0, $pedir('cotizar', ['cliente_id' => (string) $nS, 'periodo' => 'mensual'])[1]['monto']);
+check('cotizar: con sus módulos', 39.0, $pedir('cotizar', ['cliente_id' => (string) $nS, 'periodo' => 'mensual'])[1]['monto']);
 // solicitudes
 $sols = array_column($pedir('solicitudes', ['por_pagina' => 200])[1]['solicitudes'], null, 'id');
 $sm = $sols["cambio_modulos:$pid"] ?? null;
@@ -264,11 +264,11 @@ check('… con Crear demo prellenado', ['crear_demo', 'ana@x.ec'], (function () 
 $a = $sm['acciones_posibles'][0];
 $opA = bin2hex(random_bytes(16));
 $r = $ej('cambiar_modulos', $a['datos'], (int) $nS, $opA);
-check('Aprobar: enciende, responde modulos arriba y en resultado', [200, true, true, 48.0, 48.0],
+check('Aprobar: enciende, responde modulos arriba y en resultado', [200, true, true, 44.0, 44.0],
       [$r[0], $r[1]['ok'], in_array('mobiliario', $r[1]['modulos']['activos'], true), $r[1]['resultado']['modulos']['mensual'], $r[1]['cliente']['modulos']['mensual']]);
 check('… el pedido queda aprobado y la solicitud atendida', ['aprobada', 'atendida'], [$db->query("SELECT estado FROM modulos_solicitudes WHERE id = $pid")->fetchColumn(), $r[1]['solicitud']['estado']]);
 $r2 = $ej('cambiar_modulos', $a['datos'], (int) $nS, $opA);
-check('Repetida (mismo operacion_id): misma respuesta, no hace nada otra vez', [200, true, 48.0], [$r2[0], $r2[1]['repetida'], $r2[1]['modulos']['mensual']]);
+check('Repetida (mismo operacion_id): misma respuesta, no hace nada otra vez', [200, true, 44.0], [$r2[0], $r2[1]['repetida'], $r2[1]['modulos']['mensual']]);
 check('Auditado en registro_admin', 1, $cuenta("SELECT count(*) FROM registro_admin WHERE negocio_id = $nS AND accion LIKE 'Panel Tukán Central · Módulos: Encendidos: Mobiliario%'"));
 $r = $ej('cambiar_modulos', ['encender' => ['mobiliario']], (int) $nS);
 check('Encender lo que ya tiene: sin_cambios', [200, true], [$r[0], $r[1]['sin_cambios']]);
@@ -277,7 +277,7 @@ check('Dependencias: no se apaga el portal si los cobros en línea lo necesitan 
 $r = $ej('cambiar_modulos', ['encender' => ['portal_proveedor'], 'precio_acordado' => 50], (int) $nS);
 check('Encender con su dependencia (proveedores ya está) y precio acordado', [200, 50.0, true], [$r[0], $r[1]['modulos']['mensual'], in_array('portal_proveedor', $r[1]['modulos']['activos'], true)]);
 $r = $ej('cambiar_modulos', ['precio_acordado' => null], (int) $nS);
-check('Quitar el precio acordado', [200, null, 52.0], [$r[0], $r[1]['modulos']['precio_acordado'], $r[1]['modulos']['mensual']]);
+check('Quitar el precio acordado', [200, null, 49.0], [$r[0], $r[1]['modulos']['precio_acordado'], $r[1]['modulos']['mensual']]);
 check('Módulo que no existe → 422 con campo', [422, 'datos.encender'], (function () use ($ej, $nS) { $r = $ej('cambiar_modulos', ['encender' => ['oro']], (int) $nS); return [$r[0], $r[1]['campo']]; })());
 check('Sin nada que cambiar → 422', 422, $ej('cambiar_modulos', [], (int) $nS)[0]);
 check('Rol soporte no cambia módulos → 403', [403, 'no_permitido'], (function () use ($ej, $nS) { $r = $ej('cambiar_modulos', ['encender' => ['plano']], (int) $nS, null, 'soporte'); return [$r[0], $r[1]['codigo']]; })());
@@ -319,7 +319,7 @@ check('crear_demo con un módulo que no existe → 422', 422, $ej('crear_demo', 
 // finanzas por módulo
 $fz = $pedir('finanzas')[1];
 $pm = array_column($fz['por_modulo'], null, 'modulo');
-check('finanzas.por_modulo: clientes que lo tienen como extra y cuánto suma al mes', [1, 8.0, true],
+check('finanzas.por_modulo: clientes que lo tienen como extra y cuánto suma al mes', [1, 5.0, true],
       [$pm['invitados']['clientes_extra'], $pm['invitados']['mensual_extra'], $pm['contratos']['clientes_activos'] >= 2]);
 check('MRR de finanzas = suma de mensual_estimado de los que pagan', $fz['mrr'], array_sum(array_column($pedir('clientes', ['por_pagina' => 200])[1]['clientes'], 'mensual_estimado')));
 

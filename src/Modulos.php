@@ -50,25 +50,25 @@ final class Modulos
      * El orden de aquí es el orden por defecto.
      */
     public const CATALOGO = [
-        'paquetes' => ['Paquetes y simulador', '🎁', 'Paquetes armados (Boda Oro, Quince años…) que cargan toda la cotización en un toque, con simulador de precio por número de invitados.', 3.0, [], 'ventas'],
-        'contratos' => ['Contratos con firma', '✍️', 'Contrato con tu plantilla y variables que el cliente firma con el dedo en su celular, con huella y QR de verificación. Anexos por extras.', 6.0, [], 'ventas'],
-        'portal_cliente' => ['Portal del cliente', '📱', 'Tu cliente tiene su propio enlace, sin claves: ve sus pagos, su contrato y sube comprobantes de transferencia.', 6.0, [], 'cliente'],
-        'cobros_linea' => ['Cobros en línea (Payphone)', '💳', 'Tu cliente paga sus cuotas con tarjeta desde el portal y el pago se registra solo.', 4.0, ['portal_cliente'], 'cliente'],
+        'paquetes' => ['Paquetes y simulador', '🎁', 'Paquetes armados (Boda Oro, Quince años…) que cargan toda la cotización en un toque, con simulador de precio por número de invitados.', 5.0, [], 'ventas'],
+        'contratos' => ['Contratos con firma', '✍️', 'Contrato con tu plantilla y variables que el cliente firma con el dedo en su celular, con huella y QR de verificación. Anexos por extras.', 5.0, [], 'ventas'],
+        'portal_cliente' => ['Portal del cliente', '📱', 'Tu cliente tiene su propio enlace, sin claves: ve sus pagos, su contrato y sube comprobantes de transferencia.', 5.0, [], 'cliente'],
+        'cobros_linea' => ['Cobros en línea (Payphone)', '💳', 'Tu cliente paga sus cuotas con tarjeta desde el portal y el pago se registra solo.', 5.0, ['portal_cliente'], 'cliente'],
         'cuestionarios' => ['Formulario, extras y encuesta', '📝', 'Formulario del evento que el cliente llena en su portal, extras que pide en línea (hora extra, fotocabina…) y encuesta de satisfacción con NPS y reseña en Google.', 5.0, ['portal_cliente'], 'cliente'],
-        'dia_evento' => ['Día del evento', '⏱️', 'Cronograma minuto a minuto con modo en vivo, personal del evento con su portal y confirmación, hoja del evento en PDF para todo el equipo.', 8.0, [], 'dia'],
-        'invitados' => ['Invitados con QR', '🎟️', 'Invitación digital con confirmación, mesas, pegar la lista, portal de invitados para los novios y control de ingreso con QR en la puerta.', 8.0, [], 'dia'],
-        'plano' => ['Plano del salón', '🗺️', 'Plano visual de cada espacio con el dedo o el mouse, plano de cada evento unido a las mesas de invitados y PDF a escala.', 6.0, [], 'dia'],
+        'dia_evento' => ['Día del evento', '⏱️', 'Cronograma minuto a minuto con modo en vivo, personal del evento con su portal y confirmación, hoja del evento en PDF para todo el equipo.', 5.0, [], 'dia'],
+        'invitados' => ['Invitados con QR', '🎟️', 'Invitación digital con confirmación, mesas, pegar la lista, portal de invitados para los novios y control de ingreso con QR en la puerta.', 5.0, [], 'dia'],
+        'plano' => ['Plano del salón', '🗺️', 'Plano visual de cada espacio con el dedo o el mouse, plano de cada evento unido a las mesas de invitados y PDF a escala.', 5.0, [], 'dia'],
         'mobiliario' => ['Mobiliario y menaje', '🪑', 'Sillas, mesas, mantelería y vajilla: cuánto se reserva para cada evento, si alcanza cuando hay dos eventos el mismo día y cuánto cobrar por lo que se daña.', 5.0, [], 'dia'],
         'boda_vivo' => ['Boda en vivo', '🎥', 'Transmisión del evento (con QF Producciones o tu enlace de YouTube) con el botón "Ver en vivo" en el portal y en la invitación.', 5.0, ['dia_evento'], 'dia'],
-        'proveedores' => ['Proveedores y compras', '🚚', 'Ficha del proveedor con documentos que vencen, órdenes de compra con PDF y QR, facturas (también del XML del SRI), pagos y cuentas por pagar con antigüedad.', 7.0, [], 'gestion'],
-        'portal_proveedor' => ['Portal del proveedor', '🔗', 'Cada proveedor ve sus eventos y el cronograma, confirma órdenes, sube su factura y ve sus pagos y saldo.', 4.0, ['proveedores'], 'gestion'],
-        'incidencias' => ['Incidencias y puntaje de proveedores', '⭐', 'Problemas de cada evento con foto y cómo se resolvieron, puntualidad y puntaje de cada proveedor que tú configuras.', 3.0, ['proveedores'], 'gestion'],
-        'metas' => ['Metas y reportes avanzados', '🎯', 'Metas de ventas del local y por vendedor con su avance en el Inicio, embudo y conversión, rentabilidad por evento y comisiones de vendedores.', 4.0, [], 'gestion'],
-        'telegram' => ['Avisos por Telegram', '📲', 'Pagos, firmas, consultas nuevas, cuotas por cobrar y seguimientos del día llegan solos al celular del equipo.', 3.0, [], 'conexiones'],
-        'exportar' => ['Exportar a Excel y Google Calendar', '📤', 'Descarga eventos, cobros y reportes para Excel y ve tus eventos en Google Calendar.', 3.0, [], 'conexiones'],
-        'facturacion' => ['Factura electrónica con TuFactura', '🧾', 'Cada pago del evento sale como factura electrónica autorizada por el SRI, a nombre de tu cliente, con un toque o sola al registrarlo, y le llega por correo con el PDF y el XML. Se conecta con tu cuenta de TuFactura (TuFactura se contrata aparte con Tukán Software).', 0.0, [], 'gestion'],
+        'proveedores' => ['Proveedores y compras', '🚚', 'Ficha del proveedor con documentos que vencen, órdenes de compra con PDF y QR, facturas (también del XML del SRI), pagos y cuentas por pagar con antigüedad.', 5.0, [], 'gestion'],
+        'portal_proveedor' => ['Portal del proveedor', '🔗', 'Cada proveedor ve sus eventos y el cronograma, confirma órdenes, sube su factura y ve sus pagos y saldo.', 5.0, ['proveedores'], 'gestion'],
+        'incidencias' => ['Incidencias y puntaje de proveedores', '⭐', 'Problemas de cada evento con foto y cómo se resolvieron, puntualidad y puntaje de cada proveedor que tú configuras.', 5.0, ['proveedores'], 'gestion'],
+        'metas' => ['Metas y reportes avanzados', '🎯', 'Metas de ventas del local y por vendedor con su avance en el Inicio, embudo y conversión, rentabilidad por evento y comisiones de vendedores.', 5.0, [], 'gestion'],
+        'telegram' => ['Avisos por Telegram', '📲', 'Pagos, firmas, consultas nuevas, cuotas por cobrar y seguimientos del día llegan solos al celular del equipo.', 5.0, [], 'conexiones'],
+        'exportar' => ['Exportar a Excel y Google Calendar', '📤', 'Descarga eventos, cobros y reportes para Excel y ve tus eventos en Google Calendar.', 5.0, [], 'conexiones'],
+        'facturacion' => ['Factura electrónica con TuFactura', '🧾', 'Próximamente. Cada pago del evento sale como factura electrónica autorizada por el SRI, a nombre de tu cliente, con un toque o sola al registrarlo, y le llega por correo con el PDF y el XML. Se conecta con tu cuenta de TuFactura (TuFactura: Próximamente).', 0.0, [], 'gestion'],
         // Incluido en Completo. En Básico es un extra de $5 al mes que no cuenta entre los 3 módulos a elegir (migración 112).
-        'asistente_ia' => ['Asistente IA', '✨', 'Lee fotos de documentos y llena los datos por usted, y responde las dudas al instante. Arma la cotización a partir del mensaje de WhatsApp del cliente.', 5.0, [], 'extras'],
+        'asistente_ia' => ['Asistente IA', '✨', 'Lee fotos de documentos y llena los datos por usted, y responde las dudas al instante. Arma la cotización a partir del mensaje de WhatsApp del cliente.', 3.0, [], 'extras'],
     ];
 
     /**
@@ -81,7 +81,7 @@ final class Modulos
     /**
      * Planes de $20 y $45 (migración 112): el plan Básico trae `planes.modulos_elegir` módulos a elección del cliente y cada
      * uno más cuesta `planes.precio_modulo_extra`. Estos módulos NO cuentan entre los que elige: siempre se cobran a su
-     * precio del catálogo (Asistente IA $5 al mes).
+     * precio del catálogo (Asistente IA $3 al mes).
      */
     public const FUERA_DEL_CUPO = ['asistente_ia', 'facturacion'];
 

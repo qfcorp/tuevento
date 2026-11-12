@@ -161,6 +161,7 @@ if (es_post()) {
         if ($accion !== 'pedir') throw new RuntimeException('Acción no válida.');
         $mid = (string) ($_POST['modulo'] ?? '');
         if (!Modulos::existe($mid)) throw new RuntimeException('Ese módulo no existe.');
+        if ($mid === 'facturacion') throw new RuntimeException('TuFactura (facturación electrónica del SRI): Próximamente.');   // 12 nov 2026
         // Planes de $20 y $45 (migración 112): si su plan aún tiene módulos por elegir, es uno de esos (incluido en su plan)
         $eligeIncluido = modulos()->estado($nid)['por_elegir'] > 0 && !in_array($mid, Modulos::FUERA_DEL_CUPO, true);
         if (en_app_android() && !$eligeIncluido) throw new RuntimeException(NO_EN_APP);   // en la app solo se eligen los incluidos
