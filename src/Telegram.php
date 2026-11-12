@@ -108,7 +108,7 @@ final class Telegram
                 ? "¡Listo, $nombre! Desde ahora recibirás aquí los avisos de TuEvento (pagos, firmas, consultas nuevas)."
                 : 'El enlace ya se usó o caducó. Pide uno nuevo desde TuEvento → Mi cuenta.']);
         } elseif ($texto === '/start') {
-            $this->api('sendMessage', ['chat_id' => $chat, 'text' => 'Para conectar tu cuenta, entra a TuEvento → Mi cuenta → Conectar Telegram.']);
+            $this->api('sendMessage', ['chat_id' => $chat, 'text' => 'Para conectar tu cuenta, entra a TuEvento → Mi cuenta → Conectar mi Telegram.']);
         }
     }
 }
