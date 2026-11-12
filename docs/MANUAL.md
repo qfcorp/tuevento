@@ -125,6 +125,12 @@ Periodos Este mes / Mes pasado / Este año / Otras fechas. Secciones: Ventas, Co
 - Si no se puede leer el mensaje automáticamente: «En este momento no pudimos procesar el texto automáticamente; puede hacerlo a mano aquí» con el enlace a **Nuevo evento**. Sin el módulo, el botón no aparece.
 - Para Tukán: la IA se configura una vez en el servidor (`/etc/tukan-ia.env`, `bash deploy/configurar_ia.sh` del Panel Tukán Central). Sin ese archivo la Ayuda responde con las preguntas guardadas y el manual. Gasto por negocio y mes con tope (4,00 USD con el módulo, incluido o comprado aparte; 0,50 USD sin él; una demo, 0,50 USD en total aunque tenga todos los módulos; Tukán lo cambia desde el Panel con «Tope de IA»), en el Panel → Más → IA. Preguntas guardadas: Panel de TuEvento → **Preguntas IA**.
 
+## 19b. Avisos por Telegram (módulo «Avisos por Telegram»)
+Los avisos de TuEvento llegan a tu Telegram por el bot de **Tukán Software**: **un solo bot para todos los programas Tukán**, no uno distinto por programa.
+- **Para conectarte** (cada persona del equipo, con su propio Telegram): **Menú → Mi cuenta → Conectar mi Telegram → Abrir Telegram y conectar** y en Telegram presiona **Iniciar**. El enlace sirve una sola vez; si caduca, genera otro. Para dejar de recibir avisos: **Desconectar Telegram**.
+- **Qué te llega:** pagos, firmas, consultas nuevas, cuotas por cobrar y los seguimientos del día.
+- Si usas **más de un programa Tukán**, conecta cada uno desde su pantalla; el bot es el mismo. Si no ves el botón, los avisos no están en tu plan o todavía no están activos en tu instalación: WhatsApp **098 366 2181**.
+
 ## 20. Preguntas frecuentes
 - **¿Dos vendedores pueden vender la misma fecha?** No: lo impide la base de datos.
 - **¿Cuándo se separa la fecha?** Al completar la reserva. Mientras está cotizada, se retiene (botón **Retener** para dar más días).
