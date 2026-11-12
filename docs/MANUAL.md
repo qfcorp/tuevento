@@ -2,7 +2,7 @@
 
 Versión con capturas: [Manual_TuEvento.pdf](Manual_TuEvento.pdf). Las capturas están en [manual/capturas](manual/capturas) y salen del local de ejemplo «Quinta Demo Tukanec».
 Para regenerar todo (base de ejemplo, capturas y PDF): `bash docs/manual/generar/generar.sh`.
-Ayuda: WhatsApp 098 366 2181 · info@tukansoftware.com · tukansoftware.com
+Ayuda: WhatsApp 098 366 2181 · info@tukansoftware.com · tukansoftware.com · grupo de ayuda en Telegram: https://t.me/+dQfU0W9yvo85MzRh
 
 Cada parte dice si es de la **base** (la tienen todos) o de un **módulo** (se enciende en Mi plan). Si un módulo no está en tu plan, su pantalla dice «Este módulo no está en tu plan». Apagar un módulo nunca borra datos.
 
