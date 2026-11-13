@@ -17,6 +17,7 @@ Sistema para salones de eventos, quintas y haciendas de Ecuador. Celular, tablet
 ## 2. Entrar y la pantalla de Inicio (base)
 - Correo y contraseña → **Entrar**. La primera vez, cambia la contraseña temporal en **Mi cuenta**. Sin cuenta: **Solicitar demo**.
 - **App de Android** (Google Play, «TuEvento»): el mismo correo y la misma contraseña, a pantalla completa. En la app no se ven precios ni pagos del plan de TuEvento (Mi plan muestra solo el plan y los módulos); lo que cobras a tus clientes funciona igual.
+- **App de iPhone** («TuEvento»): el mismo correo y la misma contraseña. Igual que en Android, en la app no se ven precios ni pagos del plan de TuEvento: Mi plan muestra solo tu plan, su fecha y tus módulos; lo que cobras a tus clientes funciona igual.
 - **Menú → Mi cuenta → Borrar mi cuenta**: abre un correo listo para pedir que se borre la cuenta y sus datos (máximo 15 días). Detalle en la política de privacidad.
 - Menú: a la izquierda en la computadora, con todas las secciones a la vista y agrupadas (Principal, Ventas, Dinero, Operación, Configuración) y «Buscar evento o cliente…» arriba; en el celular se abre con el botón ☰ de arriba a la izquierda. En la barra de arriba: el nombre del local, tu nombre (lleva a Mi cuenta) y Salir.
 - **Primeros pasos:** completa los datos del negocio, sube tu logo, revisa espacios y precios, crea tu primer evento, conecta Telegram. **Ya sé usarlo, ocultar**.
