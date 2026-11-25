@@ -1,6 +1,13 @@
 # Bloc de notas — TuEvento (salones de eventos, quintas y haciendas · marca Tukán)
 
-Última actualización: 10 de noviembre de 2026
+Última actualización: 25 de noviembre de 2026
+
+## 25 nov 2026 — Súper usuario: entra por el login normal con su clave y código de 2 pasos del Panel Tukán (también en la app de iPhone)
+- Antes: el súper usuario solo entraba con el botón «Entrar» del Panel Tukán Central; en el login normal (el que abre la app de iPhone) decía «Correo o contraseña incorrectos».
+- Ahora: si el login de cliente falla y el programa está conectado al Panel Tukán, `app/paginas/login.php` le pregunta al panel (`TukanCentral::verificarSuper`, POST firmado v2 tipo `super` a `/super_api.php`, Anexo C del protocolo). El programa NO guarda ni compara la clave: la revisa el panel (misma clave, mismo código de 2 pasos, mismo bloqueo de 5 fallos/15 min).
+- Si falta el código, la pantalla pide «Código de 2 pasos» (no cuenta como intento fallido). Si el panel está caído, se muestra el mensaje de siempre. Un cliente que entra bien nunca toca el panel.
+- Archivos: `src/TukanCentral.php`, `app/paginas/login.php`, `app/vistas/login.php`. Pruebas: `tests/logica_95_super_login.php` (12), `tests/web_95_super_login.sh` (28), panel de mentira `tests/panel_super_simulado.php`.
+- **Falta:** poner en el servidor el `location = /super_api.php` en nginx del Panel Central (los servidores ya instalados lo necesitan a mano) y desplegar primero el Panel Central. La app de iPhone no se recompila.
 
 ## 10 nov 2026 — Identidad gráfica común Tukán (decisión de Dimitry: todos los programas iguales, modelo el ERP)
 - TuEvento usa el **kit común** `public/assets/tukan-ui.css` + `tukan-ui.js` (idénticos en todos los programas; no se editan aquí).
