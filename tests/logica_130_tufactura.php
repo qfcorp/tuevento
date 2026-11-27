@@ -83,6 +83,49 @@ check('Exterior: país y ciudad viajan en el cliente', 'Paraguay/Asunción', ($e
 $ext2 = $tfx->armar(['precios_con_iva' => 0, 'iva' => 15], 'venta', '3', ['identificacion' => 'AB123456', 'nombre' => 'Cliente', 'direccion' => 'Madrid, España'], [['descripcion' => 'X', 'precio' => 50, 'iva' => 15]]);
 check('Exterior: una línea con 15 % sale a 0 % si la dirección es de España', 0, $ext2['items'][0]['iva']);
 
+// Cédula/RUC ecuatoriano válido PREVALECE sobre el país; País y Ciudad del cliente (27 nov 2026, regla exterior v2)
+titulo('5. Cédula o RUC ecuatoriano prevalece; país y ciudad del cliente');
+foreach ([
+    [['identificacion' => '1710034065', 'pais' => 'Paraguay'], false], [['identificacion' => '1710034065001', 'direccion' => 'Asunción, Paraguay'], false],
+    [['identificacion' => '1710034066', 'pais' => 'Paraguay'], true], [['identificacion' => 'PY1234567', 'pais' => 'Paraguay'], true],
+    [['pais' => 'Ecuador', 'direccion' => 'Madrid, España'], false], [['tipo_id' => '08'], true], [['identificacion' => 'AB123456'], false],
+] as [$cli, $espera]) check('Exterior v2: esExterior ' . json_encode($cli, JSON_UNESCAPED_UNICODE), $espera, \TukanFactura::esExterior($cli));
+$antes = $db->query('SELECT id, pais, ciudad FROM clientes ORDER BY id')->fetchAll(PDO::FETCH_ASSOC);
+$db->exec(file_get_contents(RAIZ . '/db/migraciones/119_pais_ciudad_clientes.sql'));
+check('Migración 119: se puede repetir y no cambia ninguna fila', $antes, $db->query('SELECT id, pais, ciudad FROM clientes ORDER BY id')->fetchAll(PDO::FETCH_ASSOC));
+check('El cliente de antes quedó con país Ecuador y sin ciudad', ['Ecuador', null], [$antes[0]['pais'], $antes[0]['ciudad']]);
+check('El selector de países empieza en Ecuador', 'Ecuador', FacturaTukan::paises()[0]);
+check('País fuera de la lista → Ecuador', 'Ecuador', FacturaTukan::paisElegido('Atlantis'));
+check('Cédula ecuatoriana → sin tipo 08', '', FacturaTukan::tipoId('1710034065'));
+check('Pasaporte (con letras) → tipo 08', '08', FacturaTukan::tipoId('AB123456'));
+$n = 61;
+$pagoDe = function (array $cliente, string $direccion = '') use ($db, $nid, $dueno, $ev, $pag, &$n) {
+    $f = (new DateTimeImmutable('today'))->modify('+' . (++$n) . ' days')->format('Y-m-d');
+    $e = $ev->crear($nid, ['cliente' => $cliente, 'tipo' => 'boda', 'fecha' => $f, 'hora_inicio' => '18:00', 'hora_fin' => '02:00', 'invitados' => 50,
+        'espacios' => [(int) $db->query("SELECT id FROM espacios WHERE negocio_id = $nid ORDER BY id LIMIT 1")->fetchColumn()]], (int) $dueno['id']);
+    if ($direccion !== '') $db->prepare('UPDATE clientes SET direccion = ? WHERE id = (SELECT cliente_id FROM eventos WHERE id = ?)')->execute([$direccion, $e]);
+    return (string) $pag->registrar($nid, $e, ['monto' => 115, 'metodo' => 'transferencia', 'tipo' => 'evento'], $dueno);
+};
+$itx2 = [['descripcion' => 'Servicio', 'cantidad' => 1, 'precio' => 115]];
+$armar = fn(string $pagoId) => $tfx->armar($conx, 'pago', $pagoId, FacturaTukan::datos($nid, $pagoId)[0], $itx2);
+$pA = $pagoDe(['nombre' => 'Cédula y Paraguay', 'telefono' => '0992000001', 'identificacion' => '1104680135', 'pais' => 'Paraguay', 'ciudad' => 'Asunción']);
+check('Cédula válida + Paraguay: sale con IVA (15 %)', 15, $armar($pA)['items'][0]['iva']);
+$pB = $pagoDe(['nombre' => 'Cédula mala y Paraguay', 'telefono' => '0992000002', 'identificacion' => '1710034066', 'pais' => 'Paraguay', 'ciudad' => 'Asunción']);
+check('Cédula inválida + Paraguay: 0 %', 0, $armar($pB)['items'][0]['iva']);
+$cB = FacturaTukan::datos($nid, $pB)[0];
+check('Datos: país y ciudad viajan a TuFactura', 'Paraguay/Asunción', $cB['pais'] . '/' . $cB['ciudad']);
+$pC = $pagoDe(['nombre' => 'Ecuador con dirección extranjera', 'telefono' => '0992000003', 'pais' => 'Ecuador', 'ciudad' => 'Quito'], 'Calle 80, Bogotá, Colombia');
+check('País Ecuador con dirección extranjera: con IVA', 15, $armar($pC)['items'][0]['iva']);
+$pD = $pagoDe(['nombre' => 'Sin país en el formulario', 'telefono' => '0992000004']);
+check('Cliente sin país en el formulario (módulo apagado): queda en Ecuador y con IVA', ['Ecuador', 15], [FacturaTukan::datos($nid, $pD)[0]['pais'], $armar($pD)['items'][0]['iva']]);
+$idPy = (int) $db->query("SELECT id FROM clientes WHERE nombre = 'Cédula mala y Paraguay'")->fetchColumn();
+$ev->guardarCliente($nid, ['nombre' => 'Cédula mala y Paraguay', 'telefono' => '0992000002', 'pais' => 'Ecuador', 'ciudad' => 'Quito']);
+check('Un cliente que ya existía conserva su país al volver a escribirlo', 'Paraguay', $db->query("SELECT pais FROM clientes WHERE id = $idPy")->fetchColumn());
+(new \TuEvento\Ventas($db))->editarCliente($nid, $idPy, ['nombre' => 'Cédula mala y Paraguay', 'telefono' => '0992000002', 'identificacion' => '1710034066', 'pais' => 'Colombia', 'ciudad' => 'Bogotá']);
+check('Editar la ficha cambia país y ciudad', 'Colombia/Bogotá', implode('/', $db->query("SELECT pais, ciudad FROM clientes WHERE id = $idPy")->fetch(PDO::FETCH_NUM)));
+(new \TuEvento\Ventas($db))->editarCliente($nid, $idPy, ['nombre' => 'Cédula mala y Paraguay', 'telefono' => '0992000002', 'identificacion' => '1710034066']);
+check('Editar sin el campo país (módulo apagado) no lo toca', 'Colombia', $db->query("SELECT pais FROM clientes WHERE id = $idPy")->fetchColumn());
+
 proc_terminate($proc);
 array_map('unlink', glob("$simDir/*") ?: []);
 @rmdir($simDir);

@@ -420,6 +420,10 @@ final class Ventas
                       mb_substr(trim((string) ($d['direccion'] ?? '')), 0, 250) ?: null, $origen ?: null,
                       trim((string) ($d['notas'] ?? '')) ?: null, $id, $negocioId]);
         if ($st->rowCount() !== 1) throw new RuntimeException('No se encontró el cliente.');
+        if (array_key_exists('pais', $d)) {   // solo llega con el módulo «facturacion»
+            $this->db->prepare('UPDATE clientes SET pais = ?, ciudad = ? WHERE id = ? AND negocio_id = ?')
+                ->execute([FacturaTukan::paisElegido((string) $d['pais']), mb_substr(trim((string) ($d['ciudad'] ?? '')), 0, 80) ?: null, $id, $negocioId]);
+        }
     }
 
     /** Cuántos eventos tiene, cuánto contrató (separados, confirmados y realizados) y cuánto pagó. */
@@ -498,6 +502,7 @@ final class Ventas
         } else {
             $d['cliente'] = ['nombre' => $t('cliente_nombre'), 'telefono' => $t('cliente_telefono'),
                              'identificacion' => $t('cliente_identificacion'), 'email' => $t('cliente_email'), 'origen' => $t('origen')];
+            if (array_key_exists('cliente_pais', $p)) $d['cliente'] += ['pais' => $t('cliente_pais'), 'ciudad' => $t('cliente_ciudad')];   // solo con el módulo «facturacion»
             if (mb_strlen($d['cliente']['nombre']) < 3) throw new RuntimeException('Escribe el nombre del cliente.');
             if ($d['cliente']['telefono'] !== '' && WhatsApp::normalizarTelefono($d['cliente']['telefono']) === null) {
                 throw new RuntimeException('Revisa el celular del cliente (ej. 0991234567).');

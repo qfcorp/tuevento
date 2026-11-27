@@ -28,6 +28,7 @@ use TuEvento\{Eventos, WhatsApp};
                 <label for="identificacion">Cédula o RUC <small>(opcional)</small></label>
                 <input type="text" id="identificacion" name="identificacion" value="<?= e($d['identificacion']) ?>" inputmode="numeric" maxlength="13">
             </div>
+            <?php if (modulo_activo($u, 'facturacion')): $pcPais = $d['pais'] ?? ''; $pcCiudad = $d['ciudad'] ?? ''; $pcPrefijo = ''; require RAIZ . '/app/vistas/_pais_ciudad.php'; endif; ?>
             <div class="campo tk-campo">
                 <label for="email">Correo <small>(opcional)</small></label>
                 <input type="email" id="email" name="email" value="<?= e($d['email']) ?>">

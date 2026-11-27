@@ -19,6 +19,7 @@ if (!$cliente) {
 $puedeEditar = es_comercial($u);
 $error = null;
 $d = $cliente;
+$conFactura = modulo_activo($u, 'facturacion');   // País y ciudad del cliente: solo si el negocio tiene TuFactura
 
 if (es_post()) {
     exigir($puedeEditar, 'Tu usuario solo puede ver la ficha.');
@@ -27,6 +28,7 @@ if (es_post()) {
     try {
         if ($accion === 'guardar') {
             foreach (['nombre', 'telefono', 'identificacion', 'email', 'direccion', 'origen', 'notas'] as $k) $d[$k] = campo($k);
+            if ($conFactura) foreach (['pais', 'ciudad'] as $k) $d[$k] = campo($k);
             $ventas->editarCliente($nid, $id, $d);
             aviso('Ficha guardada.');
             redirigir('cliente', ['id' => $id]);

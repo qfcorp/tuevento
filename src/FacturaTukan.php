@@ -47,16 +47,41 @@ final class FacturaTukan
     {
         if (!ctype_digit($pagoId)) return null;
         $st = self::db()->prepare("SELECT p.*, e.nombre AS evento, e.codigo, e.fecha AS fecha_evento,
-                                          c.nombre AS c_nombre, c.identificacion AS c_ident, c.email AS c_email, c.telefono AS c_tel, c.direccion AS c_dir
+                                          c.nombre AS c_nombre, c.identificacion AS c_ident, c.email AS c_email, c.telefono AS c_tel, c.direccion AS c_dir,
+                                          c.pais AS c_pais, c.ciudad AS c_ciudad
                                      FROM pagos p JOIN eventos e ON e.id = p.evento_id JOIN clientes c ON c.id = e.cliente_id
                                     WHERE p.id = ? AND p.negocio_id = ? AND p.tipo = 'evento' AND p.estado = 'confirmado'");
         $st->execute([(int) $pagoId, $negocio]);
         $p = $st->fetch(PDO::FETCH_ASSOC);
         if (!$p) return null;
         $cliente = ['identificacion' => (string) $p['c_ident'], 'nombre' => (string) $p['c_nombre'], 'correo' => (string) $p['c_email'],
-                    'telefono' => (string) $p['c_tel'], 'direccion' => (string) $p['c_dir']];
+                    'telefono' => (string) $p['c_tel'], 'direccion' => (string) $p['c_dir'],
+                    'tipo_id' => self::tipoId((string) $p['c_ident']), 'pais' => (string) $p['c_pais'], 'ciudad' => (string) $p['c_ciudad']];
         $items = [['descripcion' => 'Evento: ' . $p['evento'], 'detalle' => $p['codigo'] . ' · ' . date('d/m/Y', strtotime((string) $p['fecha_evento'])), 'cantidad' => 1, 'precio' => (float) $p['monto']]];
         return [$cliente, $items, ['forma' => (string) $p['metodo'], 'info' => array_filter(['Evento' => (string) $p['codigo'], 'Recibo' => $p['numero_recibo'] ? 'N.º ' . $p['numero_recibo'] : ''])]];
+    }
+
+    public const PAIS_DEFECTO = 'Ecuador';
+
+    /** Países del selector «País» del cliente (Ecuador primero y por defecto). El último, «Otro país», no es Ecuador: cuenta como exterior. */
+    public static function paises(): array
+    {
+        return [self::PAIS_DEFECTO, 'Colombia', 'Perú', 'Estados Unidos', 'España', 'Argentina', 'Bolivia', 'Brasil', 'Canadá', 'Chile', 'Costa Rica', 'Francia', 'Italia',
+                'México', 'Panamá', 'Paraguay', 'Reino Unido', 'República Dominicana', 'Uruguay', 'Venezuela', 'Otro país'];
+    }
+
+    /** País que se guarda desde el formulario: uno de la lista (o el ya guardado); si llega vacío o raro, Ecuador. */
+    public static function paisElegido(string $pais, string $actual = ''): string
+    {
+        $pais = trim($pais);
+        return in_array($pais, self::paises(), true) || ($pais !== '' && $pais === $actual) ? $pais : self::PAIS_DEFECTO;
+    }
+
+    /** «08» (identificación del exterior) si el documento no es de Ecuador y parece pasaporte (trae letras); si no, vacío (el enlace decide por país y dirección). */
+    public static function tipoId(string $ident): string
+    {
+        $i = strtoupper(preg_replace('/[^A-Za-z0-9]/', '', $ident));
+        return $i !== '' && !\TukanFactura::identificacionEcuatoriana($i) && preg_match('/[A-Z]/', $i) ? '08' : '';
     }
 
     /** Los últimos pagos confirmados para facturar a mano: [id, fecha, cliente, monto, detalle]. */
