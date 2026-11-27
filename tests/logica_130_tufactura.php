@@ -62,6 +62,27 @@ $mods->cambiar($nid, [], ['facturacion']);
 $p3 = $pag->registrar($nid, $e1, ['monto' => 100, 'metodo' => 'efectivo', 'tipo' => 'evento'], $dueno);
 check('Apagado de nuevo: ya no factura solo', null, $tf->deOrigen($nid, 'pago', (string) $p3));
 
+// Ventas al EXTERIOR: sin IVA en ningún producto (27 nov 2026): la regla de TukanFactura::esExterior y cómo la usa armar()
+require_once dirname(__DIR__) . '/src/TukanFactura.php';
+foreach ([
+    [['pais' => 'Ecuador'], false], [['pais' => 'EC'], false], [['pais' => 'Paraguay'], true],
+    [['pais' => 'Ecuador', 'direccion' => 'Asunción, Paraguay'], false], [['pais' => 'Estados Unidos', 'direccion' => 'Quito'], true],
+    [['direccion' => 'Calle 80, Bogotá, Colombia'], true], [['direccion' => 'Madrid, España'], true],
+    [['direccion' => 'Av. Amazonas y Colón, Quito'], false], [['direccion' => 'Av. Colombia y Peru, Quito, Ecuador'], false],
+    [['direccion' => 'Calle Paraguaná, Quito'], false], [[], false], [['tipo_id' => '08'], true], [['tipo_id' => '08', 'direccion' => 'Cuenca, Ecuador'], false],
+] as [$cli, $espera]) check('Exterior: esExterior ' . json_encode($cli, JSON_UNESCAPED_UNICODE), $espera, \TukanFactura::esExterior($cli));
+$tfx = new \TukanFactura(new PDO('sqlite::memory:'), str_repeat('k', 32), 'Prueba');
+$conx = ['precios_con_iva' => 1, 'iva' => 15];
+$itx = [['descripcion' => 'Servicio', 'cantidad' => 1, 'precio' => 115], ['descripcion' => 'Extra', 'cantidad' => 2, 'precio' => 10, 'iva' => 15]];
+$loc = $tfx->armar($conx, 'venta', '1', ['identificacion' => '1710034065', 'nombre' => 'Ana', 'direccion' => 'Quito'], $itx);
+check('Exterior: cliente de Ecuador sigue con IVA 15 %', 15, $loc['items'][0]['iva']);
+$ext = $tfx->armar($conx, 'venta', '2', ['identificacion' => 'PY1234567', 'nombre' => 'Cliente PY', 'pais' => 'Paraguay', 'ciudad' => 'Asunción'], $itx);
+check('Exterior: todas las líneas a 0 %', true, $ext['items'][0]['iva'] === 0 && $ext['items'][1]['iva'] === 0);
+check('Exterior: no se le quita IVA al precio (el total es lo que pagó)', true, $ext['items'][0]['precio'] === 115.0 && $ext['items'][1]['precio'] === 10.0);
+check('Exterior: país y ciudad viajan en el cliente', 'Paraguay/Asunción', ($ext['cliente']['pais'] ?? '') . '/' . ($ext['cliente']['ciudad'] ?? ''));
+$ext2 = $tfx->armar(['precios_con_iva' => 0, 'iva' => 15], 'venta', '3', ['identificacion' => 'AB123456', 'nombre' => 'Cliente', 'direccion' => 'Madrid, España'], [['descripcion' => 'X', 'precio' => 50, 'iva' => 15]]);
+check('Exterior: una línea con 15 % sale a 0 % si la dirección es de España', 0, $ext2['items'][0]['iva']);
+
 proc_terminate($proc);
 array_map('unlink', glob("$simDir/*") ?: []);
 @rmdir($simDir);
