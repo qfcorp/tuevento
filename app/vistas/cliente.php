@@ -54,6 +54,7 @@ $fmt = fn(?string $ts) => $ts ? fecha_corta(substr($ts, 0, 10), false) . ' ' . s
                 <label for="direccion">Dirección <small>(para el contrato)</small></label>
                 <input type="text" id="direccion" name="direccion" value="<?= e($d['direccion']) ?>" maxlength="250">
             </div>
+            <?php if (modulo_activo($u, 'facturacion')): $pcPais = $d['pais'] ?? ''; $pcCiudad = $d['ciudad'] ?? ''; $pcPrefijo = ''; require RAIZ . '/app/vistas/_pais_ciudad.php'; endif; ?>
             <div class="campo tk-campo">
                 <label for="origen">¿Cómo nos conoció?</label>
                 <select id="origen" name="origen">

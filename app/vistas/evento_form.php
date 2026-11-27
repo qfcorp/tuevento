@@ -68,6 +68,7 @@ $accion = $nuevo ? url('evento_nuevo') : url('evento_editar', ['id' => $ev['id']
                     <label for="cliente_email">Correo <small>(opcional)</small></label>
                     <input type="email" id="cliente_email" name="cliente_email" value="<?= e($d['cliente_email']) ?>">
                 </div>
+                <?php if (modulo_activo($u, 'facturacion')): $pcPais = $d['cliente_pais'] ?? ''; $pcCiudad = $d['cliente_ciudad'] ?? ''; $pcPrefijo = 'cliente_'; require RAIZ . '/app/vistas/_pais_ciudad.php'; endif; ?>
             </div>
             <p class="suave ayuda-chica">Si el celular o la cédula ya están registrados, usamos ese mismo cliente (no se duplica).</p>
         </div>

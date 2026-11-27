@@ -99,7 +99,13 @@ final class Eventos
         $st = $this->db->prepare('INSERT INTO clientes (negocio_id, nombre, identificacion, telefono, email, direccion, origen, notas)
                                   VALUES (?,?,?,?,?,?,?,?) RETURNING id');
         $st->execute([$negocioId, ...$valores, trim((string) ($d['notas'] ?? '')) ?: null]);
-        return (int) $st->fetchColumn();
+        $nuevo = (int) $st->fetchColumn();
+        // País y ciudad (solo con el módulo «facturacion» llegan en el formulario): un cliente que ya existía conserva los suyos
+        if (array_key_exists('pais', $d) || array_key_exists('ciudad', $d)) {
+            $this->db->prepare('UPDATE clientes SET pais = ?, ciudad = ? WHERE id = ? AND negocio_id = ?')
+                ->execute([FacturaTukan::paisElegido((string) ($d['pais'] ?? '')), mb_substr(trim((string) ($d['ciudad'] ?? '')), 0, 80) ?: null, $nuevo, $negocioId]);
+        }
+        return $nuevo;
     }
 
     private function buscarClienteRepetido(int $negocioId, string $tel, string $ident): ?int

@@ -42,4 +42,23 @@ check "PDF de la factura" "application/pdf" "$(curl -s -b "$JAR" -o "$TMP/f.pdf"
 post "r=tufactura" -d tf_accion=facturar_origen -d "origen_id=$PID" > /dev/null
 check "No se factura dos veces" "1" "$(sql "SELECT count(*) FROM tukan_factura_documentos WHERE negocio_id = $NID")"
 check "A nombre del cliente" "1710034065" "$(sql "SELECT envio::json->'cliente'->>'identificacion' FROM tukan_factura_documentos WHERE id = $DOC")"
+
+echo "3. País y ciudad del cliente (regla exterior v2)"
+get "r=clientes" > /dev/null
+contiene "Cliente nuevo: pide el país (Ecuador por defecto)" "$TMP/pag.html" 'option value="Ecuador" selected'
+contiene "Cliente nuevo: pide la ciudad" "$TMP/pag.html" 'name="ciudad"'
+post "r=clientes" -d "nombre=Cliente Paraguay" -d telefono=0993334444 -d pais=Paraguay -d ciudad=Asunción > /dev/null
+check "Cliente guardado con su país y ciudad" "Paraguay|Asunción" "$(sql "SELECT pais || '|' || ciudad FROM clientes WHERE negocio_id = $NID AND nombre = 'Cliente Paraguay'")"
+CID=$(sql "SELECT id FROM clientes WHERE negocio_id = $NID AND nombre = 'Cliente Paraguay'")
+get "r=cliente&id=$CID" > /dev/null
+contiene "La ficha muestra el país elegido" "$TMP/pag.html" 'option value="Paraguay" selected'
+post "r=cliente&id=$CID" -d "nombre=Cliente Paraguay" -d telefono=0993334444 -d pais=Colombia -d ciudad=Bogotá > /dev/null
+check "La ficha guarda el cambio de país" "Colombia|Bogotá" "$(sql "SELECT pais || '|' || ciudad FROM clientes WHERE id = $CID")"
+get "r=evento_nuevo" > /dev/null
+contiene "Evento nuevo (cliente nuevo): pide el país" "$TMP/pag.html" 'name="cliente_pais"'
+sql "UPDATE negocios SET modulos_extra = replace(modulos_extra, 'facturacion', '') WHERE id = $NID" > /dev/null
+get "r=clientes" > /dev/null
+no_contiene "Sin TuFactura el formulario no pide país" "$TMP/pag.html" 'name="pais"'
+post "r=cliente&id=$CID" -d "nombre=Cliente Paraguay" -d telefono=0993334444 > /dev/null
+check "Sin TuFactura, guardar la ficha no toca el país" "Colombia" "$(sql "SELECT pais FROM clientes WHERE id = $CID")"
 kill $TFSIM 2>/dev/null

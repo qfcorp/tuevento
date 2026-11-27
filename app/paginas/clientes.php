@@ -7,6 +7,8 @@ $eventos = new Eventos(db());
 $q = mb_substr(trim((string) ($_GET['q'] ?? '')), 0, 80);
 $error = null;
 $d = ['nombre' => '', 'telefono' => '', 'identificacion' => '', 'email' => '', 'origen' => ''];
+$conFactura = modulo_activo($u, 'facturacion');   // País y ciudad del cliente: solo si el negocio tiene TuFactura
+if ($conFactura) $d += ['pais' => \TuEvento\FacturaTukan::PAIS_DEFECTO, 'ciudad' => ''];
 
 if (es_post()) {
     exigir(es_comercial($u), 'Solo el dueño y los vendedores pueden crear clientes.');
@@ -29,4 +31,4 @@ if (es_post()) {
 $clientes = $eventos->clientes($nid, $q, 300);
 $total = (int) db()->query('SELECT count(*) FROM clientes WHERE negocio_id = ' . $nid)->fetchColumn();
 vista('clientes', ['clientes' => $clientes, 'q' => $q, 'error' => $error, 'd' => $d, 'total' => $total,
-                   'puedeCrear' => es_comercial($u), 'abrirNuevo' => $error !== null || isset($_GET['nuevo'])], 'Clientes · TuEvento');
+                   'puedeCrear' => es_comercial($u), 'conFactura' => $conFactura, 'abrirNuevo' => $error !== null || isset($_GET['nuevo'])], 'Clientes · TuEvento');

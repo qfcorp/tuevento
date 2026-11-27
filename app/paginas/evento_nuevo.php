@@ -15,6 +15,7 @@ $espacios = $ventas->espacios($nid, false);
 $d = [
     'modo_cliente' => 'nuevo', 'cliente_id' => (int) ($_GET['cliente_id'] ?? 0),
     'cliente_nombre' => '', 'cliente_telefono' => '', 'cliente_identificacion' => '', 'cliente_email' => '',
+    'cliente_pais' => \TuEvento\FacturaTukan::PAIS_DEFECTO, 'cliente_ciudad' => '',   // solo se muestran (y se guardan) con el módulo «facturacion»
     'origen' => '', 'tipo' => 'boda', 'nombre' => '',
     'fecha' => Ventas::fechaValida($_GET['fecha'] ?? null) ? (string) $_GET['fecha'] : '',
     'hora_inicio' => '18:00', 'hora_fin' => '02:00', 'invitados' => '',
